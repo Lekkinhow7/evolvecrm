@@ -1,0 +1,11 @@
+[build]
+command = "pnpm build"
+publish = ".next"
+
+[build.environment]
+NODE_VERSION = "22"
+NPM_FLAGS = "--version"
+PNPM_CONFIG_MINIMUM_RELEASE_AGE = "0"
+
+[[plugins]]
+package = "@netlify/plugin-nextjs"
