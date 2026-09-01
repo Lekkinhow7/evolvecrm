@@ -92,4 +92,10 @@
     "vitest": "^4.1.2",
     "vitest-axe": "^0.1.0"
   }
+
+,
+"packageManager": "pnpm@9.15.9",
+"pnpm": {
+  "onlyBuiltDependencies": ["core-js", "esbuild", "protobufjs", "sharp", "unrs-resolver"]
+}
 }
