@@ -1,5 +1,5 @@
 /**
- * @fileoverview Configuração do TanStack Query para o Evolve CRM.
+ * @fileoverview Configuração do TanStack Query para o Sucção Zero CRM.
  * 
  * Este módulo centraliza toda a configuração de gerenciamento de estado do servidor:
  * - Cliente e provider do TanStack Query
@@ -127,7 +127,7 @@ const handleMutationError = (error: unknown, _variables: unknown, _context: unkn
  */
 
 /**
- * Cliente TanStack Query configurado para o Evolve CRM.
+ * Cliente TanStack Query configurado para o Sucção Zero CRM.
  * 
  * Configurações:
  * - Stale time: 5 minutos

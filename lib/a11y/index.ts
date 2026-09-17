@@ -1,5 +1,5 @@
 /**
- * @fileoverview Biblioteca de acessibilidade para o Evolve CRM.
+ * @fileoverview Biblioteca de acessibilidade para o Sucção Zero CRM.
  * 
  * Este módulo fornece componentes e hooks para implementar acessibilidade
  * seguindo as diretrizes WCAG 2.1 Level AA.

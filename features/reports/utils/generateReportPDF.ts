@@ -73,13 +73,13 @@ export const generateReportPDF = async (data: ReportData, period: PeriodFilter, 
     // HEADER
     // ============================================
 
-    // Logo placeholder (N for Evolve CRM)
+    // Logo placeholder (N for Sucção Zero CRM)
     doc.setFillColor(...COLORS.blue);
     doc.roundedRect(margin, 12, 12, 12, 2, 2, 'F');
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text('E', margin + 4.5, 20);
+    doc.text('S', margin + 4.5, 20);
 
     // Title
     doc.setFontSize(20);
@@ -319,7 +319,7 @@ export const generateReportPDF = async (data: ReportData, period: PeriodFilter, 
     // Footer text
     doc.setFontSize(7);
     doc.setTextColor(...COLORS.secondary);
-    doc.text('Evolve CRM', margin, pageHeight - 10);
+    doc.text('Sucção Zero CRM', margin, pageHeight - 10);
     doc.text('Página 1', pageWidth / 2, pageHeight - 10, { align: 'center' });
     doc.text(new Date().toLocaleDateString('pt-BR'), pageWidth - margin, pageHeight - 10, { align: 'right' });
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { ContactsPage } from '@/features/contacts/ContactsPage'
 
-export const metadata: Metadata = { title: 'Contatos | Evolve CRM' };
+export const metadata: Metadata = { title: 'Contatos | Sucção Zero CRM' };
 
 export default function Contacts() {
     return <ContactsPage />

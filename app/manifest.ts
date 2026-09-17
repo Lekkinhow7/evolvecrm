@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Evolve CRM',
-    short_name: 'Evolve CRM',
+    name: 'Sucção Zero CRM',
+    short_name: 'Sucção Zero CRM',
     description: 'CRM Inteligente para Gestão de Vendas',
     start_url: '/boards',
     display: 'standalone',

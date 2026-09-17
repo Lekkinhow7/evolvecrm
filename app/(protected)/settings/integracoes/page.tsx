@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import SettingsPage from '@/features/settings/SettingsPage'
 
-export const metadata: Metadata = { title: 'Integrações | Evolve CRM' };
+export const metadata: Metadata = { title: 'Integrações | Sucção Zero CRM' };
 
 export default function SettingsIntegracoes() {
   return <SettingsPage tab="integrations" />

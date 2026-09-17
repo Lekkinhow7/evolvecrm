@@ -81,7 +81,7 @@ export const CompanyFormModal: React.FC<CompanyFormModalProps> = ({
       <ModalForm onSubmit={handleSubmit(handleFormSubmit)}>
         <InputField
           label="Nome"
-          placeholder="Ex: Evolve CRM LTDA"
+          placeholder="Ex: Sucção Zero CRM LTDA"
           required
           error={errors.name}
           registration={register('name')}

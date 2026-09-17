@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { AIHubPage } from '@/features/ai-hub/AIHubPage'
 
-export const metadata: Metadata = { title: 'AI Hub | Evolve CRM' };
+export const metadata: Metadata = { title: 'AI Hub | Sucção Zero CRM' };
 
 export default function AIHub() {
     return <AIHubPage />
