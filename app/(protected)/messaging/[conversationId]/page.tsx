@@ -10,7 +10,7 @@ interface ConversationPageProps {
 }
 
 export const metadata: Metadata = {
-  title: 'Conversa | Sucção Zero CRM',
+  title: 'Conversa | Sucção0 CRM',
   description: 'Visualizar conversa',
 };
 

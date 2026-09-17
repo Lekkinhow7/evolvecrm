@@ -7,7 +7,7 @@ import DealCockpitFocusClient from '@/features/deals/cockpit/DealCockpitFocusCli
  */
 export async function generateMetadata({ params }: { params: Promise<{ dealId: string }> }): Promise<Metadata> {
   const { dealId } = await params;
-  return { title: `Deal ${dealId} | Sucção Zero CRM` };
+  return { title: `Deal ${dealId} | Sucção0 CRM` };
 }
 
 export default async function DealCockpitPage({

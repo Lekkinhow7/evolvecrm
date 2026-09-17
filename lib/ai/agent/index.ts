@@ -1,7 +1,7 @@
 /**
  * @fileoverview AI Agent Module
  *
- * Agente autônomo de vendas para o Sucção Zero CRM.
+ * Agente autônomo de vendas para o Sucção0 CRM.
  * Processa mensagens automaticamente e move leads pelo funil.
  *
  * @module lib/ai/agent
