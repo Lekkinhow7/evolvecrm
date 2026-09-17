@@ -140,8 +140,13 @@ async function upsertContactForDeal(opts: {
   };
 
   if (existing.data?.id) {
-    if (name) base.name = name;
-    const { data, error } = await sb.from('contacts').update(base).eq('id', existing.data.id).select('id').single();
+    // Atualização parcial: não apaga e-mail, cargo ou empresa que não vieram no envio.
+    const update: any = { updated_at: now };
+    for (const column of ['email', 'phone', 'role', 'client_company_id']) {
+      if (base[column] !== null && base[column] !== undefined) update[column] = base[column];
+    }
+    if (name) update.name = name;
+    const { data, error } = await sb.from('contacts').update(update).eq('id', existing.data.id).select('id').single();
     if (error) throw error;
     return data.id as string;
   }

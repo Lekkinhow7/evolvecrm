@@ -174,7 +174,7 @@ export async function POST(request: Request) {
 
   let lookup = sb
     .from('contacts')
-    .select('id')
+    .select('id,source')
     .eq('organization_id', auth.organizationId)
     .is('deleted_at', null);
 
@@ -209,10 +209,27 @@ export async function POST(request: Request) {
   };
 
   if (existing.data?.id) {
-    if (name) payload.name = name;
+    // Atualização parcial: só grava os campos que vieram no envio. Sem isso, cada
+    // upsert (ex.: sincronização do n8n) apagava e-mail, status, etapa etc.
+    const sent = parsed.data as Record<string, unknown>;
+    const columnsBySentKey: Record<string, string[]> = {
+      email: ['email'], phone: ['phone'], role: ['role'], avatar: ['avatar'],
+      status: ['status'], stage: ['stage'], source: ['source'], notes: ['notes'],
+      birth_date: ['birth_date'], last_interaction: ['last_interaction'],
+      last_purchase_date: ['last_purchase_date'], total_value: ['total_value'],
+      company_name: ['company_name'], client_company_id: ['client_company_id', 'company_name'],
+    };
+    const update: any = { updated_at: now };
+    for (const [column, keys] of Object.entries(columnsBySentKey)) {
+      const value = payload[column];
+      if (keys.some((k) => sent[k] !== undefined) && value !== undefined && value !== null) update[column] = value;
+    }
+    // A origem é a do primeiro contato: um upsert posterior não troca "Site" por "WhatsApp".
+    if ((existing.data as { source?: string | null }).source) delete update.source;
+    if (name) update.name = name;
     const { data, error } = await sb
       .from('contacts')
-      .update(payload)
+      .update(update)
       .eq('id', existing.data.id)
       .select('id,name,email,phone,role,company_name,client_company_id,avatar,notes,status,stage,source,birth_date,last_interaction,last_purchase_date,total_value,created_at,updated_at')
       .single();
