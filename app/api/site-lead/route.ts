@@ -30,6 +30,11 @@ const LeadSchema = z.object({
   ralos: z.string().max(30).optional(),
   notificacao: z.string().max(10).optional(),
   cidade: z.string().max(120).optional(),
+  // formulário de escritório de advocacia (site da Alice Teixeira)
+  assunto: z.string().max(80).optional(),
+  situacao: z.string().max(200).optional(),
+  quando: z.string().max(80).optional(),
+  documento: z.string().max(200).optional(),
   pagina: z.string().max(300).optional(),
   utm_source: z.string().max(100).optional(),
   utm_medium: z.string().max(100).optional(),
@@ -186,7 +191,7 @@ export async function POST(request: Request) {
   if (openDeal.data?.id) {
     dealId = openDeal.data.id as string;
   } else {
-    const tipo = normalizeText(d.tipo);
+    const tipo = normalizeText(d.tipo) || normalizeText(d.assunto);
     const created = await sb
       .from('deals')
       .insert({
@@ -199,7 +204,11 @@ export async function POST(request: Request) {
         tags: ['site', origem],
         custom_fields: {
           origem_site: origem,
-          tipo_piscina: tipo,
+          tipo_piscina: normalizeText(d.tipo),
+          assunto: normalizeText(d.assunto),
+          situacao: normalizeText(d.situacao),
+          quando: normalizeText(d.quando),
+          documento: normalizeText(d.documento),
           ralos: normalizeText(d.ralos),
           notificacao: normalizeText(d.notificacao),
           cidade: normalizeText(d.cidade),
@@ -225,7 +234,11 @@ export async function POST(request: Request) {
 
   // 3) Nota com o que a pessoa informou no site
   const linhas = [
-    origem === 'whatsapp' ? `Clicou no botão de WhatsApp do site${d.botao ? ` (${d.botao})` : ''}.` : 'Preencheu o formulário de orçamento do site.',
+    origem === 'whatsapp' ? `Clicou no botão de WhatsApp do site${d.botao ? ` (${d.botao})` : ''}.` : d.assunto ? 'Preencheu o formulário do site.' : 'Preencheu o formulário de orçamento do site.',
+    d.assunto ? `Assunto: ${d.assunto}` : null,
+    d.situacao ? `Situação: ${d.situacao}` : null,
+    d.quando ? `Quando aconteceu: ${d.quando}` : null,
+    d.documento ? d.documento : null,
     d.tipo ? `Tipo de piscina: ${d.tipo}` : null,
     d.ralos ? `Ralos no fundo: ${d.ralos}` : null,
     d.notificacao ? `Já recebeu notificação: ${d.notificacao}` : null,

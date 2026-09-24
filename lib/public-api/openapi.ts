@@ -1,4 +1,5 @@
-// OpenAPI 3.1.2 "source of truth" for Sucção0 CRM Public API (Integrations).
+import { CRM_NAME } from '@/lib/brand';
+// OpenAPI 3.1.2 "source of truth" for CRM Public API (Integrations).
 //
 // NOTE:
 // - Keep this file updated together with route implementations.
@@ -10,10 +11,10 @@ export function getPublicApiOpenApiDocument(): OpenApiDocument {
   return {
     openapi: '3.1.2',
     info: {
-      title: 'Sucção0 CRM Public API',
+      title: `${CRM_NAME} Public API`,
       version: 'v1',
       description:
-        'API pública do Sucção0 CRM para integrações (n8n/Make). Produto em primeiro lugar: copiar → colar → testar.',
+        `API pública do ${CRM_NAME} para integrações (n8n/Make). Produto em primeiro lugar: copiar → colar → testar.`,
     },
     servers: [{ url: '/api/public/v1' }],
     tags: [

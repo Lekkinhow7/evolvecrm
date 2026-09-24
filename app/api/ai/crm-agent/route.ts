@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 // Route Handler for AI CRM Agent - /api/ai/crm-agent
 // Substitui o streamText client-side do useCRMAgent (que expunha API keys no browser).
 
@@ -637,7 +638,7 @@ export async function POST(req: Request) {
     // 6. Stream response
     const result = streamText({
         model,
-        system: `Você é o assistente inteligente do Sucção0 CRM. Você tem acesso completo ao CRM e pode:
+        system: `Você é o assistente inteligente do ${CRM_NAME}. Você tem acesso completo ao CRM e pode:
 
 - Buscar e analisar deals, contatos e atividades
 - Criar novas atividades, deals e tarefas

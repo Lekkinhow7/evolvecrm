@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 export type PromptCatalogItem = {
   /** Key estável usado pelo código para buscar o prompt */
   key: string;
@@ -112,7 +113,7 @@ export const PROMPT_CATALOG: PromptCatalogItem[] = [
     title: 'Agente · System prompt base (CRM Pilot)',
     usedBy: ['lib/ai/crmAgent → BASE_INSTRUCTIONS', 'app/api/ai/chat'],
     defaultTemplate:
-      `Você é o Sucção0 CRM Pilot, um assistente de vendas inteligente. 🚀\n` +
+      `Você é o ${CRM_NAME} Pilot, um assistente de vendas inteligente. 🚀\n` +
       `\n` +
       `PERSONALIDADE:\n` +
       `- Seja proativo, amigável e analítico\n` +

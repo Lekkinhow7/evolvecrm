@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 import { ToolLoopAgent, stepCountIs } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { CRMCallOptionsSchema, type CRMCallOptions } from '@/types/ai';
@@ -176,7 +177,7 @@ function buildContextPrompt(options: CRMCallOptions): string {
 /**
  * Base instructions for the CRM Agent
  */
-const BASE_INSTRUCTIONS = `Você é o Sucção0 CRM Pilot, um assistente de vendas inteligente. 🚀
+const BASE_INSTRUCTIONS = `Você é o ${CRM_NAME} Pilot, um assistente de vendas inteligente. 🚀
 
 PERSONALIDADE:
 - Seja proativo, amigável e analítico

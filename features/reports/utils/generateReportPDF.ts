@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 import { PeriodFilter, PERIOD_LABELS } from '@/features/dashboard/hooks/useDashboardMetrics';
 import { Deal } from '@/types';
 
@@ -73,7 +74,7 @@ export const generateReportPDF = async (data: ReportData, period: PeriodFilter, 
     // HEADER
     // ============================================
 
-    // Logo placeholder (N for Sucção0 CRM)
+    // Logo placeholder (N for CRM)
     doc.setFillColor(...COLORS.blue);
     doc.roundedRect(margin, 12, 12, 12, 2, 2, 'F');
     doc.setFontSize(10);
@@ -319,7 +320,7 @@ export const generateReportPDF = async (data: ReportData, period: PeriodFilter, 
     // Footer text
     doc.setFontSize(7);
     doc.setTextColor(...COLORS.secondary);
-    doc.text('Sucção0 CRM', margin, pageHeight - 10);
+    doc.text(`${CRM_NAME}`, margin, pageHeight - 10);
     doc.text('Página 1', pageWidth / 2, pageHeight - 10, { align: 'center' });
     doc.text(new Date().toLocaleDateString('pt-BR'), pageWidth - margin, pageHeight - 10, { align: 'right' });
 

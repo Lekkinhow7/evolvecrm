@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -9,7 +10,7 @@ function html(specUrl: string) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Sucção0 CRM Public API — Swagger</title>
+    <title>${CRM_NAME} Public API — Swagger</title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
     <style>
       :root {

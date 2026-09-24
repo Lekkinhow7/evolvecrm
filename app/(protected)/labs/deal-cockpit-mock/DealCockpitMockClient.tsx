@@ -1,4 +1,5 @@
 'use client';
+import { CRM_NAME } from '@/lib/brand';
 
 import React from 'react';
 import {
@@ -991,7 +992,7 @@ export default function DealCockpitMockClient() {
                     <Bot className="h-4 w-4 text-cyan-300" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-100">Sucção0 CRM Pilot</div>
+                    <div className="text-sm font-semibold text-slate-100">{CRM_NAME} Pilot</div>
                     <div className="text-[11px] text-slate-500">Deal: {mock.deal.title}</div>
                   </div>
                 </div>

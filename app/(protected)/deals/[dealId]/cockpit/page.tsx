@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 import type { Metadata } from 'next';
 import DealCockpitFocusClient from '@/features/deals/cockpit/DealCockpitFocusClient';
 
@@ -7,7 +8,7 @@ import DealCockpitFocusClient from '@/features/deals/cockpit/DealCockpitFocusCli
  */
 export async function generateMetadata({ params }: { params: Promise<{ dealId: string }> }): Promise<Metadata> {
   const { dealId } = await params;
-  return { title: `Deal ${dealId} | Sucção0 CRM` };
+  return { title: `Deal ${dealId} | ${CRM_NAME}` };
 }
 
 export default async function DealCockpitPage({

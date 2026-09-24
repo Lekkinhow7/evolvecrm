@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { MessagingPage } from '@/features/messaging/MessagingPage';
@@ -10,7 +11,7 @@ interface ConversationPageProps {
 }
 
 export const metadata: Metadata = {
-  title: 'Conversa | Sucção0 CRM',
+  title: `Conversa | ${CRM_NAME}`,
   description: 'Visualizar conversa',
 };
 

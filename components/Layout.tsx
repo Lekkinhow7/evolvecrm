@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 /**
  * @fileoverview Layout Principal da Aplicação
  *
@@ -282,7 +283,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               S
             </div>
             <span className={`text-xl font-bold font-display tracking-tight text-slate-900 dark:text-white whitespace-nowrap overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-              Sucção0 CRM
+              {CRM_NAME}
             </span>
           </div>
 

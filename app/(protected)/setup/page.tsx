@@ -1,4 +1,5 @@
 'use client'
+import { CRM_NAME } from '@/lib/brand';
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -130,7 +131,7 @@ export default function SetupPage() {
       <div className="max-w-md w-full relative z-10 px-4">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white font-display tracking-tight mb-2">
-            Bem-vindo ao Sucção0 CRM
+            Bem-vindo ao {CRM_NAME}
           </h1>
           <p className="text-slate-500 dark:text-slate-400">Vamos preparar seu ambiente de trabalho.</p>
         </div>
@@ -296,7 +297,7 @@ export default function SetupPage() {
         </div>
 
         <p className="mt-8 text-center text-xs text-slate-400 dark:text-slate-500">
-          &copy; {new Date().getFullYear()} Sucção0 CRM. Todos os direitos reservados.
+          &copy; {new Date().getFullYear()} {CRM_NAME}. Todos os direitos reservados.
         </p>
       </div>
     </div>

@@ -1,4 +1,5 @@
 'use client';
+import { CRM_NAME } from '@/lib/brand';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -2253,7 +2254,7 @@ export default function DealCockpitClient({ dealId }: { dealId?: string }) {
                     <Sparkles className="h-4 w-4 text-cyan-300" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-100">Sucção0 CRM Pilot</div>
+                    <div className="text-sm font-semibold text-slate-100">{CRM_NAME} Pilot</div>
                     <div className="text-[11px] text-slate-500">Deal: {humanizeTestLabel(deal.title) || deal.title}</div>
                   </div>
                 </div>

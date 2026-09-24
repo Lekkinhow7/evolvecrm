@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
@@ -7,7 +8,7 @@ import { InstallBanner } from '@/components/pwa/InstallBanner'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
 
 export const metadata: Metadata = {
-  title: 'Sucção0 CRM',
+  title: `${CRM_NAME}`,
   description: 'CRM Inteligente para Gestão de Vendas',
 }
 

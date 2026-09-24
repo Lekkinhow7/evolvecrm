@@ -1,9 +1,10 @@
+import { CRM_NAME } from '@/lib/brand';
 import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Sucção0 CRM',
-    short_name: 'Sucção0 CRM',
+    name: `${CRM_NAME}`,
+    short_name: `${CRM_NAME}`,
     description: 'CRM Inteligente para Gestão de Vendas',
     start_url: '/boards',
     display: 'standalone',

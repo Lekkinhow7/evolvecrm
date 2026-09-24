@@ -1,4 +1,5 @@
 'use client';
+import { CRM_NAME } from '@/lib/brand';
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
@@ -559,7 +560,7 @@ export function UIChat({
                     <Sparkles className="w-5 h-5 text-primary-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-white">Sucção0 CRM Pilot</h2>
+                    <h2 className="font-semibold text-white">{CRM_NAME} Pilot</h2>
                     <p className="text-xs text-slate-400 truncate">
                         {headerSubtitle}
                     </p>

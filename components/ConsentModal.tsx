@@ -1,3 +1,4 @@
+import { CRM_NAME } from '@/lib/brand';
 /**
  * T016: ConsentModal Component
  * Modal para coleta de consentimentos LGPD
@@ -21,7 +22,7 @@ interface ConsentModalProps {
 const CONSENT_LABELS: Record<ConsentType, { title: string; description: string }> = {
   terms: {
     title: 'Termos de Uso',
-    description: 'Li e aceito os Termos de Uso do Sucção0 CRM.',
+    description: `Li e aceito os Termos de Uso do ${CRM_NAME}.`,
   },
   privacy: {
     title: 'Política de Privacidade',
@@ -120,7 +121,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({
             Consentimentos Necessários
           </h2>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Para continuar usando o Sucção0 CRM, precisamos do seu consentimento.
+            Para continuar usando o {CRM_NAME}, precisamos do seu consentimento.
           </p>
         </div>
 
