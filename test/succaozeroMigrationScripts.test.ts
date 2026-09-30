@@ -114,3 +114,16 @@ describe('phase 1 foundation migration', () => {
     expect(migration).toContain('create trigger succaozero_opportunity_pools_relationship_scope')
   })
 })
+
+describe('migration ledger', () => {
+  const applyScript = readFileSync(
+    path.resolve(process.cwd(), 'scripts/succaozero/apply-migration.mjs'),
+    'utf8',
+  ).toLowerCase()
+
+  it('protege a tabela técnica de versões com RLS e sem acesso dos clientes', () => {
+    expect(applyScript).toContain('alter table public.succaozero_schema_migrations enable row level security')
+    expect(applyScript).toContain('alter table public.succaozero_schema_migrations force row level security')
+    expect(applyScript).toContain('revoke all on public.succaozero_schema_migrations from anon, authenticated')
+  })
+})

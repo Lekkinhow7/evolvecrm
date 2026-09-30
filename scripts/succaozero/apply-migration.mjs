@@ -79,6 +79,8 @@ async function main() {
         metadata jsonb not null default '{}'::jsonb,
         applied_at timestamptz not null default now()
       );
+      alter table public.succaozero_schema_migrations enable row level security;
+      alter table public.succaozero_schema_migrations force row level security;
       revoke all on public.succaozero_schema_migrations from anon, authenticated;
     `)
 
