@@ -16,7 +16,8 @@
     "smoke:integrations": "node scripts/smoke-integrations.mjs",
     "release:prepare": "node scripts/release.mjs prepare",
     "release:draft": "node scripts/release.mjs draft",
-    "release:tag": "node scripts/release.mjs tag"
+    "release:tag": "node scripts/release.mjs tag",
+    "verify:succaozero-schema": "node scripts/succaozero/verify-schema.mjs --environment=staging"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.55",
