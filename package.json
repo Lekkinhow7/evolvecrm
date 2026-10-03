@@ -17,7 +17,9 @@
     "release:prepare": "node scripts/release.mjs prepare",
     "release:draft": "node scripts/release.mjs draft",
     "release:tag": "node scripts/release.mjs tag",
-    "verify:succaozero-schema": "node scripts/succaozero/verify-schema.mjs --environment=staging"
+    "verify:succaozero-schema": "node scripts/succaozero/verify-schema.mjs --environment=staging",
+    "migrate:succaozero:dry-run": "node scripts/succaozero/migrate-agent-data.mjs",
+    "reconcile:succaozero": "node scripts/succaozero/reconcile-data.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.55",
