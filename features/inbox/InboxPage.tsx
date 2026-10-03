@@ -8,6 +8,7 @@ import { InboxOverviewView } from './components/InboxOverviewView';
 import { InboxListView } from './components/InboxListView';
 import { InboxFocusView } from './components/InboxFocusView';
 import { DebugFillButton } from '@/components/debug/DebugFillButton';
+import { SuccaozeroNextActionsPanel } from './components/SuccaozeroNextActionsPanel';
 
 /**
  * Componente React `InboxPage`.
@@ -80,6 +81,8 @@ export const InboxPage: React.FC = () => {
 
         <ViewModeToggle mode={viewMode} onChange={setViewMode} />
       </div>
+
+      <SuccaozeroNextActionsPanel />
 
       {/* Views */}
       {viewMode === 'overview' ? (
