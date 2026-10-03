@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { ConfirmDialog as ConfirmModal } from '@/components/ui/confirm-dialog';
+import { SalesRoutingSection } from '@/features/settings/components/SalesRoutingSection';
 import { Loader2, UserPlus, Crown, Briefcase, KeyRound, Mail, Check, X, Sparkles, Clock, RefreshCw, Trash2, Link, Copy, CheckCircle2 } from 'lucide-react';
 
 interface Profile {
@@ -295,6 +296,8 @@ export const UsersPage: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            <SalesRoutingSection />
 
             {/* User Grid */}
             <div className="grid gap-3">
