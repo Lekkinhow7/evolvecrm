@@ -1,25 +1,15 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { createStaticAdminClient } from '@/lib/supabase/server';
-import { isE164 } from '@/lib/phone';
-import { normalizePhone, normalizeText } from '@/lib/public-api/sanitize';
+import { createHash } from 'node:crypto'
 
-/**
- * Captura de leads do site (formulário e botões de WhatsApp).
- *
- * `POST /api/site-lead` sem chave: o navegador do visitante chama direto, então
- * nenhum segredo pode ir para o site. A rota só cria/atualiza contato, abre um
- * negócio na primeira etapa do funil configurado e registra uma nota.
- *
- * Aceita `application/json` e `text/plain` (navigator.sendBeacon manda text/plain,
- * que não dispara preflight de CORS).
- *
- * Variáveis opcionais:
- * - SITE_LEAD_BOARD_KEY: chave do funil (padrão `succaozero`)
- * - SITE_LEAD_ALLOWED_ORIGINS: origens aceitas, separadas por vírgula (vazio = qualquer origem)
- */
+import { NextResponse } from 'next/server'
+import { z } from 'zod'
 
-export const runtime = 'nodejs';
+import { isE164 } from '@/lib/phone'
+import { normalizePhone, normalizeText } from '@/lib/public-api/sanitize'
+import { getSuccaozeroConfig } from '@/lib/succaozero/config'
+import { ingestSuccaozeroLead } from '@/lib/succaozero/intake'
+import { createStaticAdminClient } from '@/lib/supabase/server'
+
+export const runtime = 'nodejs'
 
 const LeadSchema = z.object({
   name: z.string().max(120).optional(),
@@ -34,223 +24,182 @@ const LeadSchema = z.object({
   utm_source: z.string().max(100).optional(),
   utm_medium: z.string().max(100).optional(),
   utm_campaign: z.string().max(150).optional(),
-  // campo armadilha: humano não preenche
   website: z.string().max(200).optional(),
-});
+})
+
+type SiteLead = z.infer<typeof LeadSchema>
 
 function allowedOrigin(request: Request): string {
-  const origin = request.headers.get('origin') || '';
+  const origin = request.headers.get('origin') || ''
   const list = (process.env.SITE_LEAD_ALLOWED_ORIGINS || '')
     .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (list.length === 0) return origin || '*';
-  return list.includes(origin) ? origin : '';
+    .map((value) => value.trim())
+    .filter(Boolean)
+
+  if (list.length === 0) return origin || '*'
+  return list.includes(origin) ? origin : ''
 }
 
 function corsHeaders(request: Request): Record<string, string> {
-  const origin = allowedOrigin(request);
+  const origin = allowedOrigin(request)
   const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Idempotency-Key',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
-  };
-  if (origin) headers['Access-Control-Allow-Origin'] = origin;
-  return headers;
+  }
+  if (origin) headers['Access-Control-Allow-Origin'] = origin
+  return headers
 }
 
 function reply(request: Request, status: number, body: unknown) {
-  return NextResponse.json(body, { status, headers: corsHeaders(request) });
+  return NextResponse.json(body, { status, headers: corsHeaders(request) })
+}
+
+function createSiteEventId(data: SiteLead): string {
+  const window = Math.floor(Date.now() / (5 * 60 * 1000))
+  const fingerprint = JSON.stringify({
+    window,
+    name: normalizeText(data.name),
+    phone: normalizePhone(data.phone),
+    origem: data.origem || 'formulario',
+    pagina: normalizeText(data.pagina),
+    utm_source: normalizeText(data.utm_source),
+    utm_medium: normalizeText(data.utm_medium),
+    utm_campaign: normalizeText(data.utm_campaign),
+  })
+  return `site:${createHash('sha256').update(fingerprint).digest('hex')}`
+}
+
+function metadata(data: SiteLead) {
+  return {
+    origem: data.origem || 'formulario',
+    botao: normalizeText(data.botao),
+    tipo_piscina: normalizeText(data.tipo),
+    ralos: normalizeText(data.ralos),
+    notificacao: normalizeText(data.notificacao),
+    cidade: normalizeText(data.cidade),
+    pagina: normalizeText(data.pagina),
+    utm_source: normalizeText(data.utm_source),
+    utm_medium: normalizeText(data.utm_medium),
+    utm_campaign: normalizeText(data.utm_campaign),
+  }
 }
 
 export async function OPTIONS(request: Request) {
-  return new NextResponse(null, { status: 204, headers: corsHeaders(request) });
+  return new NextResponse(null, { status: 204, headers: corsHeaders(request) })
 }
 
 export async function POST(request: Request) {
-  if (!allowedOrigin(request)) return reply(request, 403, { ok: false, error: 'Origem não permitida' });
-
-  const raw = await request.text().catch(() => '');
-  let body: unknown = null;
-  try {
-    body = JSON.parse(raw);
-  } catch {
-    return reply(request, 400, { ok: false, error: 'JSON inválido' });
+  if (!allowedOrigin(request)) {
+    return reply(request, 403, { ok: false, error: 'Origem não permitida' })
   }
 
-  const parsed = LeadSchema.safeParse(body);
-  if (!parsed.success) return reply(request, 422, { ok: false, error: 'Dados inválidos' });
-  const d = parsed.data;
+  const raw = await request.text().catch(() => '')
+  let body: unknown
+  try {
+    body = JSON.parse(raw)
+  } catch {
+    return reply(request, 400, { ok: false, error: 'JSON inválido' })
+  }
 
-  // Robô preencheu o campo escondido: responde ok e não grava nada.
-  if (d.website && d.website.trim()) return reply(request, 200, { ok: true });
+  const parsed = LeadSchema.safeParse(body)
+  if (!parsed.success) {
+    return reply(request, 422, { ok: false, error: 'Dados inválidos' })
+  }
+  const data = parsed.data
 
-  const phone = normalizePhone(d.phone);
-  if (!phone || !isE164(phone)) return reply(request, 422, { ok: false, error: 'Telefone inválido' });
+  if (data.website?.trim()) return reply(request, 200, { ok: true })
 
-  const name = normalizeText(d.name) || 'Lead do site';
-  const origem = d.origem || 'formulario';
-  const sb = createStaticAdminClient();
+  let config
+  try {
+    config = getSuccaozeroConfig()
+  } catch (error) {
+    console.error('[site-lead] configuração canônica inválida', error)
+    return reply(request, 503, {
+      ok: false,
+      error: 'Entrada temporariamente indisponível',
+    })
+  }
+  if (!config.enabled) {
+    return reply(request, 503, {
+      ok: false,
+      error: 'Entrada temporariamente indisponível',
+    })
+  }
 
-  const boardKey = process.env.SITE_LEAD_BOARD_KEY || 'succaozero';
-  const board = await sb
+  const phone = normalizePhone(data.phone)
+  if (!phone || !isE164(phone)) {
+    return reply(request, 422, { ok: false, error: 'Telefone inválido' })
+  }
+
+  const requestedEventId = request.headers.get('idempotency-key')?.trim()
+  if (requestedEventId && requestedEventId.length > 200) {
+    return reply(request, 422, { ok: false, error: 'Chave de idempotência inválida' })
+  }
+
+  const supabase = createStaticAdminClient()
+  const board = await supabase
     .from('boards')
     .select('id, organization_id')
-    .eq('key', boardKey)
+    .eq('key', config.boardKey)
+    .eq('organization_id', config.organizationId)
     .is('deleted_at', null)
     .limit(1)
-    .maybeSingle();
-  if (board.error || !board.data) {
-    console.error('[site-lead] funil não encontrado', boardKey, board.error);
-    return reply(request, 500, { ok: false, error: 'Funil não configurado' });
-  }
-  const organizationId = board.data.organization_id as string;
-  const boardId = board.data.id as string;
+    .maybeSingle()
 
-  const stage = await sb
+  if (board.error || !board.data) {
+    console.error('[site-lead] funil Sucção Zero não encontrado', board.error)
+    return reply(request, 500, { ok: false, error: 'Funil não configurado' })
+  }
+
+  const boardId = board.data.id as string
+  const stage = await supabase
     .from('board_stages')
     .select('id')
     .eq('board_id', boardId)
+    .eq('organization_id', config.organizationId)
     .order('order', { ascending: true })
     .limit(1)
-    .maybeSingle();
+    .maybeSingle()
+
   if (stage.error || !stage.data) {
-    console.error('[site-lead] etapa inicial não encontrada', stage.error);
-    return reply(request, 500, { ok: false, error: 'Funil sem etapas' });
+    console.error('[site-lead] etapa inicial Sucção Zero não encontrada', stage.error)
+    return reply(request, 500, { ok: false, error: 'Funil sem etapas' })
   }
 
-  const now = new Date().toISOString();
-
-  // 1) Contato: um por telefone
-  const existingContact = await sb
-    .from('contacts')
-    .select('id, name')
-    .eq('organization_id', organizationId)
-    .eq('phone', phone)
-    .is('deleted_at', null)
-    .limit(1)
-    .maybeSingle();
-  if (existingContact.error) {
-    console.error('[site-lead] erro ao buscar contato', existingContact.error);
-    return reply(request, 500, { ok: false, error: 'Erro ao gravar' });
-  }
-
-  let contactId: string;
-  if (existingContact.data?.id) {
-    contactId = existingContact.data.id as string;
-    const patch: Record<string, unknown> = { updated_at: now, last_interaction: now };
-    if (normalizeText(d.name) && existingContact.data.name === 'Lead do site') patch.name = name;
-    await sb.from('contacts').update(patch).eq('id', contactId);
-  } else {
-    const created = await sb
-      .from('contacts')
-      .insert({
-        organization_id: organizationId,
-        name,
+  try {
+    const result = await ingestSuccaozeroLead(
+      {
+        source: 'site',
+        externalEventId: requestedEventId || createSiteEventId(data),
+        name: normalizeText(data.name) || 'Lead do site',
         phone,
-        source: 'Site',
-        status: 'ACTIVE',
-        stage: 'LEAD',
-        last_interaction: now,
-        created_at: now,
-        updated_at: now,
-      })
-      .select('id')
-      .single();
-    if (created.error) {
-      console.error('[site-lead] erro ao criar contato', created.error);
-      return reply(request, 500, { ok: false, error: 'Erro ao gravar' });
-    }
-    contactId = created.data.id as string;
+        boardId,
+        stageId: stage.data.id as string,
+        metadata: metadata(data),
+      },
+      { organizationId: config.organizationId, supabase },
+    )
+
+    const needsAttention =
+      result.status === 'pending_identity' || result.status === 'queued_without_owner'
+    const status = needsAttention ? 202 : result.duplicate ? 200 : 201
+
+    return reply(request, status, {
+      ok: true,
+      event_id: result.eventId,
+      contact_id: result.crmContactId,
+      deal_id: result.crmDealId,
+      deal_created: !result.duplicate && Boolean(result.crmDealId),
+      succaozero_contact_id: result.contactId,
+      opportunity_id: result.opportunityId,
+      owner_profile_id: result.ownerProfileId,
+      duplicate: result.duplicate,
+      status: result.status,
+    })
+  } catch (error) {
+    console.error('[site-lead] falha na entrada transacional', error)
+    return reply(request, 500, { ok: false, error: 'Erro ao gravar' })
   }
-
-  // 2) Negócio: só abre outro se o contato não tiver um em aberto neste funil
-  const openDeal = await sb
-    .from('deals')
-    .select('id')
-    .eq('board_id', boardId)
-    .eq('contact_id', contactId)
-    .eq('is_won', false)
-    .eq('is_lost', false)
-    .is('deleted_at', null)
-    .limit(1)
-    .maybeSingle();
-  if (openDeal.error) {
-    console.error('[site-lead] erro ao buscar negócio', openDeal.error);
-    return reply(request, 500, { ok: false, error: 'Erro ao gravar' });
-  }
-
-  let dealId: string;
-  let dealCreated = false;
-  if (openDeal.data?.id) {
-    dealId = openDeal.data.id as string;
-  } else {
-    const tipo = normalizeText(d.tipo);
-    const created = await sb
-      .from('deals')
-      .insert({
-        organization_id: organizationId,
-        title: tipo ? `${name} (${tipo})` : name,
-        value: 0,
-        board_id: boardId,
-        stage_id: stage.data.id,
-        contact_id: contactId,
-        tags: ['site', origem],
-        custom_fields: {
-          origem_site: origem,
-          tipo_piscina: tipo,
-          ralos: normalizeText(d.ralos),
-          notificacao: normalizeText(d.notificacao),
-          cidade: normalizeText(d.cidade),
-          utm_source: normalizeText(d.utm_source),
-          utm_medium: normalizeText(d.utm_medium),
-          utm_campaign: normalizeText(d.utm_campaign),
-        },
-        is_won: false,
-        is_lost: false,
-        last_stage_change_date: now,
-        created_at: now,
-        updated_at: now,
-      })
-      .select('id')
-      .single();
-    if (created.error) {
-      console.error('[site-lead] erro ao criar negócio', created.error);
-      return reply(request, 500, { ok: false, error: 'Erro ao gravar' });
-    }
-    dealId = created.data.id as string;
-    dealCreated = true;
-  }
-
-  // 3) Nota com o que a pessoa informou no site
-  const linhas = [
-    origem === 'whatsapp' ? `Clicou no botão de WhatsApp do site${d.botao ? ` (${d.botao})` : ''}.` : 'Preencheu o formulário de orçamento do site.',
-    d.tipo ? `Tipo de piscina: ${d.tipo}` : null,
-    d.ralos ? `Ralos no fundo: ${d.ralos}` : null,
-    d.notificacao ? `Já recebeu notificação: ${d.notificacao}` : null,
-    d.cidade ? `Local: ${d.cidade}` : null,
-    d.utm_source || d.utm_campaign ? `Campanha: ${[d.utm_source, d.utm_medium, d.utm_campaign].filter(Boolean).join(' / ')}` : null,
-    d.pagina ? `Página: ${d.pagina}` : null,
-  ].filter(Boolean);
-
-  const note = await sb.from('activities').insert({
-    organization_id: organizationId,
-    title: origem === 'whatsapp' ? 'Lead do site: WhatsApp' : 'Lead do site: formulário',
-    description: linhas.join('\n'),
-    type: 'NOTE',
-    date: now,
-    completed: true,
-    deal_id: dealId,
-    contact_id: contactId,
-    created_at: now,
-  });
-  if (note.error) console.error('[site-lead] erro ao criar nota', note.error);
-
-  return reply(request, dealCreated ? 201 : 200, {
-    ok: true,
-    contact_id: contactId,
-    deal_id: dealId,
-    deal_created: dealCreated,
-  });
 }
