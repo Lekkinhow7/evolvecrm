@@ -27,7 +27,40 @@ const DealCreateSchema = z.object({
   contact_id: z.string().uuid().optional(),
   contact: ContactInlineSchema.optional(),
   client_company_id: z.string().uuid().optional(),
+  owner_id: z.string().uuid().optional(),
 }).strict();
+
+async function scopedRecordExists(opts: {
+  table: 'boards' | 'board_stages' | 'contacts' | 'client_companies' | 'profiles';
+  id: string;
+  organizationId: string;
+  boardId?: string;
+}) {
+  const sb = createStaticAdminClient();
+  let query = sb
+    .from(opts.table)
+    .select('id')
+    .eq('organization_id', opts.organizationId)
+    .eq('id', opts.id);
+
+  if (opts.table === 'boards' || opts.table === 'contacts' || opts.table === 'client_companies') {
+    query = query.is('deleted_at', null);
+  }
+  if (opts.table === 'board_stages' && opts.boardId) {
+    query = query.eq('board_id', opts.boardId);
+  }
+
+  const { data, error } = await query.maybeSingle();
+  if (error) throw error;
+  return Boolean(data?.id);
+}
+
+function relationshipScopeError() {
+  return NextResponse.json(
+    { error: 'A related record is outside the authenticated organization', code: 'RELATIONSHIP_SCOPE_ERROR' },
+    { status: 422 },
+  );
+}
 
 export async function GET(request: Request) {
   const auth = await authPublicApi(request);
@@ -184,12 +217,63 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Provide board_id or board_key', code: 'VALIDATION_ERROR' }, { status: 422 });
   }
 
+  try {
+    if (!await scopedRecordExists({ table: 'boards', id: boardId, organizationId: auth.organizationId })) {
+      return relationshipScopeError();
+    }
+  } catch (error: any) {
+    console.error('[API] Failed to validate board relationship:', error);
+    return NextResponse.json({ error: 'Internal server error', code: 'DB_ERROR' }, { status: 500 });
+  }
+
   let stageId = sanitizeUUID(parsed.data.stage_id);
   if (!stageId) {
     stageId = await resolveFirstStageId({ organizationId: auth.organizationId, boardId });
   }
   if (!stageId) {
     return NextResponse.json({ error: 'No stages found for board', code: 'VALIDATION_ERROR' }, { status: 422 });
+  }
+
+  try {
+    if (!await scopedRecordExists({
+      table: 'board_stages',
+      id: stageId,
+      organizationId: auth.organizationId,
+      boardId,
+    })) {
+      return relationshipScopeError();
+    }
+  } catch (error: any) {
+    console.error('[API] Failed to validate stage relationship:', error);
+    return NextResponse.json({ error: 'Internal server error', code: 'DB_ERROR' }, { status: 500 });
+  }
+
+  const companyIds = [
+    sanitizeUUID(parsed.data.client_company_id),
+    sanitizeUUID(parsed.data.contact?.client_company_id),
+  ].filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index);
+  const ownerId = sanitizeUUID(parsed.data.owner_id);
+
+  try {
+    for (const companyId of companyIds) {
+      if (!await scopedRecordExists({
+        table: 'client_companies',
+        id: companyId,
+        organizationId: auth.organizationId,
+      })) {
+        return relationshipScopeError();
+      }
+    }
+    if (ownerId && !await scopedRecordExists({
+      table: 'profiles',
+      id: ownerId,
+      organizationId: auth.organizationId,
+    })) {
+      return relationshipScopeError();
+    }
+  } catch (error: any) {
+    console.error('[API] Failed to validate company/owner relationship:', error);
+    return NextResponse.json({ error: 'Internal server error', code: 'DB_ERROR' }, { status: 500 });
   }
 
   let contactId = sanitizeUUID(parsed.data.contact_id);
@@ -204,6 +288,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Provide contact_id or contact', code: 'VALIDATION_ERROR' }, { status: 422 });
   }
 
+  try {
+    if (!await scopedRecordExists({ table: 'contacts', id: contactId, organizationId: auth.organizationId })) {
+      return relationshipScopeError();
+    }
+  } catch (error: any) {
+    console.error('[API] Failed to validate contact relationship:', error);
+    return NextResponse.json({ error: 'Internal server error', code: 'DB_ERROR' }, { status: 500 });
+  }
+
   const now = new Date().toISOString();
   const value = Number(parsed.data.value ?? 0);
   const insertPayload: any = {
@@ -214,6 +307,7 @@ export async function POST(request: Request) {
     stage_id: stageId,
     contact_id: contactId,
     client_company_id: sanitizeUUID(parsed.data.client_company_id) || null,
+    owner_id: ownerId || null,
     is_won: false,
     is_lost: false,
     created_at: now,

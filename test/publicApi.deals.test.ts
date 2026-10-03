@@ -104,10 +104,20 @@ const contactQueryBuilder = {
   })),
 }
 
+const relationshipQueryBuilder = {
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  is: vi.fn().mockReturnThis(),
+  maybeSingle: vi.fn(async () => ({ data: { id: BOARD_ID }, error: null })),
+}
+
 const supabaseMock = {
   from: vi.fn((table: string) => {
     if (table === 'deals') return dealQueryBuilder
     if (table === 'contacts') return contactQueryBuilder
+    if (['boards', 'board_stages', 'client_companies', 'profiles'].includes(table)) {
+      return relationshipQueryBuilder
+    }
     throw new Error(`Unexpected table: ${table}`)
   }),
 }
@@ -307,8 +317,8 @@ describe('POST /api/public/v1/deals', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(authPublicApi).mockResolvedValue(AUTH_OK)
-    // Reset contact lookup para "não encontrado" (cria novo)
-    contactQueryBuilder.maybeSingle.mockResolvedValue({ data: null, error: null })
+    contactQueryBuilder.maybeSingle.mockResolvedValue({ data: { id: CONTACT_ID }, error: null })
+    relationshipQueryBuilder.maybeSingle.mockResolvedValue({ data: { id: BOARD_ID }, error: null })
   })
 
   function makePostRequest(body: unknown): Request {
@@ -511,5 +521,23 @@ describe('POST /api/public/v1/deals', () => {
         is_lost: false,
       })
     )
+  })
+
+  it('rejeita IDs válidos que pertencem a outra organização', async () => {
+    relationshipQueryBuilder.maybeSingle
+      .mockResolvedValueOnce({ data: { id: BOARD_ID }, error: null })
+      .mockResolvedValueOnce({ data: null, error: null })
+
+    const res = await POST(makePostRequest({
+      title: 'Deal com etapa externa',
+      board_id: BOARD_ID,
+      stage_id: STAGE_ID,
+      contact_id: CONTACT_ID,
+    }))
+    const body = await res.json()
+
+    expect(res.status).toBe(422)
+    expect(body.code).toBe('RELATIONSHIP_SCOPE_ERROR')
+    expect(dealQueryBuilder.insert).not.toHaveBeenCalled()
   })
 })

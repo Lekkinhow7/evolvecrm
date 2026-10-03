@@ -50,6 +50,9 @@ export async function moveStageByDealId(opts: {
   dealId: string;
   target: { to_stage_id?: string | null; to_stage_label?: string | null };
   mark?: 'won' | 'lost' | null;
+  eventId?: string | null;
+  eventOccurredAt?: string | null;
+  actorId?: string | null;
 }) {
   const sb = createStaticAdminClient();
   const dealId = sanitizeUUID(opts.dealId);
@@ -94,6 +97,90 @@ export async function moveStageByDealId(opts: {
     };
   }
 
+  let canonicalOpportunityId: string | null = null;
+  if (opts.eventId) {
+    const canonical = await sb
+      .from('succaozero_opportunities')
+      .select('id')
+      .eq('organization_id', opts.organizationId)
+      .eq('crm_deal_id', dealId)
+      .maybeSingle();
+    if (canonical.error) {
+      return { ok: false as const, status: 500, body: { error: canonical.error.message, code: 'DB_ERROR' } };
+    }
+    if (!canonical.data?.id) {
+      return {
+        ok: false as const,
+        status: 422,
+        body: { error: 'Deal is outside the canonical Sucção Zero model', code: 'RELATIONSHIP_SCOPE_ERROR' },
+      };
+    }
+    canonicalOpportunityId = canonical.data.id as string;
+
+    const existingEvent = await sb
+      .from('succaozero_commercial_events')
+      .select('id')
+      .eq('organization_id', opts.organizationId)
+      .eq('event_key', opts.eventId)
+      .maybeSingle();
+    if (existingEvent.error) {
+      return { ok: false as const, status: 500, body: { error: existingEvent.error.message, code: 'DB_ERROR' } };
+    }
+    if (existingEvent.data) {
+      return { ok: true as const, status: 200, body: { data: deal, action: 'duplicate' } };
+    }
+
+    if (opts.eventOccurredAt) {
+      const latestEvent = await sb
+        .from('succaozero_commercial_events')
+        .select('occurred_at')
+        .eq('organization_id', opts.organizationId)
+        .eq('opportunity_id', canonicalOpportunityId)
+        .in('event_type', ['stage.changed', 'stage.unchanged'])
+        .order('occurred_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestEvent.error) {
+        return { ok: false as const, status: 500, body: { error: latestEvent.error.message, code: 'DB_ERROR' } };
+      }
+      if (
+        latestEvent.data?.occurred_at &&
+        new Date(latestEvent.data.occurred_at as string).getTime() > new Date(opts.eventOccurredAt).getTime()
+      ) {
+        return {
+          ok: false as const,
+          status: 409,
+          body: { error: 'Event is older than current state', code: 'OUT_OF_ORDER' },
+        };
+      }
+    }
+  }
+
+  const auditStageChange = async (eventType: 'stage.changed' | 'stage.unchanged') => {
+    if (!opts.eventId || !canonicalOpportunityId) return null;
+    const audit = await sb.from('succaozero_commercial_events').insert({
+      organization_id: opts.organizationId,
+      opportunity_id: canonicalOpportunityId,
+      event_key: opts.eventId,
+      event_type: eventType,
+      actor_type: 'integration',
+      actor_id: opts.actorId || null,
+      previous_value: { stage_id: (deal as any).stage_id },
+      new_value: { stage_id: stageId },
+      evidence: {},
+      occurred_at: opts.eventOccurredAt || new Date().toISOString(),
+    });
+    return audit.error;
+  };
+
+  if ((deal as any).stage_id === stageId && !opts.mark) {
+    const auditError = await auditStageChange('stage.unchanged');
+    if (auditError) {
+      return { ok: false as const, status: 500, body: { error: auditError.message, code: 'DB_ERROR' } };
+    }
+    return { ok: true as const, status: 200, body: { data: deal, action: 'unchanged' } };
+  }
+
   const now = new Date().toISOString();
   const updates: any = { stage_id: stageId, last_stage_change_date: now, updated_at: now };
   if (opts.mark === 'won' || (wonStageId && stageId === wonStageId)) {
@@ -116,6 +203,28 @@ export async function moveStageByDealId(opts: {
     .maybeSingle();
   if (error) return { ok: false as const, status: 500, body: { error: error.message, code: 'DB_ERROR' } };
   if (!data) return { ok: false as const, status: 404, body: { error: 'Deal not found', code: 'NOT_FOUND' } };
+
+  if (canonicalOpportunityId) {
+    const canonicalStatus = updates.is_won ? 'won' : updates.is_lost ? 'lost' : 'open';
+    const canonicalUpdate = await sb
+      .from('succaozero_opportunities')
+      .update({
+        stage_id: stageId,
+        status: canonicalStatus,
+        closed_at: canonicalStatus === 'open' ? null : now,
+        updated_at: now,
+      })
+      .eq('organization_id', opts.organizationId)
+      .eq('id', canonicalOpportunityId);
+    if (canonicalUpdate.error) {
+      return { ok: false as const, status: 500, body: { error: canonicalUpdate.error.message, code: 'DB_ERROR' } };
+    }
+  }
+
+  const auditError = await auditStageChange('stage.changed');
+  if (auditError) {
+    return { ok: false as const, status: 500, body: { error: auditError.message, code: 'DB_ERROR' } };
+  }
   return { ok: true as const, status: 200, body: { data, action: 'moved' } };
 }
 
@@ -165,7 +274,7 @@ export async function moveStageByIdentity(opts: {
 
   const { data: deals, error: dealsError } = await sb
     .from('deals')
-    .select('id')
+    .select('id,stage_id')
     .eq('organization_id', opts.organizationId)
     .is('deleted_at', null)
     .eq('board_id', boardId)
@@ -195,6 +304,14 @@ export async function moveStageByIdentity(opts: {
         error: stageId === '__AMBIGUOUS__' ? 'Ambiguous stage label for this board' : 'Stage not found for this board',
         code: 'VALIDATION_ERROR',
       },
+    };
+  }
+
+  if ((deals[0] as any).stage_id === stageId && !opts.mark) {
+    return {
+      ok: true as const,
+      status: 200,
+      body: { data: deals[0], action: 'unchanged' },
     };
   }
 
