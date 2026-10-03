@@ -7,7 +7,7 @@
     "precheck": "npm run lint && npm run typecheck && npm run test:run && npm run build",
     "precheck:fast": "npm run lint && npm run typecheck && npm run test:run",
     "stories": "vitest run test/stories --reporter=dot",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
     "typecheck": "tsc --noEmit",
@@ -19,7 +19,8 @@
     "release:tag": "node scripts/release.mjs tag",
     "verify:succaozero-schema": "node scripts/succaozero/verify-schema.mjs --environment=staging",
     "migrate:succaozero:dry-run": "node scripts/succaozero/migrate-agent-data.mjs",
-    "reconcile:succaozero": "node scripts/succaozero/reconcile-data.mjs"
+    "reconcile:succaozero": "node scripts/succaozero/reconcile-data.mjs",
+    "release-gate:succaozero": "node scripts/succaozero/release-gate.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.55",
