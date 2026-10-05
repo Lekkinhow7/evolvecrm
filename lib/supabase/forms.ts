@@ -235,6 +235,34 @@ export const formsService = {
     };
   },
 
+  /** Tudo que já foi respondido num formulário, com de onde veio. */
+  async submissionsByForm(formId: string): Promise<{ data: FormSubmission[] | null; error: Error | null }> {
+    if (!supabase) return { data: null, error: new Error('Supabase não configurado') };
+    const { data, error } = await supabase
+      .from('form_submissions')
+      .select('*, deals:deal_id (title), activities:activity_id (title, date)')
+      .eq('form_id', formId)
+      .order('submitted_at', { ascending: false })
+      .limit(200);
+    if (error) return { data: null, error: error as unknown as Error };
+    const rows = (data || []) as Array<Record<string, any>>;
+    return {
+      data: rows.map((r) => ({
+        id: r.id,
+        formId: r.form_id,
+        formName: r.activities?.title || r.deals?.title,
+        formLinkId: r.form_link_id || undefined,
+        dealId: r.deal_id || undefined,
+        activityId: r.activity_id || undefined,
+        answers: r.answers || {},
+        files: r.files || [],
+        authorLabel: r.author_label || undefined,
+        submittedAt: r.submitted_at,
+      })),
+      error: null,
+    };
+  },
+
   async linksFor(
     scope: { dealId?: string; activityId?: string },
   ): Promise<{ data: FormLink[] | null; error: Error | null }> {
