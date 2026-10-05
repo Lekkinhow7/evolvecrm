@@ -70,6 +70,24 @@ export interface DbActivity {
   created_at: string;
   /** ID do dono/responsável. */
   owner_id: string | null;
+  /** Fim previsto da visita técnica. */
+  ends_at?: string | null;
+  /** Estado da visita técnica. */
+  visit_status?: string | null;
+  /** Técnico com login no CRM. */
+  technician_profile_id?: string | null;
+  /** Técnico sem login. */
+  technician_label?: string | null;
+  /** Endereço da visita. */
+  address?: string | null;
+  /** Ponto de referência da visita. */
+  address_note?: string | null;
+  /** Chegada do técnico. */
+  arrival_at?: string | null;
+  /** Preenchimento do laudo. */
+  report_filled_at?: string | null;
+  /** Id do agendamento de origem no banco do agente. */
+  external_ref?: string | null;
 }
 
 // Interface auxiliar para o retorno do Supabase com o join
@@ -95,6 +113,15 @@ const transformActivity = (db: DbActivityWithDeal): Activity => ({
   contactId: db.contact_id || undefined,
   clientCompanyId: (db as any).client_company_id || undefined,
   participantContactIds: (db as any).participant_contact_ids || [],
+  endsAt: db.ends_at || undefined,
+  visitStatus: (db.visit_status as Activity['visitStatus']) || undefined,
+  technicianProfileId: db.technician_profile_id || undefined,
+  technicianLabel: db.technician_label || undefined,
+  address: db.address || undefined,
+  addressNote: db.address_note || undefined,
+  arrivalAt: db.arrival_at || undefined,
+  reportFilledAt: db.report_filled_at || undefined,
+  externalRef: db.external_ref || undefined,
   dealTitle: db.deals?.title || '',
   user: { name: 'Você', avatar: '' }, // Will be enriched later
 });
@@ -117,6 +144,15 @@ const transformActivityToDb = (activity: Partial<Activity>): Partial<DbActivity>
   if (activity.contactId !== undefined) db.contact_id = sanitizeUUID(activity.contactId);
   if (activity.clientCompanyId !== undefined) (db as any).client_company_id = sanitizeUUID(activity.clientCompanyId);
   if (activity.participantContactIds !== undefined) (db as any).participant_contact_ids = activity.participantContactIds || [];
+  if (activity.endsAt !== undefined) db.ends_at = activity.endsAt || null;
+  if (activity.visitStatus !== undefined) db.visit_status = activity.visitStatus || null;
+  if (activity.technicianProfileId !== undefined) db.technician_profile_id = sanitizeUUID(activity.technicianProfileId);
+  if (activity.technicianLabel !== undefined) db.technician_label = activity.technicianLabel || null;
+  if (activity.address !== undefined) db.address = activity.address || null;
+  if (activity.addressNote !== undefined) db.address_note = activity.addressNote || null;
+  if (activity.arrivalAt !== undefined) db.arrival_at = activity.arrivalAt || null;
+  if (activity.reportFilledAt !== undefined) db.report_filled_at = activity.reportFilledAt || null;
+  if (activity.externalRef !== undefined) db.external_ref = activity.externalRef || null;
 
   return db;
 };
@@ -173,6 +209,17 @@ export const activitiesService = {
         contact_id: sanitizeUUID(activity.contactId),
         client_company_id: sanitizeUUID(activity.clientCompanyId),
         participant_contact_ids: activity.participantContactIds || [],
+        ...transformActivityToDb({
+          endsAt: activity.endsAt,
+          visitStatus: activity.visitStatus,
+          technicianProfileId: activity.technicianProfileId,
+          technicianLabel: activity.technicianLabel,
+          address: activity.address,
+          addressNote: activity.addressNote,
+          arrivalAt: activity.arrivalAt,
+          reportFilledAt: activity.reportFilledAt,
+          externalRef: activity.externalRef,
+        }),
         ...(organizationId ? { organization_id: organizationId } : {}),
       };
 

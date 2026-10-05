@@ -1,7 +1,11 @@
 'use client'
 
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useActivitiesController } from './hooks/useActivitiesController';
+import { VisitModal } from './components/VisitModal';
+import { queryKeys } from '@/lib/query/queryKeys';
+import type { Activity } from '@/types';
 import { ActivitiesHeader } from './components/ActivitiesHeader';
 import { ActivitiesFilters } from './components/ActivitiesFilters';
 import { ActivitiesList } from './components/ActivitiesList';
@@ -43,6 +47,12 @@ export const ActivitiesPage: React.FC = () => {
 
     const { addToast } = useToast();
     const [selectedActivities, setSelectedActivities] = useState<Set<string>>(new Set());
+    // Visita técnica abre em detalhe próprio: tem situação, técnico e formulário.
+    const [visitaAberta, setVisitaAberta] = useState<Activity | null>(null);
+    const queryClient = useQueryClient();
+    const refetchActivities = () => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.activities.all });
+    };
 
     const handleSelectActivity = (id: string, selected: boolean) => {
         setSelectedActivities(prev => {
@@ -110,6 +120,18 @@ export const ActivitiesPage: React.FC = () => {
                     deals={deals}
                     currentDate={currentDate}
                     setCurrentDate={setCurrentDate}
+                    onSelectVisit={setVisitaAberta}
+                />
+            )}
+
+            {visitaAberta && (
+                <VisitModal
+                    visita={visitaAberta}
+                    onClose={() => setVisitaAberta(null)}
+                    onSalvo={() => {
+                        setVisitaAberta(null);
+                        refetchActivities();
+                    }}
                 />
             )}
 
