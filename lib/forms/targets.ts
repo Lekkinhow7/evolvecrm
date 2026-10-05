@@ -54,7 +54,43 @@ export function parseCurrency(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** "14:30" vira o horário daquele dia da visita. Data completa passa direto. */
+const FUSO = 'America/Sao_Paulo';
+
+/** Partes do calendário de um instante, vistas no fuso de São Paulo. */
+function partesEmSaoPaulo(data: Date) {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: FUSO,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const p = Object.fromEntries(
+    fmt.formatToParts(data).filter((x) => x.type !== 'literal').map((x) => [x.type, x.value]),
+  ) as Record<string, string>;
+  return {
+    ano: Number(p.year),
+    mes: Number(p.month),
+    dia: Number(p.day),
+    hora: Number(p.hour === '24' ? '0' : p.hour),
+    minuto: Number(p.minute),
+    segundo: Number(p.second),
+  };
+}
+
+/** Quanto São Paulo está à frente do UTC naquele instante, em milissegundos. */
+function deslocamentoSaoPaulo(data: Date): number {
+  const p = partesEmSaoPaulo(data);
+  return Date.UTC(p.ano, p.mes - 1, p.dia, p.hora, p.minuto, p.segundo) - data.getTime();
+}
+
+/**
+ * "14:30" vira as 14:30 do dia da visita no horário de Brasília, não no fuso do
+ * servidor, que na hospedagem é UTC. Data completa passa direto.
+ */
 export function parseMoment(value: unknown, referencia?: string | null): string | null {
   if (typeof value !== 'string' || !value.trim()) return null;
   const texto = value.trim();
@@ -62,8 +98,13 @@ export function parseMoment(value: unknown, referencia?: string | null): string 
   if (hora) {
     const base = referencia ? new Date(referencia) : new Date();
     if (Number.isNaN(base.getTime())) return null;
-    base.setHours(Number(hora[1]), Number(hora[2]), 0, 0);
-    return base.toISOString();
+    const dia = partesEmSaoPaulo(base);
+    const comoSeFosseUtc = Date.UTC(dia.ano, dia.mes - 1, dia.dia, Number(hora[1]), Number(hora[2]));
+    // Primeiro palpite com o deslocamento do instante de referência, depois uma
+    // conferência, para o caso de o deslocamento mudar dentro do próprio dia.
+    let instante = comoSeFosseUtc - deslocamentoSaoPaulo(base);
+    instante = comoSeFosseUtc - deslocamentoSaoPaulo(new Date(instante));
+    return new Date(instante).toISOString();
   }
   const data = new Date(texto);
   return Number.isNaN(data.getTime()) ? null : data.toISOString();
