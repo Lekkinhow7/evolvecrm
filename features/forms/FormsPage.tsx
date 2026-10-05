@@ -14,6 +14,8 @@ import { ClipboardList, Plus, Trash2, ChevronUp, ChevronDown, Power } from 'luci
 import { useToast } from '@/context/ToastContext';
 import { useDeals } from '@/lib/query/hooks/useDealsQuery';
 import { formsService } from '@/lib/supabase/forms';
+import { LinkGerado } from './components/LinkGerado';
+import { RespostasRecebidas } from './components/RespostasRecebidas';
 import {
   FORM_AUDIENCE_LABEL,
   FORM_FIELD_TYPE_LABEL,
@@ -254,6 +256,7 @@ export function FormsPage() {
             {salvando && <p className="text-slate-400 text-xs">Salvando...</p>}
 
             <EnvioPorNegocio form={form} />
+            <RespostasRecebidas form={form} />
           </section>
         ) : (
           <section className="flex items-center justify-center rounded-2xl border border-slate-200 border-dashed p-12 text-slate-400 dark:border-white/10">
@@ -325,12 +328,11 @@ function EnvioPorNegocio({ form }: { form: CrmForm }) {
         </button>
       </div>
       {link && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-100 p-3 dark:bg-white/5">
-          <code className="min-w-0 flex-1 truncate text-slate-700 text-xs dark:text-slate-200">{link}</code>
-          <button onClick={() => navigator.clipboard?.writeText(link)} className="text-slate-500 text-xs hover:text-slate-900">
-            copiar
-          </button>
-        </div>
+        <LinkGerado
+          url={link}
+          nomeFormulario={form.name}
+          contexto={abertos.find((d) => d.id === dealId)?.title}
+        />
       )}
     </div>
   );
