@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClipboardList, Plus, Trash2, ChevronUp, ChevronDown, Power } from 'lucide-react';
 
 import { useToast } from '@/context/ToastContext';
+import { useDeals } from '@/lib/query/hooks/useDealsQuery';
 import { formsService } from '@/lib/supabase/forms';
 import {
   FORM_AUDIENCE_LABEL,
@@ -251,6 +252,8 @@ export function FormsPage() {
             </div>
 
             {salvando && <p className="text-slate-400 text-xs">Salvando...</p>}
+
+            <EnvioPorNegocio form={form} />
           </section>
         ) : (
           <section className="flex items-center justify-center rounded-2xl border border-slate-200 border-dashed p-12 text-slate-400 dark:border-white/10">
@@ -258,6 +261,77 @@ export function FormsPage() {
           </section>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Gera o link deste formulário para um negócio.
+ *
+ * A visita tem o botão dentro do próprio detalhe dela, no calendário. Aqui é o
+ * caminho para orçamento e venda, que são do negócio e não dependem de visita.
+ */
+function EnvioPorNegocio({ form }: { form: CrmForm }) {
+  const { showToast } = useToast();
+  const { data: deals } = useDeals();
+  const [dealId, setDealId] = useState('');
+  const [link, setLink] = useState<string | null>(null);
+  const [gerando, setGerando] = useState(false);
+
+  const abertos = useMemo(
+    () => (deals || []).filter((d) => !d.isWon && !d.isLost).slice(0, 200),
+    [deals],
+  );
+
+  const gerar = async () => {
+    if (!dealId) return;
+    setGerando(true);
+    const resposta = await fetch('/api/forms/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ formId: form.id, dealId, expiresInHours: 168 }),
+    });
+    const dados = await resposta.json().catch(() => ({}));
+    setGerando(false);
+    if (!resposta.ok) {
+      showToast(dados?.error || 'Não foi possível gerar o link', 'error');
+      return;
+    }
+    setLink(dados.url);
+    await navigator.clipboard?.writeText(dados.url).catch(() => undefined);
+    showToast('Link gerado e copiado', 'success');
+  };
+
+  return (
+    <div className="border-slate-200 border-t pt-5 dark:border-white/10">
+      <h2 className="font-semibold text-slate-900 dark:text-white">Enviar este formulário</h2>
+      <p className="mb-3 text-slate-500 text-xs">
+        Escolha o negócio e gere o link. Ele abre no celular sem login, só desse registro, e vale sete dias.
+        Para visita técnica, o botão fica dentro da visita, no calendário.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <select className={`${input} max-w-sm`} value={dealId} onChange={(e) => setDealId(e.target.value)}>
+          <option value="">Escolha o negócio</option>
+          {abertos.map((d) => (
+            <option key={d.id} value={d.id}>{d.title}</option>
+          ))}
+        </select>
+        <button
+          onClick={gerar}
+          disabled={!dealId || gerando}
+          className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-slate-900"
+        >
+          {gerando ? 'Gerando...' : 'Gerar link'}
+        </button>
+      </div>
+      {link && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-100 p-3 dark:bg-white/5">
+          <code className="min-w-0 flex-1 truncate text-slate-700 text-xs dark:text-slate-200">{link}</code>
+          <button onClick={() => navigator.clipboard?.writeText(link)} className="text-slate-500 text-xs hover:text-slate-900">
+            copiar
+          </button>
+        </div>
+      )}
     </div>
   );
 }

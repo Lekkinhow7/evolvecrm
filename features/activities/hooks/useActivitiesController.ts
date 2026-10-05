@@ -214,6 +214,9 @@ export const useActivitiesController = () => {
             dealTitle: selectedDeal?.title || '',
             completed: false,
             user: { name: 'Eu', avatar: '' },
+            // Visita nasce agendada; técnico, endereço e formulário entram no
+            // detalhe da visita, aberto pelo calendário.
+            ...(formData.type === 'VISITA' ? { visitStatus: 'agendada' as const } : {}),
           },
         },
         {
