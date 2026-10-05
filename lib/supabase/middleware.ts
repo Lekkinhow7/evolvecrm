@@ -74,10 +74,12 @@ export async function updateSession(request: NextRequest) {
     const pathname = request.nextUrl.pathname
     const isSetupRoute = pathname === '/setup' || pathname.startsWith('/setup/')
     const isInstallRoute = pathname === '/install' || pathname.startsWith('/install/')
+    // Formulário aberto por link assinado: o técnico preenche sem ter login.
+    const isFormLinkRoute = pathname.startsWith('/f/')
 
     try {
         const { data: initData, error: initError } = await supabase.rpc('is_instance_initialized')
-        if (!initError && initData === false && !isSetupRoute && !isInstallRoute) {
+        if (!initError && initData === false && !isSetupRoute && !isInstallRoute && !isFormLinkRoute) {
             const url = request.nextUrl.clone()
             url.pathname = '/setup'
             return NextResponse.redirect(url)
@@ -88,7 +90,7 @@ export async function updateSession(request: NextRequest) {
 
     // Protected routes - redirect to login if not authenticated
     const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/auth')
-    const isPublicRoute = pathname === '/' || pathname.startsWith('/join') || isSetupRoute || isInstallRoute
+    const isPublicRoute = pathname === '/' || pathname.startsWith('/join') || isSetupRoute || isInstallRoute || isFormLinkRoute
 
     if (!user && !isAuthRoute && !isPublicRoute) {
         const url = request.nextUrl.clone()

@@ -270,7 +270,7 @@ export interface Activity {
   /** IDs dos contatos participantes (opcional). */
   participantContactIds?: string[];
   dealTitle: string;
-  type: 'CALL' | 'MEETING' | 'EMAIL' | 'TASK' | 'NOTE' | 'STATUS_CHANGE';
+  type: 'CALL' | 'MEETING' | 'EMAIL' | 'TASK' | 'NOTE' | 'STATUS_CHANGE' | 'VISITA';
   title: string;
   description?: string;
   date: string;
@@ -279,7 +279,43 @@ export interface Activity {
     avatar: string;
   };
   completed: boolean;
+  /** Fim previsto. Só a visita técnica usa; tarefa comercial não tem duração. */
+  endsAt?: string;
+  /** Estado da visita técnica. Fica vazio em atividade que não é visita. */
+  visitStatus?: VisitStatus;
+  /** Técnico que tem login no CRM. */
+  technicianProfileId?: string;
+  /** Técnico sem login, escrito à mão. */
+  technicianLabel?: string;
+  /** Endereço da visita. */
+  address?: string;
+  /** Ponto de referência, portaria, quem recebe. */
+  addressNote?: string;
+  /** Hora em que o técnico chegou, informada no laudo. */
+  arrivalAt?: string;
+  /** Quando o laudo foi preenchido. */
+  reportFilledAt?: string;
+  /** Id do agendamento no banco do agente, para a sincronização não duplicar. */
+  externalRef?: string;
 }
+
+/** Estados possíveis de uma visita técnica. */
+export type VisitStatus =
+  | 'agendada'
+  | 'confirmada'
+  | 'em_atendimento'
+  | 'concluida'
+  | 'cancelada'
+  | 'nao_compareceu';
+
+export const VISIT_STATUS_LABEL: Record<VisitStatus, string> = {
+  agendada: 'Agendada',
+  confirmada: 'Confirmada',
+  em_atendimento: 'Em atendimento',
+  concluida: 'Realizada',
+  cancelada: 'Cancelada',
+  nao_compareceu: 'Não compareceu',
+};
 
 export interface DashboardStats {
   totalDeals: number;

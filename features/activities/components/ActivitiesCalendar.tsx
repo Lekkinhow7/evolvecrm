@@ -1,12 +1,14 @@
 import React, { useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Phone, Users, Mail, CheckSquare } from 'lucide-react';
-import { Activity, Deal } from '@/types';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Phone, Users, Mail, CheckSquare, Wrench } from 'lucide-react';
+import { Activity, Deal, VISIT_STATUS_LABEL } from '@/types';
 
 interface ActivitiesCalendarProps {
     activities: Activity[];
     deals: Deal[];
     currentDate: Date;
     setCurrentDate: (date: Date) => void;
+    /** Abre a visita técnica ao clicar. Tarefa comercial não usa. */
+    onSelectVisit?: (activity: Activity) => void;
 }
 
 const HOURS = Array.from({ length: 10 }, (_, i) => i + 9); // 9:00 to 18:00
@@ -32,7 +34,8 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
     activities,
     deals,
     currentDate,
-    setCurrentDate
+    setCurrentDate,
+    onSelectVisit
 }) => {
     const getWeekStart = (date: Date) => {
         const d = new Date(date);
@@ -70,6 +73,7 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
             case 'MEETING': return <Users size={14} className="text-white" />;
             case 'EMAIL': return <Mail size={14} className="text-white" />;
             case 'TASK': return <CheckSquare size={14} className="text-white" />;
+            case 'VISITA': return <Wrench size={14} className="text-white" />;
         }
     };
 
@@ -79,6 +83,8 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
             case 'MEETING': return 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 border-purple-400';
             case 'EMAIL': return 'bg-gradient-to-br from-green-500 to-green-600 shadow-lg shadow-green-500/50 hover:shadow-green-500/70 border-green-400';
             case 'TASK': return 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/50 hover:shadow-orange-500/70 border-orange-400';
+            // Visita técnica tem cor própria para não se confundir com tarefa comercial.
+            case 'VISITA': return 'bg-gradient-to-br from-teal-500 to-teal-700 shadow-lg shadow-teal-500/50 hover:shadow-teal-500/70 border-teal-400';
         }
     };
 
@@ -200,6 +206,7 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
                                                         overflow-hidden
                                                     `}
                                                     title={`${activity.title} - ${activity.dealId ? (dealTitleById.get(activity.dealId) ?? '') : ''}`}
+                                                    onClick={() => activity.type === 'VISITA' && onSelectVisit?.(activity)}
                                                 >
                                                     {/* Shine effect on hover */}
                                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
@@ -216,6 +223,12 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
                                                         <div className={`font-bold text-white leading-tight ${activity.completed ? 'line-through' : ''}`}>
                                                             {activity.title}
                                                         </div>
+                                                        {activity.type === 'VISITA' && (
+                                                            <div className="mt-1 text-[11px] text-white/90">
+                                                                {activity.technicianLabel || 'técnico não definido'}
+                                                                {activity.visitStatus ? ` · ${VISIT_STATUS_LABEL[activity.visitStatus]}` : ''}
+                                                            </div>
+                                                        )}
 
                                                         {/* Hover Expanded Info */}
                                                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-2 pt-2 border-t border-white/20">

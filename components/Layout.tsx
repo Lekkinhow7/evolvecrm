@@ -43,6 +43,8 @@ import {
   User,
   Bug,
   CheckSquare,
+  ClipboardList,
+  TrendingUp,
   PanelLeftClose,
   PanelLeftOpen
 } from 'lucide-react';
@@ -305,7 +307,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             { to: '/dashboard', icon: LayoutDashboard, label: 'Visão Geral', prefetch: 'dashboard' as const, badge: undefined },
             { to: '/boards', icon: KanbanSquare, label: 'Boards', prefetch: 'boards' as const, badge: undefined },
             { to: '/contacts', icon: Users, label: 'Contatos', prefetch: 'contacts' as const, badge: undefined },
-            { to: '/activities', icon: CheckSquare, label: 'Atividades', prefetch: 'activities' as const, badge: undefined },
+            { to: '/activities', icon: CheckSquare, label: 'Agenda', prefetch: 'activities' as const, badge: undefined },
+            { to: '/comercial', icon: TrendingUp, label: 'Comercial', prefetch: undefined, badge: undefined },
+            { to: '/formularios', icon: ClipboardList, label: 'Formulários', prefetch: undefined, badge: undefined },
             { to: '/reports', icon: BarChart3, label: 'Relatórios', prefetch: 'reports' as const, badge: undefined },
             { to: '/settings', icon: Settings, label: 'Configurações', prefetch: 'settings' as const, badge: undefined },
           ].map((item) => {
