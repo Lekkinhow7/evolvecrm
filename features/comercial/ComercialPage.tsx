@@ -86,6 +86,14 @@ export function ComercialPage() {
 
   const faixa = useMemo(() => intervalo(periodo), [periodo]);
 
+  // Sem funil escolhido, o painel mostraria as etapas de todos os funis
+  // juntos, inclusive os de modelo. Começa pelo funil padrão da empresa.
+  useEffect(() => {
+    if (boardId || !boards?.length) return;
+    const padrao = boards.find((b) => b.isDefault) || boards[0];
+    if (padrao) setBoardId(padrao.id);
+  }, [boardId, boards]);
+
   const carregar = useCallback(async () => {
     if (!supabase) return;
     setCarregando(true);
