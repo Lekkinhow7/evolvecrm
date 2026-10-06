@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 
 import { NextResponse } from 'next/server';
 
+import { devolverAoBancoDoAgente } from '@/lib/forms/retorno';
 import { buildColumnUpdates } from '@/lib/forms/targets';
 import { createStaticAdminClient } from '@/lib/supabase/server';
 
@@ -202,7 +203,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ token: str
 
   const form = await supabase
     .from('forms')
-    .select('id, target, thanks_message, active, form_fields(key, label, type, required, target_column)')
+    .select('id, key, target, thanks_message, active, form_fields(key, label, type, required, target_column)')
     .eq('id', link.form_id)
     .maybeSingle();
   if (form.error || !form.data || !form.data.active) {
@@ -305,6 +306,14 @@ export async function POST(request: Request, ctx: { params: Promise<{ token: str
   }
 
   await supabase.from('form_links').update({ used_at: new Date().toISOString() }).eq('id', link.id);
+
+  // A IA e os avisos do n8n leem a visita no banco do agente: ele precisa saber.
+  await devolverAoBancoDoAgente(supabase, {
+    formKey: String(form.data.key || ''),
+    activityId: link.activity_id,
+    dealId: link.deal_id,
+    respostas,
+  });
 
   return NextResponse.json({
     ok: true,
