@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { isAllowedOrigin } from '@/lib/security/sameOrigin';
 import { createClient } from '@/lib/supabase/server';
+import { agendarLembretesDaVisita } from '@/lib/visits/agendar';
 
 export const runtime = 'nodejs';
 
@@ -30,109 +31,6 @@ const BodySchema = z
   .refine((v) => Boolean(v.dealId || v.activityId), {
     message: 'Informe o negócio ou a visita',
   });
-
-/** Deixa o número no formato do WhatsApp: com 55 e com o nono dígito. */
-function normalizarTelefone(bruto: string): string | null {
-  const digitos = bruto.replace(/\D/g, '');
-  if (!digitos) return null;
-  const comPais = digitos.startsWith('55') ? digitos : `55${digitos}`;
-  const corpo = comPais.slice(2);
-  if (corpo.length === 10 && /^[6-9]/.test(corpo.slice(2, 3))) {
-    return `55${corpo.slice(0, 2)}9${corpo.slice(2)}`;
-  }
-  if (corpo.length < 10 || corpo.length > 11) return null;
-  return comPais;
-}
-
-/**
- * Põe na fila os dois avisos da visita: duas horas antes e quinze minutos
- * antes. Reagendar a visita regrava os horários, e o horário que já passou não
- * entra na fila para não disparar aviso atrasado.
- */
-async function agendarLembretesDaVisita(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  dados: {
-    organizationId: string;
-    activityId: string;
-    dealId?: string;
-    formLinkId: string;
-    formName: string;
-    telefone: string;
-    url: string;
-  },
-): Promise<number> {
-  const telefone = normalizarTelefone(dados.telefone);
-  if (!telefone) return 0;
-
-  const consulta = await supabase
-    .from('activities')
-    .select('title, date, address, address_note, technician_label')
-    .eq('id', dados.activityId)
-    .maybeSingle();
-  const visita = consulta.data;
-  if (consulta.error || !visita?.date) return 0;
-
-  const quando = new Date(visita.date as string);
-  const hora = quando.toLocaleString('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-  const endereco = [visita.address, visita.address_note].filter(Boolean).join(' - ');
-  const nome = (visita.technician_label as string) || '';
-
-  const corpo = (abertura: string) =>
-    [
-      abertura,
-      '',
-      `Visita: ${visita.title}`,
-      `Quando: ${hora}`,
-      endereco ? `Endereço: ${endereco}` : null,
-      '',
-      `Formulário para preencher no fim da visita:`,
-      dados.url,
-    ]
-      .filter((l) => l !== null)
-      .join('\n');
-
-  const agora = Date.now();
-  const planos = [
-    {
-      kind: 'visita_2h',
-      scheduled_for: new Date(quando.getTime() - 2 * 60 * 60 * 1000),
-      body: corpo(`${nome ? `Oi, ${nome}! ` : 'Oi! '}Sua visita é daqui a duas horas.`),
-    },
-    {
-      kind: 'visita_15min',
-      scheduled_for: new Date(quando.getTime() - 15 * 60 * 1000),
-      body: corpo(`${nome ? `${nome}, ` : ''}faltam 15 minutos para a visita. Deixe este link aberto para preencher o laudo assim que terminar.`),
-    },
-  ].filter((p) => p.scheduled_for.getTime() > agora);
-
-  if (!planos.length) return 0;
-
-  const { error } = await supabase.from('outbound_messages').upsert(
-    planos.map((p) => ({
-      organization_id: dados.organizationId,
-      activity_id: dados.activityId,
-      deal_id: dados.dealId ?? null,
-      form_link_id: dados.formLinkId,
-      kind: p.kind,
-      to_phone: telefone,
-      body: p.body,
-      scheduled_for: p.scheduled_for.toISOString(),
-      sent_at: null,
-      cancelled_at: null,
-      attempts: 0,
-      last_error: null,
-    })),
-    { onConflict: 'activity_id,kind' },
-  );
-
-  return error ? 0 : planos.length;
-}
 
 export async function POST(request: Request) {
   if (!isAllowedOrigin(request)) {
@@ -202,15 +100,25 @@ export async function POST(request: Request) {
 
   let lembretes = 0;
   if (body.agendarLembretes && body.activityId && body.recipientPhone) {
-    lembretes = await agendarLembretesDaVisita(supabase, {
-      organizationId: profile.data.organization_id,
-      activityId: body.activityId,
-      dealId: body.dealId,
-      formLinkId: link.data.id,
-      formName: form.data.name,
-      telefone: body.recipientPhone,
-      url,
-    });
+    const visita = await supabase
+      .from('activities')
+      .select('title, date, address, address_note, technician_label')
+      .eq('id', body.activityId)
+      .maybeSingle();
+    if (visita.data?.date) {
+      lembretes = await agendarLembretesDaVisita(supabase, {
+        organizationId: profile.data.organization_id,
+        activityId: body.activityId,
+        dealId: body.dealId,
+        formLinkId: link.data.id,
+        telefone: body.recipientPhone,
+        url,
+        titulo: String(visita.data.title),
+        quando: new Date(String(visita.data.date)),
+        endereco: [visita.data.address, visita.data.address_note].filter(Boolean).join(' - ') || null,
+        nomeTecnico: (visita.data.technician_label as string) || null,
+      });
+    }
   }
 
   return NextResponse.json({
