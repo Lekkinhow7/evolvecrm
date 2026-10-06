@@ -65,6 +65,8 @@ export interface EntradaAgendamento {
   programarLembretes?: boolean;
   /** Gera um link novo a cada pedido: o aviso de 2h e o de 15min levam links próprios. */
   novoLink?: boolean;
+  /** Chave do formulário cujo link volta: laudo_visita (padrão), orcamento ou venda. */
+  formulario?: string;
 }
 
 export interface ResultadoAgendamento {
@@ -328,21 +330,38 @@ export async function agendarVisita(
   };
 
   if (activityId) {
-    await supabase.from('activities').update(campos).eq('id', activityId);
+    // Visita que já existe: só acerta data, horário e quem vai. Situação,
+    // laudo e conclusão são do CRM e não voltam para "agendada" quando um
+    // aviso depois da visita pede o link de novo.
+    const ajuste: Record<string, unknown> = {
+      title: titulo,
+      date: inicio.toISOString(),
+      ends_at: fim.toISOString(),
+    };
+    if (negocio.dealId) ajuste.deal_id = negocio.dealId;
+    if (negocio.contactId) ajuste.contact_id = negocio.contactId;
+    if (entrada.address) ajuste.address = entrada.address;
+    if (entrada.addressNote) ajuste.address_note = entrada.addressNote;
+    if (tecnico) {
+      ajuste.technician_ref = tecnico.ref;
+      ajuste.technician_label = tecnico.name;
+      ajuste.technician_phone = tecnico.phone;
+    }
+    await supabase.from('activities').update(ajuste).eq('id', activityId);
   } else {
     const criada = await supabase.from('activities').insert(campos).select('id').single();
     if (criada.error || !criada.data) throw new Error('Não foi possível criar a visita');
     activityId = criada.data.id as string;
+    // Só a visita nova move o cartão: depois dela o funil anda pelos formulários.
+    if (negocio.dealId) await marcarVisitaAgendada(supabase, negocio.dealId, negocio.boardId);
   }
 
-  if (negocio.dealId) await marcarVisitaAgendada(supabase, negocio.dealId, negocio.boardId);
-
-  // Link do laudo: um por visita, refeito só se ainda não existir.
+  // Link do formulário pedido (o laudo, se nada for dito).
   const formulario = await supabase
     .from('forms')
     .select('id')
     .eq('organization_id', entrada.organizationId)
-    .eq('key', 'laudo_visita')
+    .eq('key', entrada.formulario || 'laudo_visita')
     .eq('active', true)
     .maybeSingle();
 

@@ -294,11 +294,16 @@ export async function POST(request: Request, ctx: { params: Promise<{ token: str
     dataVisita,
   );
 
-  if (link.activity_id) {
+  // Só o formulário da visita (laudo) fecha a visita. Orçamento e venda podem
+  // chegar por um link que também aponta para a visita, e não podem marcar
+  // laudo preenchido.
+  if (link.activity_id && form.data.target === 'activity') {
     const patch: Record<string, unknown> = { ...updates.activity, report_filled_at: new Date().toISOString() };
     if (!patch.visit_status) patch.visit_status = 'concluida';
     patch.completed = true;
     await supabase.from('activities').update(patch).eq('id', link.activity_id);
+  } else if (link.activity_id && Object.keys(updates.activity).length) {
+    await supabase.from('activities').update(updates.activity).eq('id', link.activity_id);
   }
   if (link.deal_id && Object.keys(updates.deal).length) {
     await supabase.from('deals').update(updates.deal).eq('id', link.deal_id);
