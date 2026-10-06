@@ -37,6 +37,8 @@ const BodySchema = z
     programar_lembretes: z.boolean().optional(),
     /** Verdadeiro para receber um link novo a cada pedido. */
     novo_link: z.boolean().optional(),
+    /** Qual formulário o link abre. Sem isso, o do laudo. */
+    formulario: z.enum(['laudo_visita', 'orcamento', 'venda']).optional(),
     /**
      * Marca que o n8n vai mandar este aviso agora. Só a primeira chamada de cada
      * tipo por visita recebe aviso_ja_enviado=false: as seguintes recebem true,
@@ -88,6 +90,7 @@ export async function POST(request: Request) {
       externalRef: body.external_ref,
       programarLembretes: body.programar_lembretes,
       novoLink: body.novo_link,
+      formulario: body.formulario,
       appUrl,
     });
 
