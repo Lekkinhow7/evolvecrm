@@ -33,6 +33,10 @@ const BodySchema = z
     tecnico_ref: z.string().trim().max(120).optional(),
     title: z.string().trim().max(160).optional(),
     external_ref: z.string().trim().max(200).optional(),
+    /** Falso quando quem manda o aviso ao técnico é o n8n. */
+    programar_lembretes: z.boolean().optional(),
+    /** Verdadeiro para receber um link novo a cada pedido. */
+    novo_link: z.boolean().optional(),
   })
   .refine((v) => Boolean(v.phone || v.deal_id), {
     message: 'Informe o telefone do cliente ou o negócio',
@@ -75,6 +79,8 @@ export async function POST(request: Request) {
           : null,
       title: body.title,
       externalRef: body.external_ref,
+      programarLembretes: body.programar_lembretes,
+      novoLink: body.novo_link,
       appUrl,
     });
 
