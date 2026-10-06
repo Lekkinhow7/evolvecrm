@@ -368,7 +368,8 @@ export async function agendarVisita(
   let formUrl: string | null = null;
   let lembretes = 0;
 
-  if (formulario.data?.id && tecnico) {
+  // O link sai mesmo sem técnico: no orçamento quem recebe é o vendedor.
+  if (formulario.data?.id) {
     const jaTem = await supabase
       .from('form_links')
       .select('id')
@@ -391,8 +392,8 @@ export async function agendarVisita(
           activity_id: activityId,
           deal_id: negocio.dealId,
           token_hash: createHash('sha256').update(token).digest('hex'),
-          recipient_label: tecnico.name,
-          recipient_phone: tecnico.phone,
+          recipient_label: tecnico?.name ?? null,
+          recipient_phone: tecnico?.phone ?? null,
           expires_at: new Date(fim.getTime() + VALIDADE_LINK_HORAS * 3600_000).toISOString(),
         })
         .select('id')
@@ -402,17 +403,17 @@ export async function agendarVisita(
 
     if (linkId && token) {
       formUrl = `${entrada.appUrl.replace(/\/+$/, '')}/f/${token}`;
-      lembretes = entrada.programarLembretes === false ? 0 : await agendarLembretesDaVisita(supabase, {
+      lembretes = entrada.programarLembretes === false || !tecnico ? 0 : await agendarLembretesDaVisita(supabase, {
         organizationId: entrada.organizationId,
         activityId,
         dealId: negocio.dealId,
         formLinkId: linkId,
-        telefone: tecnico.phone,
+        telefone: tecnico!.phone,
         url: formUrl,
         titulo,
         quando: inicio,
         endereco: [entrada.address, entrada.addressNote].filter(Boolean).join(' - ') || null,
-        nomeTecnico: tecnico.name,
+        nomeTecnico: tecnico!.name,
       });
     } else if (linkId) {
       // Link já existia: só reacerta os horários dos avisos, mantendo a mensagem.
