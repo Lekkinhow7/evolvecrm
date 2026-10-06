@@ -2,9 +2,11 @@
  * @fileoverview Agendamento de visita vindo do atendimento.
  *
  * É esta porta que a IA chama quando o cliente marca a visita na conversa. A
- * partir daqui o CRM faz o resto sozinho: cria a visita no calendário, escolhe
- * o técnico da equipe, gera o link do laudo e programa os dois avisos no
- * WhatsApp dele.
+ * partir daqui o CRM faz o resto sozinho: cria a visita no calendário, gera o
+ * link do laudo e programa os dois avisos no WhatsApp do técnico.
+ *
+ * Quem é o técnico vem no próprio pedido: a equipe e os horários livres estão
+ * no banco do agente, e é a IA que escolhe lá. O CRM só registra.
  */
 
 import { NextResponse } from 'next/server';
@@ -26,7 +28,9 @@ const BodySchema = z
     duration_minutes: z.number().int().min(15).max(480).optional(),
     address: z.string().trim().max(300).optional(),
     address_note: z.string().trim().max(300).optional(),
-    technician_id: z.string().uuid().optional(),
+    tecnico_nome: z.string().trim().min(1).max(120).optional(),
+    tecnico_whatsapp: z.string().trim().min(8).max(30).optional(),
+    tecnico_ref: z.string().trim().max(120).optional(),
     title: z.string().trim().max(160).optional(),
     external_ref: z.string().trim().max(200).optional(),
   })
@@ -65,7 +69,10 @@ export async function POST(request: Request) {
       durationMinutes: body.duration_minutes,
       address: body.address,
       addressNote: body.address_note,
-      technicianId: body.technician_id,
+      technician:
+        body.tecnico_nome && body.tecnico_whatsapp
+          ? { name: body.tecnico_nome, phone: body.tecnico_whatsapp, ref: body.tecnico_ref ?? null }
+          : null,
       title: body.title,
       externalRef: body.external_ref,
       appUrl,
@@ -78,12 +85,12 @@ export async function POST(request: Request) {
         negocio_id: resultado.dealId,
         contato_id: resultado.contactId,
         tecnico: resultado.technician
-          ? { id: resultado.technician.id, nome: resultado.technician.name, whatsapp: resultado.technician.phone }
+          ? { nome: resultado.technician.name, whatsapp: resultado.technician.phone, ref: resultado.technician.ref }
           : null,
         formulario_url: resultado.formUrl,
         lembretes_programados: resultado.reminders,
         reaproveitou_agendamento: resultado.reused,
-        aviso: resultado.technician ? undefined : 'Nenhum técnico ativo cadastrado: a visita foi criada sem responsável e sem lembretes.',
+        aviso: resultado.technician ? undefined : 'O pedido veio sem tecnico_nome e tecnico_whatsapp: a visita foi criada sem responsável e sem lembretes.',
       },
       { status: resultado.reused ? 200 : 201 },
     );

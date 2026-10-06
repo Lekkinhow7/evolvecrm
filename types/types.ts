@@ -289,6 +289,8 @@ export interface Activity {
   technicianLabel?: string;
   /** WhatsApp do técnico, para onde vão os lembretes da visita. */
   technicianPhone?: string;
+  /** Id do profissional no banco do agente, de onde vêm a equipe e a agenda. */
+  technicianRef?: string;
   /** Endereço da visita. */
   address?: string;
   /** Ponto de referência, portaria, quem recebe. */

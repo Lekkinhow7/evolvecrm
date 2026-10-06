@@ -80,6 +80,8 @@ export interface DbActivity {
   technician_label?: string | null;
   /** WhatsApp do técnico. */
   technician_phone?: string | null;
+  /** Id do profissional no banco do agente. */
+  technician_ref?: string | null;
   /** Endereço da visita. */
   address?: string | null;
   /** Ponto de referência da visita. */
@@ -120,6 +122,7 @@ const transformActivity = (db: DbActivityWithDeal): Activity => ({
   technicianProfileId: db.technician_profile_id || undefined,
   technicianLabel: db.technician_label || undefined,
   technicianPhone: db.technician_phone || undefined,
+  technicianRef: db.technician_ref || undefined,
   address: db.address || undefined,
   addressNote: db.address_note || undefined,
   arrivalAt: db.arrival_at || undefined,
