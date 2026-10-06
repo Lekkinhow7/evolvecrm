@@ -173,15 +173,21 @@ async function acharOuCriarNegocio(
   return { dealId: (negocio.data?.id as string) || null, contactId, boardId };
 }
 
-/** Move o negócio para a etapa de visita agendada, se ela existir. */
+/**
+ * Move o negócio para a etapa de visita agendada, se ela existir. Só anda para
+ * frente: cliente que já está em orçamento ou venda não volta de etapa porque
+ * ganhou uma visita nova.
+ */
 async function marcarVisitaAgendada(supabase: SupabaseClient, dealId: string, boardId: string | null) {
   if (!boardId) return;
   const semAcento = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-  const etapas = await supabase.from('board_stages').select('id, name').eq('board_id', boardId);
+  const etapas = await supabase.from('board_stages').select('id, name, order').eq('board_id', boardId);
   const alvo = (etapas.data || []).find((e) => semAcento(String(e.name)) === 'visita agendada');
   if (!alvo) return;
   const atual = await supabase.from('deals').select('stage_id, is_won, is_lost').eq('id', dealId).maybeSingle();
   if (!atual.data || atual.data.is_won || atual.data.is_lost || atual.data.stage_id === alvo.id) return;
+  const etapaAtual = (etapas.data || []).find((e) => e.id === atual.data!.stage_id);
+  if (etapaAtual && Number(etapaAtual.order) > Number(alvo.order)) return;
   await supabase
     .from('deals')
     .update({ stage_id: alvo.id, last_stage_change_date: new Date().toISOString() })
@@ -270,6 +276,42 @@ export async function agendarLembretesDaVisita(
   );
 
   return error ? 0 : planos.length;
+}
+
+/**
+ * Cancela a visita que veio do atendimento: ela fica no calendário como
+ * cancelada, os avisos que ainda não saíram são cancelados e o link do laudo
+ * deixa de valer. Devolve o id da visita, ou null se ela nunca chegou ao CRM.
+ */
+export async function cancelarVisita(
+  supabase: SupabaseClient,
+  dados: { organizationId: string; externalRef: string },
+): Promise<string | null> {
+  const existente = await supabase
+    .from('activities')
+    .select('id')
+    .eq('organization_id', dados.organizationId)
+    .eq('external_ref', dados.externalRef)
+    .is('deleted_at', null)
+    .maybeSingle();
+  const activityId = (existente.data?.id as string) || null;
+  if (!activityId) return null;
+
+  const agora = new Date().toISOString();
+  await supabase.from('activities').update({ visit_status: 'cancelada' }).eq('id', activityId);
+  await supabase
+    .from('outbound_messages')
+    .update({ cancelled_at: agora })
+    .eq('activity_id', activityId)
+    .is('sent_at', null)
+    .is('cancelled_at', null);
+  await supabase
+    .from('form_links')
+    .update({ expires_at: agora })
+    .eq('activity_id', activityId)
+    .is('used_at', null)
+    .gt('expires_at', agora);
+  return activityId;
 }
 
 /**

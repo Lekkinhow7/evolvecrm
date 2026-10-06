@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { authPublicApi } from '@/lib/public-api/auth';
 import { createStaticAdminClient } from '@/lib/supabase/server';
-import { agendarVisita } from '@/lib/visits/agendar';
+import { agendarVisita, cancelarVisita } from '@/lib/visits/agendar';
 
 export const runtime = 'nodejs';
 
@@ -23,7 +23,7 @@ const BodySchema = z
     phone: z.string().trim().min(8).max(30).optional(),
     name: z.string().trim().max(120).optional(),
     deal_id: z.string().uuid().optional(),
-    starts_at: z.string().min(10),
+    starts_at: z.string().min(10).optional(),
     ends_at: z.string().min(10).optional(),
     duration_minutes: z.number().int().min(15).max(480).optional(),
     address: z.string().trim().max(300).optional(),
@@ -45,9 +45,17 @@ const BodySchema = z
      * e é isso que impede o técnico de receber o mesmo aviso duas vezes.
      */
     marcar_aviso: z.enum(['visita_2h', 'visita_15min']).optional(),
+    /** Verdadeiro quando a visita foi cancelada no atendimento. Pede external_ref. */
+    cancelada: z.boolean().optional(),
   })
-  .refine((v) => Boolean(v.phone || v.deal_id), {
+  .refine((v) => v.cancelada || Boolean(v.phone || v.deal_id), {
     message: 'Informe o telefone do cliente ou o negócio',
+  })
+  .refine((v) => v.cancelada || Boolean(v.starts_at), {
+    message: 'Informe a data da visita',
+  })
+  .refine((v) => !v.cancelada || Boolean(v.external_ref), {
+    message: 'Para cancelar, informe o external_ref da visita',
   });
 
 export async function POST(request: Request) {
@@ -63,7 +71,20 @@ export async function POST(request: Request) {
   }
   const body = parsed.data;
 
-  const quando = new Date(body.starts_at);
+  if (body.cancelada) {
+    try {
+      const visitaId = await cancelarVisita(createStaticAdminClient(), {
+        organizationId: auth.organizationId,
+        externalRef: body.external_ref!,
+      });
+      return NextResponse.json({ ok: true, cancelada: Boolean(visitaId), visita_id: visitaId });
+    } catch (erro) {
+      console.error('[visitas] falha ao cancelar', erro);
+      return NextResponse.json({ error: 'Não foi possível cancelar a visita', code: 'CANCEL_FAILED' }, { status: 500 });
+    }
+  }
+
+  const quando = new Date(body.starts_at!);
   if (Number.isNaN(quando.getTime())) {
     return NextResponse.json({ error: 'Data da visita inválida', code: 'INVALID_DATE' }, { status: 422 });
   }
@@ -133,7 +154,10 @@ export async function POST(request: Request) {
         formulario_url: resultado.formUrl,
         lembretes_programados: resultado.reminders,
         reaproveitou_agendamento: resultado.reused,
-        aviso: resultado.technician ? undefined : 'O pedido veio sem tecnico_nome e tecnico_whatsapp: a visita foi criada sem responsável e sem lembretes.',
+        aviso:
+          resultado.technician || resultado.reused
+            ? undefined
+            : 'O pedido veio sem tecnico_nome e tecnico_whatsapp: a visita foi criada sem responsável e sem lembretes.',
       },
       { status: resultado.reused ? 200 : 201 },
     );
