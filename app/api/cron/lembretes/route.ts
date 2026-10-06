@@ -50,6 +50,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
+  const envioConfigurado = Boolean(process.env.UAZAPI_URL && process.env.UAZAPI_TOKEN);
+
   const supabase = createStaticAdminClient();
   const fila = await supabase
     .from('outbound_messages')
@@ -66,6 +68,19 @@ export async function POST(request: Request) {
   }
 
   const pendentes = fila.data || [];
+
+  // Sem serviço de envio ligado, a fila fica intacta: nada é marcado e nenhuma
+  // tentativa é gasta, para as mensagens saírem inteiras quando ele for ligado.
+  if (!envioConfigurado) {
+    return NextResponse.json({
+      ok: true,
+      envioConfigurado: false,
+      pendentes: pendentes.length,
+      enviadas: 0,
+      falhas: 0,
+    });
+  }
+
   let enviadas = 0;
   let falhas = 0;
 
