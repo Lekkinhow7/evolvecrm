@@ -263,6 +263,32 @@ export const formsService = {
     };
   },
 
+  /** Lembretes já programados para uma visita. */
+  async remindersFor(activityId: string): Promise<{
+    data: Array<{ id: string; kind: string; scheduledFor: string; sentAt?: string; lastError?: string; toPhone: string }> | null;
+    error: Error | null;
+  }> {
+    if (!supabase) return { data: null, error: new Error('Supabase não configurado') };
+    const { data, error } = await supabase
+      .from('outbound_messages')
+      .select('id, kind, scheduled_for, sent_at, last_error, to_phone')
+      .eq('activity_id', activityId)
+      .is('cancelled_at', null)
+      .order('scheduled_for', { ascending: true });
+    if (error) return { data: null, error: error as unknown as Error };
+    return {
+      data: (data || []).map((r: Record<string, any>) => ({
+        id: r.id,
+        kind: r.kind,
+        scheduledFor: r.scheduled_for,
+        sentAt: r.sent_at || undefined,
+        lastError: r.last_error || undefined,
+        toPhone: r.to_phone,
+      })),
+      error: null,
+    };
+  },
+
   async linksFor(
     scope: { dealId?: string; activityId?: string },
   ): Promise<{ data: FormLink[] | null; error: Error | null }> {

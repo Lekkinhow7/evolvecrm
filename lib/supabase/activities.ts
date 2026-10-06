@@ -78,6 +78,8 @@ export interface DbActivity {
   technician_profile_id?: string | null;
   /** Técnico sem login. */
   technician_label?: string | null;
+  /** WhatsApp do técnico. */
+  technician_phone?: string | null;
   /** Endereço da visita. */
   address?: string | null;
   /** Ponto de referência da visita. */
@@ -117,6 +119,7 @@ const transformActivity = (db: DbActivityWithDeal): Activity => ({
   visitStatus: (db.visit_status as Activity['visitStatus']) || undefined,
   technicianProfileId: db.technician_profile_id || undefined,
   technicianLabel: db.technician_label || undefined,
+  technicianPhone: db.technician_phone || undefined,
   address: db.address || undefined,
   addressNote: db.address_note || undefined,
   arrivalAt: db.arrival_at || undefined,
@@ -148,6 +151,7 @@ const transformActivityToDb = (activity: Partial<Activity>): Partial<DbActivity>
   if (activity.visitStatus !== undefined) db.visit_status = activity.visitStatus || null;
   if (activity.technicianProfileId !== undefined) db.technician_profile_id = sanitizeUUID(activity.technicianProfileId);
   if (activity.technicianLabel !== undefined) db.technician_label = activity.technicianLabel || null;
+  if (activity.technicianPhone !== undefined) db.technician_phone = activity.technicianPhone || null;
   if (activity.address !== undefined) db.address = activity.address || null;
   if (activity.addressNote !== undefined) db.address_note = activity.addressNote || null;
   if (activity.arrivalAt !== undefined) db.arrival_at = activity.arrivalAt || null;
@@ -214,6 +218,7 @@ export const activitiesService = {
           visitStatus: activity.visitStatus,
           technicianProfileId: activity.technicianProfileId,
           technicianLabel: activity.technicianLabel,
+          technicianPhone: activity.technicianPhone,
           address: activity.address,
           addressNote: activity.addressNote,
           arrivalAt: activity.arrivalAt,

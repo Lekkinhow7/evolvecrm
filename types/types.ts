@@ -287,6 +287,8 @@ export interface Activity {
   technicianProfileId?: string;
   /** Técnico sem login, escrito à mão. */
   technicianLabel?: string;
+  /** WhatsApp do técnico, para onde vão os lembretes da visita. */
+  technicianPhone?: string;
   /** Endereço da visita. */
   address?: string;
   /** Ponto de referência, portaria, quem recebe. */
