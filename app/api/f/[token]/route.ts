@@ -46,6 +46,83 @@ async function findLink(token: string) {
   return { supabase, link, motivo: null };
 }
 
+const semAcento = (t: string) =>
+  t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+/**
+ * Leva o negócio para a etapa que a resposta do formulário indica.
+ *
+ * Orçamento enviado para o cliente para na etapa de orçamento. Aprovado vira
+ * venda fechada, que é venda combinada e ainda não entregue. O formulário de
+ * venda, com o valor fechado, é que marca ganho. Recusado marca perdido.
+ *
+ * Só escreve quando a etapa muda de verdade: repetir o envio não reinicia a
+ * data de mudança de etapa nem o fechamento.
+ */
+async function moverEtapa(
+  supabase: ReturnType<typeof createStaticAdminClient>,
+  dealId: string,
+  mudancas: Record<string, unknown>,
+): Promise<void> {
+  const negocio = await supabase
+    .from('deals')
+    .select('id, board_id, stage_id, is_won, is_lost')
+    .eq('id', dealId)
+    .maybeSingle();
+  if (negocio.error || !negocio.data?.board_id) return;
+
+  const board = await supabase
+    .from('boards')
+    .select('won_stage_id, lost_stage_id')
+    .eq('id', negocio.data.board_id)
+    .maybeSingle();
+  const etapas = await supabase
+    .from('board_stages')
+    .select('id, name')
+    .eq('board_id', negocio.data.board_id);
+  if (etapas.error || !etapas.data?.length) return;
+
+  const porNome = (alvo: string) =>
+    etapas.data.find((e) => semAcento(String(e.name)) === semAcento(alvo))?.id;
+
+  let destino: string | undefined;
+  let ganho = false;
+  let perdido = false;
+
+  if (mudancas.sold_value !== undefined) {
+    destino = board.data?.won_stage_id || porNome('Ganho');
+    ganho = true;
+  } else if (mudancas.quote_status === 'aprovado') {
+    destino = porNome('Venda fechada') || board.data?.won_stage_id || undefined;
+  } else if (mudancas.quote_status === 'recusado') {
+    destino = board.data?.lost_stage_id || porNome('Perdido');
+    perdido = true;
+  } else if (mudancas.quote_status === 'enviado' || mudancas.quote_value !== undefined) {
+    destino = porNome('Orçamento enviado');
+  }
+
+  if (!destino) return;
+
+  const patch: Record<string, unknown> = {};
+  if (destino !== negocio.data.stage_id) {
+    patch.stage_id = destino;
+    patch.last_stage_change_date = new Date().toISOString();
+  }
+  if (ganho && !negocio.data.is_won) {
+    patch.is_won = true;
+    patch.is_lost = false;
+    patch.closed_at = new Date().toISOString();
+  }
+  if (perdido && !negocio.data.is_lost) {
+    patch.is_lost = true;
+    patch.is_won = false;
+    patch.closed_at = new Date().toISOString();
+  }
+  if (!Object.keys(patch).length) return;
+
+  await supabase.from('deals').update(patch).eq('id', dealId);
+}
+
 export async function GET(_req: Request, ctx: { params: Promise<{ token: string }> }) {
   const { token } = await ctx.params;
   const { supabase, link, motivo } = await findLink(token);
@@ -224,6 +301,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ token: str
   }
   if (link.deal_id && Object.keys(updates.deal).length) {
     await supabase.from('deals').update(updates.deal).eq('id', link.deal_id);
+    await moverEtapa(supabase, link.deal_id, updates.deal);
   }
 
   await supabase.from('form_links').update({ used_at: new Date().toISOString() }).eq('id', link.id);
