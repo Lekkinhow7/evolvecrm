@@ -37,6 +37,12 @@ const BodySchema = z
     programar_lembretes: z.boolean().optional(),
     /** Verdadeiro para receber um link novo a cada pedido. */
     novo_link: z.boolean().optional(),
+    /**
+     * Marca que o n8n vai mandar este aviso agora. Só a primeira chamada de cada
+     * tipo por visita recebe aviso_ja_enviado=false: as seguintes recebem true,
+     * e é isso que impede o técnico de receber o mesmo aviso duas vezes.
+     */
+    marcar_aviso: z.enum(['visita_2h', 'visita_15min']).optional(),
   })
   .refine((v) => Boolean(v.phone || v.deal_id), {
     message: 'Informe o telefone do cliente ou o negócio',
@@ -63,7 +69,8 @@ export async function POST(request: Request) {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin).replace(/\/+$/, '');
 
   try {
-    const resultado = await agendarVisita(createStaticAdminClient(), {
+    const admin = createStaticAdminClient();
+    const resultado = await agendarVisita(admin, {
       organizationId: auth.organizationId,
       phone: body.phone,
       name: body.name,
@@ -84,9 +91,36 @@ export async function POST(request: Request) {
       appUrl,
     });
 
+    let avisoJaEnviado: boolean | undefined;
+    if (body.marcar_aviso && resultado.activityId) {
+      const agora = new Date().toISOString();
+      const marca = await admin
+        .from('outbound_messages')
+        .upsert(
+          {
+            organization_id: auth.organizationId,
+            activity_id: resultado.activityId,
+            deal_id: resultado.dealId,
+            kind: body.marcar_aviso,
+            to_phone: resultado.technician?.phone || 'sem-tecnico',
+            body: 'Aviso enviado pelo n8n',
+            scheduled_for: agora,
+            sent_at: agora,
+            attempts: 1,
+          },
+          { onConflict: 'activity_id,kind', ignoreDuplicates: true },
+        )
+        .select('id');
+      // Se a marcação falhar, o aviso sai mesmo assim: perder o lembrete é pior
+      // que mandar duas vezes.
+      avisoJaEnviado = marca.error ? false : (marca.data?.length ?? 0) === 0;
+      if (marca.error) console.error('[visitas] falha ao marcar aviso', marca.error);
+    }
+
     return NextResponse.json(
       {
         ok: true,
+        aviso_ja_enviado: avisoJaEnviado,
         visita_id: resultado.activityId,
         negocio_id: resultado.dealId,
         contato_id: resultado.contactId,
