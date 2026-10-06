@@ -10,6 +10,9 @@ const repoRoot = configDir.includes('/.claude/worktrees/')
   : configDir;
 
 const nextConfig: NextConfig = {
+  // Na VPS o CRM roda como servidor Node próprio (pasta standalone). Na Netlify
+  // quem empacota é o plugin dela, então lá fica o padrão.
+  output: process.env.NEXT_OUTPUT === 'standalone' ? 'standalone' : undefined,
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },

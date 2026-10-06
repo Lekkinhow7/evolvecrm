@@ -1,0 +1,79 @@
+# Monta o CRM de cada cliente fora da VPS e deixa o pacote pronto numa release.
+# O EasyPanel só baixa esse pacote e liga o servidor (deploy/vps/*.Dockerfile),
+# então a VPS não fica pesada na hora de publicar.
+#
+# main            -> CRM da SucçãoZero (release vps-succaozero)
+# alice-teixeira  -> CRM da Alice Teixeira (release vps-alice)
+#
+# Só entram aqui valores públicos (os mesmos que o navegador recebe). As chaves
+# secretas ficam no EasyPanel.
+
+name: Versão para a VPS
+
+on:
+  push:
+    branches: [main, alice-teixeira]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vps-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  pacote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Escolhe o cliente
+        run: |
+          case "$GITHUB_REF_NAME" in
+            main)
+              echo "TAG=vps-succaozero" >> "$GITHUB_ENV"
+              echo "NEXT_PUBLIC_APP_URL=https://crm.succaozero.com.br" >> "$GITHUB_ENV"
+              echo "NEXT_PUBLIC_SUPABASE_URL=https://dcjyoxbchwomltpsgviu.supabase.co" >> "$GITHUB_ENV"
+              echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjanlveGJjaHdvbWx0cHNndml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwNzM3OTksImV4cCI6MjEwNDY0OTc5OX0.bZqw8vZI3a5CMtFg4fD8wECXRCCqKxDbl2_Rn7lXW80" >> "$GITHUB_ENV"
+              ;;
+            alice-teixeira)
+              echo "TAG=vps-alice" >> "$GITHUB_ENV"
+              echo "NEXT_PUBLIC_APP_URL=https://crm.aliceteixeiraadvogada.com.br" >> "$GITHUB_ENV"
+              echo "NEXT_PUBLIC_SUPABASE_URL=https://iuoesrnvzakrloclzjto.supabase.co" >> "$GITHUB_ENV"
+              echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1b2Vzcm52emFrcmxvY2x6anRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMjkyMzYsImV4cCI6MjEwNTgwNTIzNn0.qoryyqyyRP6OV421-N5vAnLFiaBPLiycXK2unIKEK7A" >> "$GITHUB_ENV"
+              echo "NEXT_PUBLIC_CRM_NAME=Alice Teixeira" >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "Ramo sem cliente: $GITHUB_REF_NAME"
+              exit 1
+              ;;
+          esac
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Monta o CRM
+        run: pnpm build
+        env:
+          NEXT_OUTPUT: standalone
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Empacota
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+          tar czf crm.tgz -C .next/standalone .
+
+      - name: Publica o pacote
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "$TAG" --notes "Pacote do CRM para a VPS. Atualizado a cada push."
+          gh release upload "$TAG" crm.tgz --clobber
