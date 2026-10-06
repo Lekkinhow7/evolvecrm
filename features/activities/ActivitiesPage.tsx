@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useActivitiesController } from './hooks/useActivitiesController';
 import { VisitModal } from './components/VisitModal';
+import { EquipeTecnica } from './components/EquipeTecnica';
 import { queryKeys } from '@/lib/query/queryKeys';
 import type { Activity } from '@/types';
 import { ActivitiesHeader } from './components/ActivitiesHeader';
@@ -92,6 +93,8 @@ export const ActivitiesPage: React.FC = () => {
                 onNewActivity={handleNewActivity}
                 dateFilter={dateFilter}
             />
+
+            <EquipeTecnica />
 
             {viewMode === 'list' ? (
                 <>
