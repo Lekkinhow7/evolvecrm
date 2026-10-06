@@ -3,8 +3,11 @@
  *
  * Recebe o agendamento vindo do atendimento da IA e faz tudo de uma vez: acha
  * ou cria o contato e o negócio, escolhe o técnico da equipe, cria a visita no
- * calendário, gera o link do laudo e deixa os dois lembretes na fila. Ninguém
- * precisa clicar em nada.
+ * calendário com o técnico que a IA escolheu, gera o link do laudo e deixa os
+ * dois lembretes na fila. Ninguém precisa clicar em nada.
+ *
+ * O técnico, a disponibilidade e os slots moram no banco do agente: o CRM não
+ * escolhe ninguém, só recebe quem vai e para qual WhatsApp mandar.
  *
  * @module lib/visits/agendar
  */
@@ -48,8 +51,8 @@ export interface EntradaAgendamento {
   durationMinutes?: number | null;
   address?: string | null;
   addressNote?: string | null;
-  /** Técnico escolhido. Sem isso, entra o próximo da fila da equipe. */
-  technicianId?: string | null;
+  /** Técnico escolhido pela IA no banco do agente. */
+  technician?: { name: string; phone: string; ref?: string | null } | null;
   title?: string | null;
   /** Id do agendamento no sistema de origem, para não duplicar. */
   externalRef?: string | null;
@@ -61,54 +64,10 @@ export interface ResultadoAgendamento {
   activityId: string;
   dealId: string | null;
   contactId: string | null;
-  technician: { id: string; name: string; phone: string } | null;
+  technician: { name: string; phone: string; ref: string | null } | null;
   formUrl: string | null;
   reminders: number;
   reused: boolean;
-}
-
-/** Próximo técnico ativo da fila, em rodízio. */
-async function escolherTecnico(
-  supabase: SupabaseClient,
-  organizationId: string,
-  technicianId?: string | null,
-): Promise<{ id: string; name: string; phone: string } | null> {
-  if (technicianId) {
-    const alvo = await supabase
-      .from('technicians')
-      .select('id, name, phone')
-      .eq('id', technicianId)
-      .eq('organization_id', organizationId)
-      .maybeSingle();
-    if (alvo.data) return alvo.data as { id: string; name: string; phone: string };
-  }
-
-  const equipe = await supabase
-    .from('technicians')
-    .select('id, name, phone, position')
-    .eq('organization_id', organizationId)
-    .eq('active', true)
-    .order('position', { ascending: true })
-    .order('created_at', { ascending: true });
-  const lista = (equipe.data || []) as Array<{ id: string; name: string; phone: string; position: number }>;
-  if (!lista.length) return null;
-
-  const estado = await supabase
-    .from('technician_rotation')
-    .select('next_position')
-    .eq('organization_id', organizationId)
-    .maybeSingle();
-  const proxima = Number(estado.data?.next_position ?? 0);
-
-  const escolhido = lista.find((t) => t.position >= proxima) || lista[0];
-  await supabase
-    .from('technician_rotation')
-    .upsert(
-      { organization_id: organizationId, next_position: escolhido.position + 1, updated_at: new Date().toISOString() },
-      { onConflict: 'organization_id' },
-    );
-
-  return { id: escolhido.id, name: escolhido.name, phone: escolhido.phone };
 }
 
 /** Acha o negócio aberto do cliente, ou cria contato e negócio. */
@@ -322,7 +281,10 @@ export async function agendarVisita(
     name: entrada.name,
   });
 
-  const tecnico = await escolherTecnico(supabase, entrada.organizationId, entrada.technicianId);
+  const tecnico =
+    entrada.technician?.name && entrada.technician?.phone
+      ? { name: entrada.technician.name, phone: entrada.technician.phone, ref: entrada.technician.ref ?? null }
+      : null;
   const titulo = entrada.title?.trim() || `Visita técnica${entrada.name ? ` - ${entrada.name}` : ''}`;
 
   // Mesmo agendamento chegando duas vezes atualiza a visita, não duplica.
@@ -351,7 +313,7 @@ export async function agendarVisita(
     contact_id: negocio.contactId,
     address: entrada.address ?? null,
     address_note: entrada.addressNote ?? null,
-    technician_id: tecnico?.id ?? null,
+    technician_ref: tecnico?.ref ?? null,
     technician_label: tecnico?.name ?? null,
     technician_phone: tecnico?.phone ?? null,
     external_ref: entrada.externalRef ?? null,
