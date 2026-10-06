@@ -8,12 +8,13 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Copy, Link2, X } from 'lucide-react';
+import { Link2, X } from 'lucide-react';
 
 import { useToast } from '@/context/ToastContext';
 import { activitiesService } from '@/lib/supabase/activities';
 import { formsService } from '@/lib/supabase/forms';
 import type { CrmForm, FormLink, FormSubmission } from '@/types/forms';
+import { LinkGerado } from '@/features/forms/components/LinkGerado';
 import { VISIT_STATUS_LABEL, type Activity, type VisitStatus } from '@/types';
 
 const campo =
@@ -187,16 +188,11 @@ export function VisitModal({
           </div>
 
           {linkGerado && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-100 p-3 dark:bg-white/5">
-              <code className="min-w-0 flex-1 truncate text-slate-700 text-xs dark:text-slate-200">{linkGerado}</code>
-              <button
-                onClick={() => navigator.clipboard?.writeText(linkGerado)}
-                className="text-slate-500 hover:text-slate-900"
-                aria-label="Copiar"
-              >
-                <Copy size={15} />
-              </button>
-            </div>
+            <LinkGerado
+              url={linkGerado}
+              nomeFormulario={forms.find((f) => f.id === formEscolhido)?.name || 'Formulário'}
+              contexto={visita.title}
+            />
           )}
 
           {links.length > 0 && (
