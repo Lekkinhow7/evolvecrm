@@ -41,6 +41,8 @@ export function VisitModal({
   const { showToast } = useToast();
   const [status, setStatus] = useState<VisitStatus>(visita.visitStatus || 'agendada');
   const [tecnico, setTecnico] = useState(visita.technicianLabel || '');
+  const [telefone, setTelefone] = useState(visita.technicianPhone || '');
+  const [lembretes, setLembretes] = useState<Array<{ id: string; kind: string; scheduledFor: string; sentAt?: string; lastError?: string }>>([]);
   const [endereco, setEndereco] = useState(visita.address || '');
   const [referencia, setReferencia] = useState(visita.addressNote || '');
   const [inicio, setInicio] = useState(paraInputLocal(visita.date));
@@ -54,15 +56,17 @@ export function VisitModal({
   const [linkGerado, setLinkGerado] = useState<string | null>(null);
 
   const recarregar = useCallback(async () => {
-    const [f, l, r] = await Promise.all([
+    const [f, l, r, m] = await Promise.all([
       formsService.list(),
       formsService.linksFor({ activityId: visita.id }),
       formsService.submissionsFor({ activityId: visita.id }),
+      formsService.remindersFor(visita.id),
     ]);
     const ativos = (f.data || []).filter((x) => x.active);
     setForms(ativos);
     setFormEscolhido((atual) => atual || ativos[0]?.id || '');
     setLinks(l.data || []);
+    setLembretes(m.data || []);
     setRespostas(r.data || []);
   }, [visita.id]);
 
@@ -75,6 +79,7 @@ export function VisitModal({
     const { error } = await activitiesService.update(visita.id, {
       visitStatus: status,
       technicianLabel: tecnico,
+      technicianPhone: telefone,
       address: endereco,
       addressNote: referencia,
       date: inicio ? new Date(inicio).toISOString() : visita.date,
@@ -100,6 +105,8 @@ export function VisitModal({
         activityId: visita.id,
         dealId: visita.dealId || undefined,
         recipientLabel: tecnico || undefined,
+        recipientPhone: telefone || undefined,
+        agendarLembretes: Boolean(telefone),
         expiresInHours: 168,
       }),
     });
@@ -140,6 +147,10 @@ export function VisitModal({
           <div>
             <label className={rotulo} htmlFor="tecnico">Técnico</label>
             <input id="tecnico" className={campo} value={tecnico} onChange={(e) => setTecnico(e.target.value)} placeholder="Quem vai na visita" />
+          </div>
+          <div>
+            <label className={rotulo} htmlFor="telefone">WhatsApp do técnico</label>
+            <input id="telefone" className={campo} value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="Com DDD" inputMode="tel" />
           </div>
           <div>
             <label className={rotulo} htmlFor="inicio">Início</label>
@@ -193,6 +204,23 @@ export function VisitModal({
               nomeFormulario={forms.find((f) => f.id === formEscolhido)?.name || 'Formulário'}
               contexto={visita.title}
             />
+          )}
+
+          {lembretes.length > 0 && (
+            <div className="mt-4 rounded-xl border border-slate-200 p-3 dark:border-white/10">
+              <p className="font-medium text-slate-800 text-xs dark:text-slate-100">Avisos programados para o técnico</p>
+              <ul className="mt-2 space-y-1 text-xs">
+                {lembretes.map((m) => (
+                  <li key={m.id} className="flex flex-wrap justify-between gap-2 text-slate-500">
+                    <span>{m.kind === 'visita_2h' ? 'Duas horas antes' : m.kind === 'visita_15min' ? 'Quinze minutos antes' : 'Cobrança'}</span>
+                    <span>
+                      {new Date(m.scheduledFor).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                      {m.sentAt ? ' · enviado' : m.lastError ? ` · ${m.lastError}` : ' · na fila'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {links.length > 0 && (
