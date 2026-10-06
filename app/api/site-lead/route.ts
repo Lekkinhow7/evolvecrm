@@ -34,6 +34,14 @@ const LeadSchema = z.object({
   utm_source: z.string().max(100).optional(),
   utm_medium: z.string().max(100).optional(),
   utm_campaign: z.string().max(150).optional(),
+  utm_content: z.string().max(150).optional(),
+  utm_term: z.string().max(150).optional(),
+  // Rastreio do anúncio: o mesmo event_id vai ao pixel, para a conversão não contar duas vezes.
+  event_id: z.string().max(80).optional(),
+  fbclid: z.string().max(300).optional(),
+  gclid: z.string().max(300).optional(),
+  fbp: z.string().max(120).optional(),
+  fbc: z.string().max(400).optional(),
   // campo armadilha: humano não preenche
   website: z.string().max(200).optional(),
 });
@@ -122,6 +130,19 @@ export async function POST(request: Request) {
 
   const now = new Date().toISOString();
 
+  // Guardado para mandar a conversão pela API da Meta e do Google mais tarde,
+  // casando com o evento que o navegador já mandou (mesmo event_id).
+  const rastreio = {
+    event_id: normalizeText(d.event_id),
+    fbclid: normalizeText(d.fbclid),
+    gclid: normalizeText(d.gclid),
+    fbp: normalizeText(d.fbp),
+    fbc: normalizeText(d.fbc),
+    ip: (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || null,
+    user_agent: (request.headers.get('user-agent') || '').slice(0, 300) || null,
+    evento_em: now,
+  };
+
   // 1) Contato: um por telefone
   const existingContact = await sb
     .from('contacts')
@@ -206,6 +227,9 @@ export async function POST(request: Request) {
           utm_source: normalizeText(d.utm_source),
           utm_medium: normalizeText(d.utm_medium),
           utm_campaign: normalizeText(d.utm_campaign),
+          utm_content: normalizeText(d.utm_content),
+          utm_term: normalizeText(d.utm_term),
+          rastreio: rastreio,
         },
         is_won: false,
         is_lost: false,
@@ -230,7 +254,9 @@ export async function POST(request: Request) {
     d.ralos ? `Ralos no fundo: ${d.ralos}` : null,
     d.notificacao ? `Já recebeu notificação: ${d.notificacao}` : null,
     d.cidade ? `Local: ${d.cidade}` : null,
-    d.utm_source || d.utm_campaign ? `Campanha: ${[d.utm_source, d.utm_medium, d.utm_campaign].filter(Boolean).join(' / ')}` : null,
+    d.utm_source || d.utm_campaign ? `Campanha: ${[d.utm_source, d.utm_medium, d.utm_campaign, d.utm_content, d.utm_term].filter(Boolean).join(' / ')}` : null,
+    d.fbclid || d.fbc ? 'Veio de anúncio da Meta.' : null,
+    d.gclid ? 'Veio de anúncio do Google.' : null,
     d.pagina ? `Página: ${d.pagina}` : null,
   ].filter(Boolean);
 
