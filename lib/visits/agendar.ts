@@ -58,6 +58,13 @@ export interface EntradaAgendamento {
   externalRef?: string | null;
   /** Endereço base do CRM, para montar o link do formulário. */
   appUrl: string;
+  /**
+   * Quando o aviso ao técnico é mandado pelo n8n, o CRM não põe nada na fila
+   * dele: só cria a visita e devolve o link.
+   */
+  programarLembretes?: boolean;
+  /** Gera um link novo a cada pedido: o aviso de 2h e o de 15min levam links próprios. */
+  novoLink?: boolean;
 }
 
 export interface ResultadoAgendamento {
@@ -352,7 +359,7 @@ export async function agendarVisita(
       .gt('expires_at', new Date().toISOString())
       .maybeSingle();
 
-    let linkId = (jaTem.data?.id as string) || null;
+    let linkId = entrada.novoLink ? null : ((jaTem.data?.id as string) || null);
     let token: string | null = null;
 
     if (!linkId) {
@@ -376,7 +383,7 @@ export async function agendarVisita(
 
     if (linkId && token) {
       formUrl = `${entrada.appUrl.replace(/\/+$/, '')}/f/${token}`;
-      lembretes = await agendarLembretesDaVisita(supabase, {
+      lembretes = entrada.programarLembretes === false ? 0 : await agendarLembretesDaVisita(supabase, {
         organizationId: entrada.organizationId,
         activityId,
         dealId: negocio.dealId,
