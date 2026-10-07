@@ -98,8 +98,9 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // Redirect authenticated users away from login
-    if (user && isAuthRoute) {
+    // Redirect authenticated users away from login.
+    // O link do e-mail (/auth/confirm) passa mesmo logado: pode ser outra pessoa no mesmo aparelho.
+    if (user && isAuthRoute && !pathname.startsWith('/auth/confirm')) {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)

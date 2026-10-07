@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getErrorMessage } from '@/lib/utils/errorUtils'
@@ -108,6 +109,12 @@ export default function LoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                             </div>
+                        </div>
+
+                        <div className="-mt-3 text-right">
+                            <Link href="/login/esqueci" className="text-sm text-primary-600 hover:text-primary-500">
+                                Esqueci minha senha
+                            </Link>
                         </div>
 
                         {error && (
