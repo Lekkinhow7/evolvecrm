@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { COOKIE_TROCAR_SENHA } from '@/lib/auth/trocarSenha'
 
 /**
  * Função pública `updateSession` do projeto.
@@ -95,6 +96,15 @@ export async function updateSession(request: NextRequest) {
     if (!user && !isAuthRoute && !isPublicRoute) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
+        return NextResponse.redirect(url)
+    }
+
+    // Entrou pelo link de senha nova ou de convite: nenhuma tela abre antes de criar a senha.
+    const trocaPendente = request.cookies.get(COOKIE_TROCAR_SENHA)?.value === '1'
+    if (user && trocaPendente && pathname !== '/nova-senha' && !pathname.startsWith('/auth/confirm') && !isFormLinkRoute) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/nova-senha'
+        url.search = ''
         return NextResponse.redirect(url)
     }
 

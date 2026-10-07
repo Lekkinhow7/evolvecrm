@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { COOKIE_TROCAR_SENHA, COOKIE_TROCAR_SENHA_SEGUNDOS } from '@/lib/auth/trocarSenha'
 
 const TIPOS: EmailOtpType[] = ['recovery', 'invite', 'signup', 'magiclink', 'email', 'email_change']
 
@@ -36,7 +37,16 @@ export async function GET(request: Request) {
         if (!error) {
             // Só aceita caminho interno, nunca outro site.
             const destino = next && next.startsWith('/') && !next.startsWith('//') ? next : destinoPadrao(tipo)
-            return NextResponse.redirect(`${origin}${destino}`)
+            const resposta = NextResponse.redirect(`${origin}${destino}`)
+            if (destinoPadrao(tipo) === '/nova-senha') {
+                resposta.cookies.set(COOKIE_TROCAR_SENHA, '1', {
+                    path: '/',
+                    maxAge: COOKIE_TROCAR_SENHA_SEGUNDOS,
+                    sameSite: 'lax',
+                    secure: origin.startsWith('https'),
+                })
+            }
+            return resposta
         }
     }
 

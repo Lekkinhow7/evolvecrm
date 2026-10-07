@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getErrorMessage } from '@/lib/utils/errorUtils'
+import { limparTrocaDeSenha } from '@/lib/auth/trocarSenha'
 import { Loader2, Lock } from 'lucide-react'
 
 // Mesma regra da troca de senha no perfil.
@@ -36,6 +37,7 @@ export default function NovaSenhaPage() {
             if (!supabase) throw new Error('Supabase não configurado.')
             const { error } = await supabase.auth.updateUser({ password: senha })
             if (error) throw error
+            limparTrocaDeSenha()
             router.push('/dashboard')
         } catch (err) {
             setError(getErrorMessage(err))

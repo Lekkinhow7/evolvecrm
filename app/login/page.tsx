@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getErrorMessage } from '@/lib/utils/errorUtils'
+import { limparTrocaDeSenha } from '@/lib/auth/trocarSenha'
 import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react'
 
 /**
@@ -35,6 +36,7 @@ export default function LoginPage() {
             })
 
             if (error) throw error
+            limparTrocaDeSenha()
             router.push('/dashboard')
         } catch (err) {
             setError(getErrorMessage(err))
