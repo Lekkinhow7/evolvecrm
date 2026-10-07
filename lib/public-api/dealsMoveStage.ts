@@ -45,6 +45,44 @@ async function resolveStageIdForBoard(opts: {
   return (data[0] as any).id as string;
 }
 
+/**
+ * Monta só o que muda no negócio. Repetir o mesmo pedido (a sincronização roda
+ * a cada minuto) não pode regravar a data em que o cartão entrou na etapa nem a
+ * data de fechamento: isso esconderia negócio parado no painel.
+ * Devolve null quando o negócio já está como pedido.
+ */
+export function montarMudancaDeEtapa(opts: {
+  atual: { stage_id: string | null; is_won: boolean | null; is_lost: boolean | null };
+  stageId: string;
+  wonStageId: string | null;
+  lostStageId: string | null;
+  mark?: 'won' | 'lost' | null;
+  agora: string;
+}): Record<string, unknown> | null {
+  const { atual, stageId, wonStageId, lostStageId, mark, agora } = opts;
+  const updates: Record<string, unknown> = {};
+  if (atual.stage_id !== stageId) {
+    updates.stage_id = stageId;
+    updates.last_stage_change_date = agora;
+  }
+  const ganho = mark === 'won' || (!!wonStageId && stageId === wonStageId);
+  const perdido = mark === 'lost' || (!!lostStageId && stageId === lostStageId);
+  if (ganho && !atual.is_won) {
+    updates.is_won = true;
+    updates.is_lost = false;
+    updates.closed_at = agora;
+    updates.loss_reason = null;
+  }
+  if (perdido && !atual.is_lost) {
+    updates.is_lost = true;
+    updates.is_won = false;
+    updates.closed_at = agora;
+  }
+  if (Object.keys(updates).length === 0) return null;
+  updates.updated_at = agora;
+  return updates;
+}
+
 export async function moveStageByDealId(opts: {
   organizationId: string;
   dealId: string;
@@ -57,7 +95,7 @@ export async function moveStageByDealId(opts: {
 
   const { data: deal, error: dealError } = await sb
     .from('deals')
-    .select('id,board_id,stage_id')
+    .select('id,board_id,stage_id,is_won,is_lost')
     .eq('organization_id', opts.organizationId)
     .is('deleted_at', null)
     .eq('id', dealId)
@@ -94,18 +132,22 @@ export async function moveStageByDealId(opts: {
     };
   }
 
-  const now = new Date().toISOString();
-  const updates: any = { stage_id: stageId, last_stage_change_date: now, updated_at: now };
-  if (opts.mark === 'won' || (wonStageId && stageId === wonStageId)) {
-    updates.is_won = true;
-    updates.is_lost = false;
-    updates.closed_at = now;
-    updates.loss_reason = null;
-  }
-  if (opts.mark === 'lost' || (lostStageId && stageId === lostStageId)) {
-    updates.is_lost = true;
-    updates.is_won = false;
-    updates.closed_at = now;
+  const updates = montarMudancaDeEtapa({
+    atual: deal as any,
+    stageId,
+    wonStageId,
+    lostStageId,
+    mark: opts.mark,
+    agora: new Date().toISOString(),
+  });
+  if (!updates) {
+    const { data: atual } = await sb
+      .from('deals')
+      .select('id,title,value,board_id,stage_id,contact_id,client_company_id,is_won,is_lost,loss_reason,closed_at,created_at,updated_at')
+      .eq('organization_id', opts.organizationId)
+      .eq('id', dealId)
+      .maybeSingle();
+    return { ok: true as const, status: 200, body: { data: atual, action: 'unchanged' } };
   }
   const { data, error } = await sb
     .from('deals')
@@ -165,7 +207,7 @@ export async function moveStageByIdentity(opts: {
 
   const { data: deals, error: dealsError } = await sb
     .from('deals')
-    .select('id')
+    .select('id,stage_id,is_won,is_lost')
     .eq('organization_id', opts.organizationId)
     .is('deleted_at', null)
     .eq('board_id', boardId)
@@ -198,18 +240,22 @@ export async function moveStageByIdentity(opts: {
     };
   }
 
-  const now = new Date().toISOString();
-  const updates: any = { stage_id: stageId, last_stage_change_date: now, updated_at: now };
-  if (opts.mark === 'won' || (wonStageId && stageId === wonStageId)) {
-    updates.is_won = true;
-    updates.is_lost = false;
-    updates.closed_at = now;
-    updates.loss_reason = null;
-  }
-  if (opts.mark === 'lost' || (lostStageId && stageId === lostStageId)) {
-    updates.is_lost = true;
-    updates.is_won = false;
-    updates.closed_at = now;
+  const updates = montarMudancaDeEtapa({
+    atual: deals[0] as any,
+    stageId,
+    wonStageId,
+    lostStageId,
+    mark: opts.mark,
+    agora: new Date().toISOString(),
+  });
+  if (!updates) {
+    const { data: atual } = await sb
+      .from('deals')
+      .select('id,title,value,board_id,stage_id,contact_id,client_company_id,is_won,is_lost,loss_reason,closed_at,created_at,updated_at')
+      .eq('organization_id', opts.organizationId)
+      .eq('id', dealId)
+      .maybeSingle();
+    return { ok: true as const, status: 200, body: { data: atual, action: 'unchanged' } };
   }
   const { data: updated, error: updateError } = await sb
     .from('deals')

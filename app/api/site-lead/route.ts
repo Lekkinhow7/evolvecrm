@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createStaticAdminClient } from '@/lib/supabase/server';
+import { enviarParaMeta, montarEvento } from '@/lib/meta/capi';
 import { isE164 } from '@/lib/phone';
 import { normalizePhone, normalizeText } from '@/lib/public-api/sanitize';
 
@@ -272,6 +273,33 @@ export async function POST(request: Request) {
     created_at: now,
   });
   if (note.error) console.error('[site-lead] erro ao criar nota', note.error);
+
+  // Mesmo Lead que o pixel mandou, agora pelo servidor, com o mesmo event_id
+  // para a Meta contar uma vez só. Sem event_id (site antigo) não há como casar.
+  if (rastreio.event_id) {
+    const base = {
+      eventId: rastreio.event_id,
+      quando: new Date(now),
+      pagina: normalizeText(d.pagina),
+      telefone: phone.replace(/\D/g, ''),
+      primeiroNome: normalizeText(d.name),
+      ip: rastreio.ip,
+      navegador: rastreio.user_agent,
+      fbp: rastreio.fbp,
+      fbc: rastreio.fbc,
+    };
+    const eventos = [
+      montarEvento({
+        ...base,
+        nome: 'Lead',
+        extras: { content_name: origem === 'whatsapp' ? 'WhatsApp do site' : 'Formulário do site', content_category: normalizeText(d.tipo) || 'nao informado' },
+      }),
+    ];
+    if (origem === 'whatsapp') {
+      eventos.push(montarEvento({ ...base, nome: 'Contact', eventId: `${rastreio.event_id}-contato`, extras: { content_name: normalizeText(d.botao) || 'WhatsApp' } }));
+    }
+    void enviarParaMeta(eventos);
+  }
 
   return reply(request, dealCreated ? 201 : 200, {
     ok: true,
