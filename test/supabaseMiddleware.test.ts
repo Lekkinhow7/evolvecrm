@@ -47,11 +47,12 @@ type MockRequest = {
   }
   cookies: {
     getAll(): unknown[]
+    get(name: string): { value: string } | undefined
     set: ReturnType<typeof vi.fn>
   }
 }
 
-function makeRequest(pathname: string) {
+function makeRequest(pathname: string, cookies: Record<string, string> = {}) {
   const req: MockRequest = {
     nextUrl: {
       pathname,
@@ -61,7 +62,10 @@ function makeRequest(pathname: string) {
     },
     cookies: {
       getAll() {
-        return []
+        return Object.entries(cookies).map(([name, value]) => ({ name, value }))
+      },
+      get(name: string) {
+        return name in cookies ? { value: cookies[name] } : undefined
       },
       set: vi.fn(),
     },
@@ -141,5 +145,27 @@ describe('updateSession (Proxy/Supabase)', () => {
     const [urlArg] = mocks.nextResponseMock.redirect.mock.calls[0]
     expect(urlArg).toMatchObject({ pathname: '/dashboard' })
     expect(res).toMatchObject({ kind: 'redirect' })
+  })
+
+  it('quem entrou pelo link de senha nova só abre /nova-senha até salvar', async () => {
+    mocks.state.currentUser = { id: 'user-1' }
+
+    await updateSession(makeRequest('/dashboard', { trocar_senha: '1' }))
+    const [urlArg] = mocks.nextResponseMock.redirect.mock.calls[0]
+    expect(urlArg).toMatchObject({ pathname: '/nova-senha' })
+
+    mocks.nextResponseMock.redirect.mockClear()
+    const res = await updateSession(makeRequest('/nova-senha', { trocar_senha: '1' }))
+    expect(mocks.nextResponseMock.redirect).not.toHaveBeenCalled()
+    expect(res).toMatchObject({ kind: 'next' })
+  })
+
+  it('link novo do e-mail passa mesmo com sessão aberta', async () => {
+    mocks.state.currentUser = { id: 'user-1' }
+
+    const res = await updateSession(makeRequest('/auth/confirm', { trocar_senha: '1' }))
+
+    expect(mocks.nextResponseMock.redirect).not.toHaveBeenCalled()
+    expect(res).toMatchObject({ kind: 'next' })
   })
 })

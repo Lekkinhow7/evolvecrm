@@ -63,6 +63,7 @@ import { useUnreadCount } from '@/lib/query/hooks/useConversationsQuery';
 import { UIChat } from './ai/UIChat';
 
 import { NotificationPopover } from './notifications/NotificationPopover';
+import { CallsPendentesAviso } from './CallsPendentesAviso';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 /**
@@ -525,6 +526,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }`}
             tabIndex={-1}
           >
+            {!(pathname === '/messaging' || pathname.startsWith('/messaging/')) && <CallsPendentesAviso />}
             {children}
           </main>
         </div>

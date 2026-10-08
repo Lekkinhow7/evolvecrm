@@ -301,6 +301,21 @@ export interface Activity {
   reportFilledAt?: string;
   /** Id do agendamento no banco do agente, para a sincronização não duplicar. */
   externalRef?: string;
+  /** Link do Google Meet da call. */
+  meetingUrl?: string;
+  /** Vendedor da call, que vem do banco do agente. */
+  sellerLabel?: string;
+  sellerPhone?: string;
+  sellerRef?: string;
+  /** Resultado registrado pelo vendedor na ficha da call. */
+  callResult?: 'agendar_visita' | 'sem_interesse' | 'retornar' | 'nao_atendeu';
+  /** Anotações do vendedor durante a call. */
+  callNotes?: string;
+  callResultAt?: string;
+  /** Quando o vendedor combinou de retornar o contato. */
+  returnAt?: string;
+  /** Na visita: a call em que ela foi agendada. */
+  originActivityId?: string;
 }
 
 /** Estados possíveis de uma visita técnica. */

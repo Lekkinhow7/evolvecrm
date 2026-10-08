@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useActivitiesController } from './hooks/useActivitiesController';
 import { VisitModal } from './components/VisitModal';
+import { CallModal } from './components/CallModal';
 import { queryKeys } from '@/lib/query/queryKeys';
 import type { Activity } from '@/types';
 import { ActivitiesHeader } from './components/ActivitiesHeader';
@@ -35,6 +36,7 @@ export const ActivitiesPage: React.FC = () => {
         formData,
         setFormData,
         filteredActivities,
+        activities,
         deals,
         contacts,
         companies,
@@ -49,6 +51,29 @@ export const ActivitiesPage: React.FC = () => {
     const [selectedActivities, setSelectedActivities] = useState<Set<string>>(new Set());
     // Visita técnica abre em detalhe próprio: tem situação, técnico e formulário.
     const [visitaAberta, setVisitaAberta] = useState<Activity | null>(null);
+    // Call do vendedor abre na ficha da call: anotações, resultado e agendamento da visita.
+    const [callAberta, setCallAberta] = useState<Activity | null>(null);
+    const abrirAtividade = (a: Activity) => {
+        if (a.type === 'MEETING') setCallAberta(a);
+        else if (a.type === 'VISITA') setVisitaAberta(a);
+    };
+    const handleEditOuAbrir = (a: Activity) => {
+        if (a.type === 'MEETING') setCallAberta(a);
+        else handleEditActivity(a);
+    };
+
+    // O link do aviso no WhatsApp chega com ?atividade=<id>: abre a ficha direto.
+    const linkAberto = useRef(false);
+    useEffect(() => {
+        if (linkAberto.current || !activities.length) return;
+        const id = new URLSearchParams(window.location.search).get('atividade');
+        if (!id) return;
+        const alvo = activities.find((a) => a.id === id);
+        if (!alvo) return;
+        linkAberto.current = true;
+        abrirAtividade(alvo);
+    }, [activities]);
+
     const queryClient = useQueryClient();
     const refetchActivities = () => {
         void queryClient.invalidateQueries({ queryKey: queryKeys.activities.all });
@@ -107,7 +132,7 @@ export const ActivitiesPage: React.FC = () => {
                         contacts={contacts}
                         companies={companies}
                         onToggleComplete={handleToggleComplete}
-                        onEdit={handleEditActivity}
+                        onEdit={handleEditOuAbrir}
                         onDelete={handleDeleteActivity}
                         selectedActivities={selectedActivities}
                         onSelectActivity={handleSelectActivity}
@@ -120,7 +145,21 @@ export const ActivitiesPage: React.FC = () => {
                     deals={deals}
                     currentDate={currentDate}
                     setCurrentDate={setCurrentDate}
-                    onSelectVisit={setVisitaAberta}
+                    onSelectVisit={abrirAtividade}
+                />
+            )}
+
+            {callAberta && (
+                <CallModal
+                    call={callAberta}
+                    onClose={() => {
+                        setCallAberta(null);
+                        refetchActivities();
+                    }}
+                    onSalvo={() => {
+                        setCallAberta(null);
+                        refetchActivities();
+                    }}
                 />
             )}
 

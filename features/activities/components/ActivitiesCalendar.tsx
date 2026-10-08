@@ -1,17 +1,19 @@
 import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Phone, Users, Mail, CheckSquare, Wrench } from 'lucide-react';
 import { Activity, Deal, VISIT_STATUS_LABEL } from '@/types';
+import { callPendente, RESULTADO_LABEL } from '@/lib/calls/ficha';
 
 interface ActivitiesCalendarProps {
     activities: Activity[];
     deals: Deal[];
     currentDate: Date;
     setCurrentDate: (date: Date) => void;
-    /** Abre a visita técnica ao clicar. Tarefa comercial não usa. */
+    /** Abre a visita técnica ou a ficha da call ao clicar. Tarefa comercial não usa. */
     onSelectVisit?: (activity: Activity) => void;
 }
 
-const HOURS = Array.from({ length: 10 }, (_, i) => i + 9); // 9:00 to 18:00
+// 7:00 às 20:00: os horários da equipe começam às 8h e a call pode ser no fim da tarde.
+const HOURS = Array.from({ length: 14 }, (_, i) => i + 7);
 const DAYS_OF_WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 /**
@@ -206,7 +208,7 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
                                                         overflow-hidden
                                                     `}
                                                     title={`${activity.title} - ${activity.dealId ? (dealTitleById.get(activity.dealId) ?? '') : ''}`}
-                                                    onClick={() => activity.type === 'VISITA' && onSelectVisit?.(activity)}
+                                                    onClick={() => (activity.type === 'VISITA' || activity.type === 'MEETING') && onSelectVisit?.(activity)}
                                                 >
                                                     {/* Shine effect on hover */}
                                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
@@ -227,6 +229,16 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
                                                             <div className="mt-1 text-[11px] text-white/90">
                                                                 {activity.technicianLabel || 'técnico não definido'}
                                                                 {activity.visitStatus ? ` · ${VISIT_STATUS_LABEL[activity.visitStatus]}` : ''}
+                                                            </div>
+                                                        )}
+                                                        {activity.type === 'MEETING' && (
+                                                            <div className="mt-1 text-[11px] text-white/90">
+                                                                {activity.sellerLabel || 'vendedor não definido'}
+                                                                {activity.callResult
+                                                                    ? ` · ${RESULTADO_LABEL[activity.callResult]}`
+                                                                    : callPendente(activity)
+                                                                        ? ' · ⚠️ resultado pendente'
+                                                                        : ''}
                                                             </div>
                                                         )}
 

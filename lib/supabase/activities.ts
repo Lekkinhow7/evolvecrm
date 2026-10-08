@@ -92,6 +92,19 @@ export interface DbActivity {
   report_filled_at?: string | null;
   /** Id do agendamento de origem no banco do agente. */
   external_ref?: string | null;
+  /** Link do Google Meet da call. */
+  meeting_url?: string | null;
+  /** Vendedor da call. */
+  seller_label?: string | null;
+  seller_phone?: string | null;
+  seller_ref?: string | null;
+  /** Resultado da call registrado na ficha. */
+  call_result?: string | null;
+  call_notes?: string | null;
+  call_result_at?: string | null;
+  return_at?: string | null;
+  /** Na visita: a call em que ela foi agendada. */
+  origin_activity_id?: string | null;
 }
 
 // Interface auxiliar para o retorno do Supabase com o join
@@ -128,6 +141,15 @@ const transformActivity = (db: DbActivityWithDeal): Activity => ({
   arrivalAt: db.arrival_at || undefined,
   reportFilledAt: db.report_filled_at || undefined,
   externalRef: db.external_ref || undefined,
+  meetingUrl: db.meeting_url || undefined,
+  sellerLabel: db.seller_label || undefined,
+  sellerPhone: db.seller_phone || undefined,
+  sellerRef: db.seller_ref || undefined,
+  callResult: (db.call_result as Activity['callResult']) || undefined,
+  callNotes: db.call_notes || undefined,
+  callResultAt: db.call_result_at || undefined,
+  returnAt: db.return_at || undefined,
+  originActivityId: db.origin_activity_id || undefined,
   dealTitle: db.deals?.title || '',
   user: { name: 'Você', avatar: '' }, // Will be enriched later
 });
@@ -160,6 +182,9 @@ const transformActivityToDb = (activity: Partial<Activity>): Partial<DbActivity>
   if (activity.arrivalAt !== undefined) db.arrival_at = activity.arrivalAt || null;
   if (activity.reportFilledAt !== undefined) db.report_filled_at = activity.reportFilledAt || null;
   if (activity.externalRef !== undefined) db.external_ref = activity.externalRef || null;
+  if (activity.meetingUrl !== undefined) db.meeting_url = activity.meetingUrl || null;
+  // As anotações são salvas enquanto o vendedor digita; o resultado só pela rota da ficha.
+  if (activity.callNotes !== undefined) db.call_notes = activity.callNotes || null;
 
   return db;
 };

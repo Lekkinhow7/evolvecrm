@@ -249,6 +249,8 @@ export const useActivitiesController = () => {
     formData,
     setFormData,
     filteredActivities,
+    /** Todas as atividades, sem filtro: o link do aviso abre qualquer uma. */
+    activities,
     deals,
     contacts,
     companies,
