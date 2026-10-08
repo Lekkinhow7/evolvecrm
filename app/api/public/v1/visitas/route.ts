@@ -47,6 +47,10 @@ const BodySchema = z
     marcar_aviso: z.enum(['visita_2h', 'visita_15min']).optional(),
     /** Verdadeiro quando a visita foi cancelada no atendimento. Pede external_ref. */
     cancelada: z.boolean().optional(),
+    /** reuniao = reunião comercial por vídeo (MEETING no calendário). Sem isso, visita técnica. */
+    tipo: z.enum(['visita', 'reuniao']).optional(),
+    /** Link do Google Meet da reunião. */
+    meeting_url: z.string().trim().url().max(500).optional(),
   })
   .refine((v) => v.cancelada || Boolean(v.phone || v.deal_id), {
     message: 'Informe o telefone do cliente ou o negócio',
@@ -112,6 +116,8 @@ export async function POST(request: Request) {
       programarLembretes: body.programar_lembretes,
       novoLink: body.novo_link,
       formulario: body.formulario,
+      tipo: body.tipo,
+      meetingUrl: body.meeting_url,
       appUrl,
     });
 
@@ -155,7 +161,7 @@ export async function POST(request: Request) {
         lembretes_programados: resultado.reminders,
         reaproveitou_agendamento: resultado.reused,
         aviso:
-          resultado.technician || resultado.reused
+          resultado.technician || resultado.reused || body.tipo === 'reuniao'
             ? undefined
             : 'O pedido veio sem tecnico_nome e tecnico_whatsapp: a visita foi criada sem responsável e sem lembretes.',
       },

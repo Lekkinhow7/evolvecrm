@@ -67,6 +67,13 @@ export interface EntradaAgendamento {
   novoLink?: boolean;
   /** Chave do formulário cujo link volta: laudo_visita (padrão), orcamento ou venda. */
   formulario?: string;
+  /**
+   * Reunião comercial marcada pela Marina: entra no calendário como MEETING, com
+   * o link do Meet, e não tem laudo nem aviso ao técnico.
+   */
+  tipo?: 'visita' | 'reuniao';
+  /** Link do Google Meet da reunião. */
+  meetingUrl?: string | null;
 }
 
 export interface ResultadoAgendamento {
@@ -336,7 +343,9 @@ export async function agendarVisita(
     entrada.technician?.name && entrada.technician?.phone
       ? { name: entrada.technician.name, phone: entrada.technician.phone, ref: entrada.technician.ref ?? null }
       : null;
-  const titulo = entrada.title?.trim() || `Visita técnica${entrada.name ? ` - ${entrada.name}` : ''}`;
+  const reuniao = entrada.tipo === 'reuniao';
+  const titulo =
+    entrada.title?.trim() || `${reuniao ? 'Reunião comercial' : 'Visita técnica'}${entrada.name ? ` - ${entrada.name}` : ''}`;
 
   // Mesmo agendamento chegando duas vezes atualiza a visita, não duplica.
   let activityId: string | null = null;
@@ -356,7 +365,8 @@ export async function agendarVisita(
   const campos = {
     organization_id: entrada.organizationId,
     title: titulo,
-    type: 'VISITA',
+    type: reuniao ? 'MEETING' : 'VISITA',
+    ...(reuniao ? { meeting_url: entrada.meetingUrl ?? null } : {}),
     date: inicio.toISOString(),
     ends_at: fim.toISOString(),
     visit_status: 'agendada',
@@ -384,6 +394,7 @@ export async function agendarVisita(
     if (negocio.contactId) ajuste.contact_id = negocio.contactId;
     if (entrada.address) ajuste.address = entrada.address;
     if (entrada.addressNote) ajuste.address_note = entrada.addressNote;
+    if (reuniao && entrada.meetingUrl) ajuste.meeting_url = entrada.meetingUrl;
     if (tecnico) {
       ajuste.technician_ref = tecnico.ref;
       ajuste.technician_label = tecnico.name;
@@ -395,7 +406,20 @@ export async function agendarVisita(
     if (criada.error || !criada.data) throw new Error('Não foi possível criar a visita');
     activityId = criada.data.id as string;
     // Só a visita nova move o cartão: depois dela o funil anda pelos formulários.
-    if (negocio.dealId) await marcarVisitaAgendada(supabase, negocio.dealId, negocio.boardId);
+    if (negocio.dealId && !reuniao) await marcarVisitaAgendada(supabase, negocio.dealId, negocio.boardId);
+  }
+
+  // Reunião não tem laudo nem aviso ao técnico: termina aqui.
+  if (reuniao) {
+    return {
+      activityId,
+      dealId: negocio.dealId,
+      contactId: negocio.contactId,
+      technician: null,
+      formUrl: null,
+      reminders: 0,
+      reused: reaproveitada,
+    };
   }
 
   // Link do formulário pedido (o laudo, se nada for dito).
