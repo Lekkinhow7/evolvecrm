@@ -8,7 +8,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link2, X } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 
 import { useToast } from '@/context/ToastContext';
 import { activitiesService } from '@/lib/supabase/activities';
@@ -16,6 +16,8 @@ import { formsService } from '@/lib/supabase/forms';
 import type { CrmForm, FormLink, FormSubmission } from '@/types/forms';
 import { LinkGerado } from '@/features/forms/components/LinkGerado';
 import { VISIT_STATUS_LABEL, type Activity, type VisitStatus } from '@/types';
+
+import { FichaShell } from './FichaShell';
 
 const campo =
   'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary-500 dark:border-white/10 dark:bg-white/5 dark:text-white';
@@ -122,19 +124,26 @@ export function VisitModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6">
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white p-6 sm:rounded-2xl dark:bg-slate-900">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-slate-500 text-xs">Visita técnica</p>
-            <h2 className="font-semibold text-slate-900 text-xl dark:text-white">{visita.title}</h2>
-            {visita.dealTitle && <p className="text-slate-500 text-sm">{visita.dealTitle}</p>}
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700" aria-label="Fechar">
-            <X size={20} />
+    <FichaShell
+      rotulo="🔧 Visita técnica"
+      titulo={visita.title}
+      subtitulo={visita.dealTitle || undefined}
+      onClose={onClose}
+      rodape={
+        <>
+          <button onClick={onClose} className="rounded-lg px-4 py-2 text-slate-600 text-sm dark:text-slate-300">
+            Fechar
           </button>
-        </div>
-
+          <button
+            onClick={salvar}
+            disabled={salvando}
+            className="rounded-lg bg-primary-600 px-4 py-2 font-medium text-sm text-white disabled:opacity-60"
+          >
+            {salvando ? 'Salvando...' : 'Salvar'}
+          </button>
+        </>
+      }
+    >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className={rotulo} htmlFor="status">Situação</label>
@@ -267,20 +276,6 @@ export function VisitModal({
             </div>
           )}
         </div>
-
-        <div className="mt-6 flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-lg px-4 py-2 text-slate-600 text-sm dark:text-slate-300">
-            Fechar
-          </button>
-          <button
-            onClick={salvar}
-            disabled={salvando}
-            className="rounded-lg bg-primary-600 px-4 py-2 font-medium text-sm text-white disabled:opacity-60"
-          >
-            {salvando ? 'Salvando...' : 'Salvar'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </FichaShell>
   );
 }

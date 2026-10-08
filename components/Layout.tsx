@@ -519,7 +519,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
           <main
             id="main-content"
-            className={`flex-1 overflow-auto relative scroll-smooth ${
+            className={`scrollbar-custom flex-1 overflow-auto relative scroll-smooth ${
               pathname === '/messaging' || pathname.startsWith('/messaging/')
                 ? 'p-0'
                 : 'p-6 pb-[calc(1.5rem+var(--app-bottom-nav-height,0px)+var(--app-safe-area-bottom,0px))]'
