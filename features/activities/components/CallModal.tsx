@@ -397,13 +397,26 @@ export function CallModal({
 
               {resultado === 'sem_interesse' && (
                 <div>
-                  <label className={rotulo} htmlFor="motivo">Motivo</label>
-                  <select id="motivo" className={campo} value={motivo} onChange={(e) => setMotivo(e.target.value as MotivoSemInteresse)}>
-                    <option value="">Escolha o motivo</option>
-                    {Object.entries(MOTIVOS_SEM_INTERESSE).map(([v, t]) => (
-                      <option key={v} value={v}>{t}</option>
+                  <p className={rotulo}>Motivo</p>
+                  {/* Botões em vez de lista: a lista do navegador não aceita cantos arredondados. */}
+                  <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Motivo">
+                    {(Object.entries(MOTIVOS_SEM_INTERESSE) as Array<[MotivoSemInteresse, string]>).map(([v, t]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        role="radio"
+                        aria-checked={motivo === v}
+                        onClick={() => setMotivo(v)}
+                        className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                          motivo === v
+                            ? 'border-primary-600 bg-primary-600 text-white'
+                            : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-200'
+                        }`}
+                      >
+                        {t}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               )}
 

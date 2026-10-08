@@ -286,6 +286,71 @@ body {
 }
 
 /* ========================================
+ * Controles do navegador no tema escuro
+ * ======================================== */
+/* A lista aberta de um <select>, o calendário dos campos de data e as barras de
+   rolagem são desenhados pelo navegador e saíam brancos no tema escuro. */
+.dark {
+  color-scheme: dark;
+}
+
+.dark select option,
+.dark select optgroup {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+/* Lista aberta do <select> com cantos arredondados, borda e cor do tema, em
+   todo o sistema. Só o Chrome novo deixa estilizar essa lista; nos outros
+   navegadores fica a lista normal (escura no tema escuro, pela regra acima).
+   Fica em @layer base para as classes do Tailwind (ex.: appearance-none) continuarem valendo. */
+@layer base {
+@supports (appearance: base-select) {
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+
+  ::picker(select) {
+    margin-top: 4px;
+    padding: 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 12px 32px rgb(15 23 42 / 0.18);
+  }
+
+  .dark ::picker(select) {
+    border-color: rgb(255 255 255 / 0.1);
+    background-color: #0f172a;
+  }
+
+  select option {
+    padding: 8px 10px;
+    border-radius: 8px;
+  }
+
+  select option:hover,
+  select option:focus-visible {
+    background-color: #e2e8f0;
+  }
+
+  .dark select option:hover,
+  .dark select option:focus-visible {
+    background-color: rgb(255 255 255 / 0.08);
+  }
+
+  select option:checked {
+    font-weight: 600;
+  }
+
+  select option::checkmark {
+    display: none;
+  }
+}
+}
+
+/* ========================================
  * Custom Scrollbar
  * ======================================== */
 @utility scrollbar-custom {
