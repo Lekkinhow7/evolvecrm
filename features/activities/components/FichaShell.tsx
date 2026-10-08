@@ -17,6 +17,7 @@ export function FichaShell({
   subtitulo,
   onClose,
   rodape,
+  acoes,
   larga = false,
   children,
 }: {
@@ -25,6 +26,8 @@ export function FichaShell({
   subtitulo?: React.ReactNode;
   onClose: () => void;
   rodape: React.ReactNode;
+  /** Botões ao lado do título, como o de entrar no Meet. */
+  acoes?: React.ReactNode;
   /** Ficha em duas colunas no computador. */
   larga?: boolean;
   children: React.ReactNode;
@@ -63,9 +66,12 @@ export function FichaShell({
             <h2 className="truncate font-semibold text-lg text-slate-900 dark:text-white">{titulo}</h2>
             {subtitulo && <div className="text-slate-500 text-sm">{subtitulo}</div>}
           </div>
-          <button onClick={onClose} className="shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-white" aria-label="Fechar">
-            <X size={20} />
-          </button>
+          <div className="flex shrink-0 items-center gap-3">
+            {acoes}
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white" aria-label="Fechar">
+              <X size={20} />
+            </button>
+          </div>
         </header>
 
         <div className="scrollbar-custom min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>

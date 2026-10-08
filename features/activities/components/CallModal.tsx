@@ -41,12 +41,25 @@ interface TecnicoNaTela {
   livre: boolean;
 }
 
+/** Ícone de cada resultado, no botão e no cartão do resultado. */
+const ICONE_RESULTADO: Record<ResultadoCall, string> = {
+  agendar_visita: '📅',
+  sem_interesse: '🚫',
+  retornar: '🔁',
+  nao_atendeu: '📵',
+};
+
 export function CallModal({
   call,
+  visitaAgendada,
+  onAbrirVisita,
   onClose,
   onSalvo,
 }: {
   call: Activity;
+  /** A visita que nasceu desta call, quando o resultado foi agendar visita. */
+  visitaAgendada?: Activity | null;
+  onAbrirVisita?: (visita: Activity) => void;
   onClose: () => void;
   onSalvo: () => void;
 }) {
@@ -170,6 +183,10 @@ export function CallModal({
     </>
   );
 
+  const cartao = 'rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]';
+  const titulo = 'mb-3 flex items-center gap-2 font-semibold text-slate-900 text-sm dark:text-white';
+  const visitaInicio = visitaAgendada ? new Date(visitaAgendada.date) : null;
+
   return (
     <FichaShell
       rotulo="📞 Call"
@@ -177,6 +194,18 @@ export function CallModal({
       subtitulo={resumo}
       onClose={onClose}
       larga
+      acoes={
+        call.meetingUrl ? (
+          <a
+            href={call.meetingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 font-medium text-sm text-white hover:bg-primary-500"
+          >
+            <Video size={15} /> Entrar no Meet
+          </a>
+        ) : null
+      }
       rodape={
         <>
           <button onClick={onClose} className="rounded-lg px-4 py-2 text-slate-600 text-sm dark:text-slate-300">
@@ -195,38 +224,31 @@ export function CallModal({
       }
     >
       {pendente && (
-        <p className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700 text-sm dark:border-red-500/20 dark:bg-red-900/20 dark:text-red-300">
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700 text-sm dark:border-red-500/20 dark:bg-red-900/20 dark:text-red-300">
           ⚠️ Esta call já terminou e ainda está sem resultado.
         </p>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-5">
         {/* Esquerda: o que se sabe do cliente e as anotações da conversa. */}
-        <div className="space-y-5">
-          {call.meetingUrl && (
-            <a
-              href={call.meetingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 font-medium text-sm text-white"
-            >
-              <Video size={16} /> Entrar no Meet
-            </a>
-          )}
-
-          <section>
-            <h3 className="mb-2 font-semibold text-slate-900 text-sm dark:text-white">📝 O que o cliente contou</h3>
+        <div className="space-y-5 lg:col-span-3">
+          <section className={cartao}>
+            <h3 className={titulo}>📝 O que o cliente contou</h3>
             {call.description ? (
-              <p className="whitespace-pre-line text-slate-700 text-sm dark:text-slate-300">{call.description}</p>
+              <p className="whitespace-pre-line text-slate-700 text-sm leading-relaxed dark:text-slate-300">{call.description}</p>
             ) : (
               <p className="text-slate-500 text-sm">Nada registrado na conversa com a Marina.</p>
             )}
-            {call.address && <p className="mt-2 text-slate-700 text-sm dark:text-slate-300">📍 {call.address}</p>}
+            {call.address && (
+              <p className="mt-3 border-slate-200 border-t pt-3 text-slate-700 text-sm dark:border-white/10 dark:text-slate-300">
+                📍 {call.address}
+              </p>
+            )}
           </section>
 
           <section>
-            <div className="mb-1 flex items-center justify-between">
-              <label className={rotulo} htmlFor="anotacoes">✍️ Anotações da call</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className={titulo.replace('mb-3 ', '')} htmlFor="anotacoes">✍️ Anotações da call</label>
               <button
                 type="button"
                 onClick={() => setAnotacoesOcultas((v) => !v)}
@@ -237,13 +259,13 @@ export function CallModal({
               </button>
             </div>
             {anotacoesOcultas ? (
-              <p className="rounded-lg border border-dashed border-slate-300 px-3 py-6 text-center text-slate-400 text-sm dark:border-white/10">
+              <p className="rounded-lg border border-dashed border-slate-300 px-3 py-8 text-center text-slate-400 text-sm dark:border-white/10">
                 Anotações ocultas
               </p>
             ) : (
               <textarea
                 id="anotacoes"
-                rows={5}
+                rows={6}
                 className={`${campo} scrollbar-custom resize-none`}
                 value={anotacoes}
                 onChange={(e) => setAnotacoes(e.target.value)}
@@ -260,36 +282,69 @@ export function CallModal({
         </div>
 
         {/* Direita: o resultado e, se for o caso, a visita. */}
-        <div>
+        <div className="lg:col-span-2">
           {call.callResult ? (
-            <section className="rounded-xl border border-slate-200 p-4 dark:border-white/10">
-              <p className="font-semibold text-slate-900 text-sm dark:text-white">Resultado: {RESULTADO_LABEL[call.callResult]}</p>
-              {call.callResultAt && (
-                <p className="text-slate-500 text-xs">Registrado em {new Date(call.callResultAt).toLocaleString('pt-BR')}</p>
+            <section className={`${cartao} space-y-4`}>
+              <div>
+                <p className="text-slate-500 text-xs">Resultado da call</p>
+                <p className="mt-1 flex items-center gap-2 font-semibold text-base text-slate-900 dark:text-white">
+                  {ICONE_RESULTADO[call.callResult]} {RESULTADO_LABEL[call.callResult]}
+                </p>
+                {call.callResultAt && (
+                  <p className="text-slate-500 text-xs">Registrado em {new Date(call.callResultAt).toLocaleString('pt-BR')}</p>
+                )}
+              </div>
+
+              {call.callResult === 'agendar_visita' && (
+                visitaAgendada && visitaInicio ? (
+                  <div className="space-y-2 border-slate-200 border-t pt-4 text-slate-700 text-sm dark:border-white/10 dark:text-slate-300">
+                    <p className="font-medium text-slate-900 dark:text-white">🔧 Visita técnica</p>
+                    <p>🗓️ {visitaInicio.toLocaleDateString('pt-BR')}, às {hora(visitaInicio)}</p>
+                    <p>👷 {visitaAgendada.technicianLabel || 'técnico não definido'}</p>
+                    {visitaAgendada.address && <p>📍 {visitaAgendada.address}</p>}
+                    {onAbrirVisita && (
+                      <button
+                        type="button"
+                        onClick={() => onAbrirVisita(visitaAgendada)}
+                        className="mt-2 w-full rounded-lg border border-primary-500 px-3 py-2 font-medium text-primary-600 text-sm hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-500/10"
+                      >
+                        Abrir visita
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="border-slate-200 border-t pt-4 text-slate-500 text-sm dark:border-white/10">A visita foi agendada.</p>
+                )
               )}
+
               {call.returnAt && (
-                <p className="mt-1 text-slate-700 text-sm dark:text-slate-300">Retornar em {new Date(call.returnAt).toLocaleString('pt-BR')}</p>
+                <p className="border-slate-200 border-t pt-4 text-slate-700 text-sm dark:border-white/10 dark:text-slate-300">
+                  🔁 Retornar em {new Date(call.returnAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                </p>
               )}
             </section>
           ) : (
-            <section>
-              <h3 className="mb-2 font-semibold text-slate-900 text-sm dark:text-white">Como foi a call?</h3>
+            <section className={cartao}>
+              <h3 className={titulo}>Como foi a call?</h3>
               <div className="mb-4 grid grid-cols-2 gap-2">
                 {RESULTADOS.map((r) => (
                   <button
                     key={r}
                     type="button"
                     onClick={() => setResultado(r)}
-                    className={`rounded-lg border px-3 py-2 text-sm ${
+                    className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-3 text-sm transition-colors ${
                       resultado === r
                         ? 'border-primary-600 bg-primary-600 text-white'
-                        : 'border-slate-300 text-slate-700 hover:border-primary-400 dark:border-white/10 dark:text-slate-200'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-200'
                     }`}
                   >
+                    <span className="text-lg leading-none">{ICONE_RESULTADO[r]}</span>
                     {RESULTADO_LABEL[r]}
                   </button>
                 ))}
               </div>
+
+              {!resultado && <p className="text-slate-500 text-sm">Escolha como terminou a conversa.</p>}
 
               {resultado === 'agendar_visita' && (
                 <div className="space-y-3">
@@ -317,7 +372,7 @@ export function CallModal({
                       {tecnicos.map((t) => (
                         <label
                           key={t.id}
-                          className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm ${
+                          className={`flex items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2 text-sm dark:bg-white/5 ${
                             t.livre ? 'cursor-pointer border-slate-300 dark:border-white/10' : 'cursor-not-allowed border-slate-200 opacity-60 dark:border-white/5'
                           }`}
                         >
@@ -332,7 +387,7 @@ export function CallModal({
                             />
                             <span className="text-slate-900 dark:text-white">{t.nome}</span>
                           </span>
-                          <span className="text-slate-500 text-xs">{t.livre ? 'livre nesse horário' : 'ocupado nesse horário 🚫'}</span>
+                          <span className="text-slate-500 text-xs">{t.livre ? 'livre' : 'ocupado 🚫'}</span>
                         </label>
                       ))}
                     </div>

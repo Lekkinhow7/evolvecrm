@@ -152,6 +152,11 @@ export const ActivitiesPage: React.FC = () => {
             {callAberta && (
                 <CallModal
                     call={callAberta}
+                    visitaAgendada={activities.find((a) => a.originActivityId === callAberta.id) || null}
+                    onAbrirVisita={(v) => {
+                        setCallAberta(null);
+                        setVisitaAberta(v);
+                    }}
                     onClose={() => {
                         setCallAberta(null);
                         refetchActivities();
