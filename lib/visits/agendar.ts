@@ -74,6 +74,8 @@ export interface EntradaAgendamento {
   tipo?: 'visita' | 'reuniao';
   /** Link do Google Meet da reunião. */
   meetingUrl?: string | null;
+  /** O que a Marina coletou na conversa: aparece na ficha da reunião e da visita. */
+  description?: string | null;
 }
 
 export interface ResultadoAgendamento {
@@ -367,6 +369,7 @@ export async function agendarVisita(
     title: titulo,
     type: reuniao ? 'MEETING' : 'VISITA',
     ...(reuniao ? { meeting_url: entrada.meetingUrl ?? null } : {}),
+    ...(entrada.description ? { description: entrada.description } : {}),
     date: inicio.toISOString(),
     ends_at: fim.toISOString(),
     visit_status: 'agendada',
@@ -395,6 +398,7 @@ export async function agendarVisita(
     if (entrada.address) ajuste.address = entrada.address;
     if (entrada.addressNote) ajuste.address_note = entrada.addressNote;
     if (reuniao && entrada.meetingUrl) ajuste.meeting_url = entrada.meetingUrl;
+    if (entrada.description) ajuste.description = entrada.description;
     if (tecnico) {
       ajuste.technician_ref = tecnico.ref;
       ajuste.technician_label = tecnico.name;

@@ -51,6 +51,8 @@ const BodySchema = z
     tipo: z.enum(['visita', 'reuniao']).optional(),
     /** Link do Google Meet da reunião. */
     meeting_url: z.string().trim().url().max(500).optional(),
+    /** O que a Marina coletou na conversa (resumo comercial). */
+    description: z.string().trim().max(4000).optional(),
   })
   .refine((v) => v.cancelada || Boolean(v.phone || v.deal_id), {
     message: 'Informe o telefone do cliente ou o negócio',
@@ -118,6 +120,7 @@ export async function POST(request: Request) {
       formulario: body.formulario,
       tipo: body.tipo,
       meetingUrl: body.meeting_url,
+      description: body.description,
       appUrl,
     });
 
