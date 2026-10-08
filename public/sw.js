@@ -2,7 +2,19 @@
 // Minimal Service Worker (MVP): cache app shell assets for faster launch.
 // Note: This does NOT provide offline data sync.
 
-const CACHE_NAME = 'nossocrm-shell-v2';
+// v3: a v2 guardava também as respostas do banco (Supabase) e das rotas /api,
+// e o CRM abria sempre com os dados da visita anterior. Trocar o nome apaga a v2.
+const CACHE_NAME = 'nossocrm-shell-v3';
+
+// Só arquivo que não muda entre uma publicação e outra pode sair do cache.
+function ehArquivoEstatico(url) {
+  if (url.origin !== self.location.origin) return false;
+  return (
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/icons/') ||
+    /\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|css)$/.test(url.pathname)
+  );
+}
 const SHELL_URLS = [
   '/',
   '/login',
@@ -45,6 +57,9 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
+
+  // Dados (Supabase, /api, outros sites) vão sempre direto à rede.
+  if (!ehArquivoEstatico(new URL(req.url))) return;
 
   // Stale-while-revalidate for static assets.
   event.respondWith(
