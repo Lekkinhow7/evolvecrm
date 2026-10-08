@@ -45,7 +45,18 @@ describe('sugerirTecnico', () => {
 });
 
 describe('callPendente', () => {
-  const call = { type: 'MEETING', date: '2026-10-08T14:00:00.000Z', endsAt: '2026-10-08T15:00:00.000Z' };
+  const call = {
+    type: 'MEETING',
+    date: '2026-10-08T14:00:00.000Z',
+    endsAt: '2026-10-08T15:00:00.000Z',
+    externalRef: 'sz-agendamento-7',
+  };
+
+  it('reunião comum do CRM, sem vendedor nem origem na Marina, não cobra resultado', () => {
+    const depois = new Date('2026-10-08T16:00:00.000Z');
+    expect(callPendente({ ...call, externalRef: null }, depois)).toBe(false);
+    expect(callPendente({ ...call, externalRef: null, sellerRef: '3' }, depois)).toBe(true);
+  });
 
   it('pendente só depois do fim da call', () => {
     expect(callPendente(call, new Date('2026-10-08T14:30:00.000Z'))).toBe(false);
@@ -60,7 +71,7 @@ describe('callPendente', () => {
   });
 
   it('sem fim gravado, a call dura uma hora', () => {
-    const semFim = { type: 'MEETING', date: '2026-10-08T14:00:00.000Z' };
+    const semFim = { type: 'MEETING', date: '2026-10-08T14:00:00.000Z', sellerRef: '3' };
     expect(fimDaCall(semFim).toISOString()).toBe('2026-10-08T15:00:00.000Z');
     expect(callPendente(semFim, new Date('2026-10-08T14:59:00.000Z'))).toBe(false);
   });

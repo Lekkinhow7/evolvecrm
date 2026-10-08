@@ -59,12 +59,28 @@ export function fimDaCall(call: { date: string; endsAt?: string | null }): Date 
   return new Date(new Date(call.date).getTime() + DURACAO_CALL_MIN * 60_000);
 }
 
-/** Call que já terminou, não foi cancelada e ainda está sem resultado. */
+/**
+ * Call de vendedor: reunião que veio da Marina (tem agendamento de origem) ou
+ * que tem vendedor. Reunião comum do CRM não cobra resultado de ninguém.
+ */
+export function ehCallDeVendedor(call: { type: string; externalRef?: string | null; sellerRef?: string | null }): boolean {
+  return call.type === 'MEETING' && Boolean(call.sellerRef || agendamentoDaAtividade(call.externalRef));
+}
+
+/** Call de vendedor que já terminou, não foi cancelada e ainda está sem resultado. */
 export function callPendente(
-  call: { type: string; date: string; endsAt?: string | null; callResult?: string | null; visitStatus?: string | null },
+  call: {
+    type: string;
+    date: string;
+    endsAt?: string | null;
+    callResult?: string | null;
+    visitStatus?: string | null;
+    externalRef?: string | null;
+    sellerRef?: string | null;
+  },
   agora: Date = new Date(),
 ): boolean {
-  if (call.type !== 'MEETING') return false;
+  if (!ehCallDeVendedor(call)) return false;
   if (call.callResult) return false;
   if (call.visitStatus === 'cancelada') return false;
   return fimDaCall(call).getTime() <= agora.getTime();
