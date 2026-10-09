@@ -53,6 +53,10 @@ const BodySchema = z
     meeting_url: z.string().trim().url().max(500).optional(),
     /** O que a Marina coletou na conversa (resumo comercial). */
     description: z.string().trim().max(4000).optional(),
+    /** Vendedor da reunião, escolhido pelo rodízio no banco do agente. */
+    vendedor_nome: z.string().trim().min(1).max(120).optional(),
+    vendedor_whatsapp: z.string().trim().max(30).optional(),
+    vendedor_ref: z.string().trim().max(120).optional(),
   })
   .refine((v) => v.cancelada || Boolean(v.phone || v.deal_id), {
     message: 'Informe o telefone do cliente ou o negócio',
@@ -121,6 +125,9 @@ export async function POST(request: Request) {
       tipo: body.tipo,
       meetingUrl: body.meeting_url,
       description: body.description,
+      seller: body.vendedor_nome
+        ? { name: body.vendedor_nome, phone: body.vendedor_whatsapp ?? null, ref: body.vendedor_ref ?? null }
+        : null,
       appUrl,
     });
 

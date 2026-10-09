@@ -76,6 +76,8 @@ export interface EntradaAgendamento {
   meetingUrl?: string | null;
   /** O que a Marina coletou na conversa: aparece na ficha da reunião e da visita. */
   description?: string | null;
+  /** Vendedor que recebeu a reunião no rodízio (vem do banco do agente). */
+  seller?: { name: string; phone?: string | null; ref?: string | null } | null;
 }
 
 export interface ResultadoAgendamento {
@@ -370,6 +372,9 @@ export async function agendarVisita(
     type: reuniao ? 'MEETING' : 'VISITA',
     ...(reuniao ? { meeting_url: entrada.meetingUrl ?? null } : {}),
     ...(entrada.description ? { description: entrada.description } : {}),
+    ...(reuniao && entrada.seller?.name
+      ? { seller_label: entrada.seller.name, seller_phone: entrada.seller.phone ?? null, seller_ref: entrada.seller.ref ?? null }
+      : {}),
     date: inicio.toISOString(),
     ends_at: fim.toISOString(),
     visit_status: 'agendada',
@@ -399,6 +404,11 @@ export async function agendarVisita(
     if (entrada.addressNote) ajuste.address_note = entrada.addressNote;
     if (reuniao && entrada.meetingUrl) ajuste.meeting_url = entrada.meetingUrl;
     if (entrada.description) ajuste.description = entrada.description;
+    if (reuniao && entrada.seller?.name) {
+      ajuste.seller_label = entrada.seller.name;
+      ajuste.seller_phone = entrada.seller.phone ?? null;
+      ajuste.seller_ref = entrada.seller.ref ?? null;
+    }
     if (tecnico) {
       ajuste.technician_ref = tecnico.ref;
       ajuste.technician_label = tecnico.name;

@@ -82,11 +82,11 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
     const getActivityGradient = (type: Activity['type']) => {
         switch (type) {
             case 'CALL': return 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/50 hover:shadow-blue-500/70 border-blue-400';
-            case 'MEETING': return 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 border-purple-400';
+            // Reunião comercial em azul e visita técnica em laranja: as duas cores da marca, fáceis de separar de longe.
+            case 'MEETING': return 'bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg shadow-blue-600/50 hover:shadow-blue-600/70 border-blue-500';
             case 'EMAIL': return 'bg-gradient-to-br from-green-500 to-green-600 shadow-lg shadow-green-500/50 hover:shadow-green-500/70 border-green-400';
             case 'TASK': return 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/50 hover:shadow-orange-500/70 border-orange-400';
-            // Visita técnica tem cor própria para não se confundir com tarefa comercial.
-            case 'VISITA': return 'bg-gradient-to-br from-teal-500 to-teal-700 shadow-lg shadow-teal-500/50 hover:shadow-teal-500/70 border-teal-400';
+            case 'VISITA': return 'bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg shadow-orange-500/50 hover:shadow-orange-500/70 border-orange-400';
         }
     };
 
