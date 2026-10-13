@@ -4,12 +4,40 @@ import { createStaticAdminClient } from '@/lib/supabase/staticAdminClient';
 // Import from main module to ensure providers are registered
 import { getChannelRouter, transformMessage } from '@/lib/messaging';
 import type { SendMessageInput, MessageContent, DbMessagingMessage } from '@/lib/messaging';
+import { chamarFichaNoN8n } from '@/lib/calls/n8n';
 import {
   getConversationCache,
   setConversationCache,
 } from '@/lib/messaging/conversation-cache';
 
 type ChannelInfo = { id: string; channel_type: string; provider: string };
+
+/** Pausa do agente de IA: 5 minutos desde a última mensagem do consultor. */
+const PAUSA_AGENTE_MS = 5 * 60 * 1000;
+
+async function marcarAgentePausado(
+  admin: ReturnType<typeof createStaticAdminClient>,
+  conversationId: string,
+) {
+  const { data } = await admin.from('messaging_conversations').select('metadata').eq('id', conversationId).maybeSingle();
+  const meta = { ...((data?.metadata as Record<string, unknown> | null) || {}) };
+  const agente = { ...((meta.agente as Record<string, unknown>) || {}) };
+  if (agente.modo !== 'pausado_sem_prazo') {
+    agente.modo = 'pausado';
+    agente.ate = new Date(Date.now() + PAUSA_AGENTE_MS).toISOString();
+  }
+  agente.ultimo_consultor_em = new Date().toISOString();
+  meta.agente = agente;
+  await admin.from('messaging_conversations').update({ metadata: meta }).eq('id', conversationId);
+}
+
+/** Texto que vai para o histórico do agente (mídia vira rótulo + legenda). */
+function textoParaHistorico(content: MessageContent): string {
+  if (content.type === 'text') return content.text;
+  const rotulos: Record<string, string> = { image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento' };
+  const legenda = 'caption' in content && content.caption ? ` ${content.caption}` : '';
+  return `[${rotulos[content.type] || 'Mensagem'}]${legenda}`;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -175,6 +203,20 @@ export async function POST(request: NextRequest) {
               sent_at: new Date().toISOString(),
             })
             .eq('id', messageId);
+
+          // uazapi: o número é o mesmo do agente de IA. O n8n pausa o agente por 5 minutos
+          // e grava a fala do consultor no histórico dele; aqui fica o espelho para a tela.
+          if (channel.provider === 'uazapi') {
+            await marcarAgentePausado(supabaseAdmin, conversationId);
+            try {
+              await chamarFichaNoN8n('agente_consultor', {
+                identificador: `${String(externalContactId).replace(/\D/g, '')}@s.whatsapp.net`,
+                texto: textoParaHistorico(content as MessageContent),
+              });
+            } catch (erro) {
+              console.error('[messaging/messages] n8n não registrou a fala do consultor', erro instanceof Error ? erro.message : erro);
+            }
+          }
         } else {
           console.error('[messaging/messages] provider failure:', result.error);
           await supabaseAdmin

@@ -10,7 +10,7 @@
 export { BaseChannelProvider } from './base.provider';
 
 // WhatsApp providers
-export { ZApiWhatsAppProvider, MetaCloudWhatsAppProvider, EvolutionWhatsAppProvider } from './whatsapp';
+export { ZApiWhatsAppProvider, MetaCloudWhatsAppProvider, EvolutionWhatsAppProvider, UazapiWhatsAppProvider } from './whatsapp';
 export type {
   ZApiCredentials,
   ZApiWebhookPayload,
@@ -33,7 +33,7 @@ export type { ResendCredentials, ResendWebhookPayload } from './email';
 // =============================================================================
 
 import { registerProvider } from '../channel-factory';
-import { ZApiWhatsAppProvider, MetaCloudWhatsAppProvider, EvolutionWhatsAppProvider } from './whatsapp';
+import { ZApiWhatsAppProvider, MetaCloudWhatsAppProvider, EvolutionWhatsAppProvider, UazapiWhatsAppProvider } from './whatsapp';
 import { MetaInstagramProvider } from './instagram';
 import { ResendEmailProvider } from './email';
 
@@ -260,4 +260,31 @@ registerProvider({
     },
   ],
   features: ['media', 'read_receipts', 'qr_code'],
+});
+
+// Register uazapi provider
+registerProvider({
+  channelType: 'whatsapp',
+  providerName: 'uazapi',
+  constructor: UazapiWhatsAppProvider,
+  displayName: 'uazapi',
+  description: 'WhatsApp via uazapi. As mensagens chegam pelo n8n, no mesmo número do agente de IA.',
+  configFields: [
+    {
+      key: 'baseUrl',
+      label: 'Endereço da instância',
+      type: 'text',
+      required: true,
+      placeholder: 'https://suaempresa.uazapi.com',
+      helpText: 'O mesmo endereço que o n8n usa para enviar as mensagens do agente',
+    },
+    {
+      key: 'token',
+      label: 'Token da instância',
+      type: 'password',
+      required: true,
+      placeholder: 'token da instância na uazapi',
+    },
+  ],
+  features: ['media'],
 });

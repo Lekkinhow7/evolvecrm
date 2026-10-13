@@ -154,6 +154,36 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
       '4. Após salvar, configure o webhook apontando para a URL exibida',
     ],
   },
+  'whatsapp:uazapi': {
+    name: 'uazapi',
+    description: 'O mesmo número do agente de IA. As mensagens chegam pelo n8n e você responde daqui.',
+    official: false,
+    fields: [
+      {
+        key: 'baseUrl',
+        label: 'Endereço da instância',
+        type: 'text',
+        placeholder: 'Ex: https://suaempresa.uazapi.com',
+        required: true,
+        helpText: 'O mesmo endereço que o n8n usa para enviar as mensagens do agente.',
+      },
+      {
+        key: 'token',
+        label: 'Token da instância',
+        type: 'password',
+        placeholder: 'Token da instância na uazapi',
+        required: true,
+        helpText: 'Encontrado no painel da uazapi, na instância do número.',
+      },
+    ],
+    setupUrl: 'https://docs.uazapi.com/',
+    setupInstructions: [
+      '1. No painel da uazapi, abra a instância do número que o agente usa',
+      '2. Copie o endereço e o token da instância',
+      '3. Cole os dados nos campos abaixo',
+      '4. Na identificação do canal, use o número com DDI e DDD, só os dígitos',
+    ],
+  },
   'whatsapp:meta-cloud': {
     name: 'Meta Cloud API',
     description: 'API oficial da Meta. Requer verificação de negócio e templates aprovados.',
@@ -871,6 +901,14 @@ const WEBHOOK_INSTRUCTIONS: Record<string, { label: string; steps: string[]; doc
     ],
     docsUrl: 'https://doc.evolution-api.com/v2/pt/webhooks/webhook',
   },
+  'uazapi': {
+    label: 'uazapi',
+    steps: [
+      'Nada a configurar no painel da uazapi: o webhook dela continua apontando para o n8n',
+      'O n8n repassa uma cópia de cada mensagem para o CRM, no endereço abaixo',
+    ],
+    docsUrl: 'https://docs.uazapi.com/',
+  },
   'resend': {
     label: 'Resend',
     steps: [
@@ -892,6 +930,11 @@ function getWebhookUrl(provider: string, channelId: string): string {
     'meta': 'messaging-webhook-meta',
     'resend': 'messaging-webhook-resend',
   };
+  // uazapi: o n8n repassa as mensagens para a rota pública do próprio CRM.
+  if (provider === 'uazapi') {
+    const appUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${appUrl}/api/public/v1/whatsapp`;
+  }
   const fn = functionMap[provider] || 'messaging-webhook-zapi';
   return `${supabaseUrl}/functions/v1/${fn}/${channelId}`;
 }

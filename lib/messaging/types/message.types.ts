@@ -191,6 +191,8 @@ export interface ConversationView extends MessagingConversation {
   channelName: string;
   /** Channel provider (e.g. 'z-api', 'meta-cloud', 'resend'). Window expiry only applies to 'meta-cloud'. */
   channelProvider?: string;
+  /** Nome do agente de IA que atende no número (settings.agentName do canal). */
+  agentName?: string;
   /** Contact info (if linked) */
   contactName?: string;
   contactEmail?: string;

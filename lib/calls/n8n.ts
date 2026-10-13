@@ -9,7 +9,13 @@
  * @module lib/calls/n8n
  */
 
-export type AcaoFicha = 'tecnicos' | 'agendar_visita' | 'resultado';
+export type AcaoFicha =
+  | 'tecnicos'
+  | 'agendar_visita'
+  | 'resultado'
+  | 'agente_pausar'
+  | 'agente_devolver'
+  | 'agente_consultor';
 
 export class FichaN8nError extends Error {}
 
