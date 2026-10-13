@@ -193,7 +193,8 @@ export async function POST(request: Request) {
   if (!conversa.external_contact_name && (contato?.name || nomeContato)) ajustes.external_contact_name = contato?.name || nomeContato;
 
   // Quem escreveu: cliente, agente de IA (pela API) ou consultor no celular do número.
-  const consultorNoCelular = fromMe && message.wasSentByApi !== true;
+  // Mesmo critério do n8n: sem o campo wasSentByApi, não conta como consultor.
+  const consultorNoCelular = fromMe && message.wasSentByApi === false;
   const nomeAgente = String((canal.settings as Record<string, unknown> | null)?.agentName || 'Agente de IA');
   if (consultorNoCelular) {
     const meta = { ...((conversa.metadata as Record<string, unknown>) || {}) };
