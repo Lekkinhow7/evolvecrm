@@ -268,7 +268,9 @@ export const dealsService = {
         .select(`
           *,
           deal_items (*)
-        `);
+        `)
+        // Negócio arquivado (deleted_at) não aparece no quadro, igual aos contatos.
+        .is('deleted_at', null);
       if (options?.signal) dealsQuery = dealsQuery.abortSignal(options.signal);
       const { data, error } = await dealsQuery
         .order('created_at', { ascending: false })

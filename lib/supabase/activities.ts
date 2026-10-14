@@ -206,6 +206,8 @@ export const activitiesService = {
           *,
           deals:deal_id (title)
         `)
+        // Atividade arquivada (deleted_at) não aparece na agenda nem nos avisos.
+        .is('deleted_at', null)
         .order('date', { ascending: false })
         .limit(1000); // Safety limit for non-paginated access
 
