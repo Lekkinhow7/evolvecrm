@@ -4,7 +4,9 @@ import {
   agendamentoDaAtividade,
   callPendente,
   fimDaCall,
+  precisaRecado,
   refDoAgendamento,
+  RESULTADO_LABEL,
   ResultadoSchema,
   sugerirTecnico,
 } from '@/lib/calls/ficha';
@@ -107,13 +109,26 @@ describe('ResultadoSchema', () => {
     expect(ResultadoSchema.safeParse({ resultado: 'sem_interesse', motivo: 'preco' }).success).toBe(true);
   });
 
-  it('retornar pede a data', () => {
-    expect(ResultadoSchema.safeParse({ resultado: 'retornar' }).success).toBe(false);
-    expect(ResultadoSchema.safeParse({ resultado: 'retornar', retornarEm: 'amanhã' }).success).toBe(false);
-    expect(ResultadoSchema.safeParse({ resultado: 'retornar', retornarEm: '2026-10-09T13:00:00.000Z' }).success).toBe(true);
+  const recado = 'Síndico vai levar à assembleia do dia 30/10. Retomar perguntando a decisão e oferecer a visita técnica.';
+
+  it('retornar pede a data e o recado para a Marina', () => {
+    expect(ResultadoSchema.safeParse({ resultado: 'retornar', recadoMarina: recado }).success).toBe(false);
+    expect(ResultadoSchema.safeParse({ resultado: 'retornar', retornarEm: 'amanhã', recadoMarina: recado }).success).toBe(false);
+    expect(ResultadoSchema.safeParse({ resultado: 'retornar', retornarEm: '2026-10-09T13:00:00.000Z' }).success).toBe(false);
+    expect(ResultadoSchema.safeParse({ resultado: 'retornar', retornarEm: '2026-10-09T13:00:00.000Z', recadoMarina: recado }).success).toBe(true);
   });
 
-  it('não atendeu não pede nada', () => {
-    expect(ResultadoSchema.safeParse({ resultado: 'nao_atendeu' }).success).toBe(true);
+  it('no-show pede o recado para a Marina, com contexto', () => {
+    expect(RESULTADO_LABEL.nao_atendeu).toBe('No-show');
+    expect(ResultadoSchema.safeParse({ resultado: 'nao_atendeu' }).success).toBe(false);
+    expect(ResultadoSchema.safeParse({ resultado: 'nao_atendeu', recadoMarina: 'ligar' }).success).toBe(false);
+    expect(ResultadoSchema.safeParse({ resultado: 'nao_atendeu', recadoMarina: recado }).success).toBe(true);
+  });
+
+  it('agendar visita e sem interesse não pedem recado', () => {
+    expect(precisaRecado('agendar_visita')).toBe(false);
+    expect(precisaRecado('sem_interesse')).toBe(false);
+    expect(precisaRecado('retornar')).toBe(true);
+    expect(precisaRecado('nao_atendeu')).toBe(true);
   });
 });

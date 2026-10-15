@@ -24,8 +24,18 @@ export const RESULTADO_LABEL: Record<ResultadoCall, string> = {
   agendar_visita: 'Agendar visita',
   sem_interesse: 'Sem interesse',
   retornar: 'Retornar depois',
-  nao_atendeu: 'Não atendeu',
+  nao_atendeu: 'No-show',
 };
+
+/**
+ * Resultados em que quem volta a falar com o cliente é a Marina, e não o
+ * vendedor. Ela só tem o contexto da reunião pelo recado, então ele é obrigatório.
+ */
+const RESULTADOS_COM_RECADO: ResultadoCall[] = ['retornar', 'nao_atendeu'];
+export const precisaRecado = (r: ResultadoCall | null | undefined) => Boolean(r && RESULTADOS_COM_RECADO.includes(r));
+
+/** Abaixo disso o recado não dá contexto para a Marina escrever ao cliente. */
+export const RECADO_MIN = 20;
 
 /** Mesmas chaves que o banco do agente aceita em motivo_recusa. */
 export const MOTIVOS_SEM_INTERESSE = {
@@ -122,6 +132,7 @@ export const ResultadoSchema = z
       .optional(),
     motivo: z.enum(Object.keys(MOTIVOS_SEM_INTERESSE) as [MotivoSemInteresse, ...MotivoSemInteresse[]]).optional(),
     retornarEm: z.string().min(10).optional(),
+    recadoMarina: z.string().trim().max(2000).optional(),
   })
   .refine((v) => v.resultado !== 'agendar_visita' || Boolean(v.visita), {
     message: 'Para agendar a visita, informe dia, hora, endereço e técnico',
@@ -131,6 +142,9 @@ export const ResultadoSchema = z
   })
   .refine((v) => v.resultado !== 'retornar' || Boolean(v.retornarEm), {
     message: 'Informe quando retornar',
+  })
+  .refine((v) => !precisaRecado(v.resultado) || (v.recadoMarina || '').length >= RECADO_MIN, {
+    message: 'Escreva o recado para a Marina, com o máximo de contexto',
   })
   .refine((v) => !v.visita || !Number.isNaN(new Date(v.visita.inicio).getTime()), {
     message: 'Data da visita inválida',

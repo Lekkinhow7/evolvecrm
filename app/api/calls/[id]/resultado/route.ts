@@ -114,6 +114,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         resultado: body.resultado,
         motivo: body.motivo || '',
         retornar_em: body.retornarEm ? new Date(body.retornarEm).toISOString() : '',
+        // Contexto que a Marina usa para voltar a falar com o cliente (retornar e no-show).
+        recado_marina: body.recadoMarina || '',
       });
     }
   } catch (erro) {
@@ -126,7 +128,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .from('activities')
     .update({
       call_result: body.resultado,
-      call_notes: anotacoes || null,
+      // O recado fica junto das anotações, para a equipe ver o que a Marina recebeu.
+      call_notes: [anotacoes, body.recadoMarina ? `Recado para a Marina: ${body.recadoMarina}` : ''].filter(Boolean).join('\n\n') || null,
       call_result_at: agora,
       return_at: body.retornarEm ? new Date(body.retornarEm).toISOString() : null,
       completed: true,

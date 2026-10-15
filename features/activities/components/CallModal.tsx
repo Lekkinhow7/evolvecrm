@@ -20,6 +20,8 @@ import {
   DURACAO_VISITA_MIN,
   fimDaCall,
   MOTIVOS_SEM_INTERESSE,
+  precisaRecado,
+  RECADO_MIN,
   RESULTADO_LABEL,
   RESULTADOS,
   type MotivoSemInteresse,
@@ -47,6 +49,14 @@ const ICONE_RESULTADO: Record<ResultadoCall, string> = {
   sem_interesse: '🚫',
   retornar: '🔁',
   nao_atendeu: '📵',
+};
+
+/** Exemplo do que vale escrever no recado, por resultado. */
+const EXEMPLO_RECADO: Partial<Record<ResultadoCall, string>> = {
+  retornar:
+    'Ex.: Síndico vai levar à assembleia de 30/10 e quem decide é o conselho. Gostou da torre de emergência e se preocupa com o prazo de instalação. Retomar perguntando a decisão e oferecer a visita técnica.',
+  nao_atendeu:
+    'Ex.: Cliente não entrou no Meet. Na conversa com a Marina disse que só pode à tarde e que a piscina é do clube. Oferecer um novo horário depois das 14h.',
 };
 
 export function CallModal({
@@ -84,7 +94,12 @@ export function CallModal({
   const [erroTecnicos, setErroTecnicos] = useState<string | null>(null);
   const [motivo, setMotivo] = useState<MotivoSemInteresse | ''>('');
   const [retornarEm, setRetornarEm] = useState('');
+  const [recado, setRecado] = useState('');
+  // Antes de salvar um resultado com recado, a ficha pede para revisar o texto.
+  const [confirmandoRecado, setConfirmandoRecado] = useState(false);
   const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => setConfirmandoRecado(false), [resultado, recado]);
 
   // Salva as anotações um pouco depois que o vendedor para de digitar.
   useEffect(() => {
@@ -140,6 +155,10 @@ export function CallModal({
 
   const salvar = async () => {
     if (!resultado) return;
+    if (precisaRecado(resultado) && !confirmandoRecado) {
+      setConfirmandoRecado(true);
+      return;
+    }
     setSalvando(true);
     const corpo: Record<string, unknown> = { resultado, anotacoes };
     if (resultado === 'agendar_visita') {
@@ -153,6 +172,7 @@ export function CallModal({
     }
     if (resultado === 'sem_interesse') corpo.motivo = motivo || undefined;
     if (resultado === 'retornar') corpo.retornarEm = retornarEm ? new Date(retornarEm).toISOString() : undefined;
+    if (precisaRecado(resultado)) corpo.recadoMarina = recado.trim();
 
     const r = await fetch(`/api/calls/${call.id}/resultado`, {
       method: 'POST',
@@ -174,7 +194,8 @@ export function CallModal({
     !salvando &&
     (resultado !== 'agendar_visita' || Boolean(inicioVisita && endereco.trim().length >= 3 && tecnicoId)) &&
     (resultado !== 'sem_interesse' || Boolean(motivo)) &&
-    (resultado !== 'retornar' || Boolean(retornarEm));
+    (resultado !== 'retornar' || Boolean(retornarEm)) &&
+    (!precisaRecado(resultado) || recado.trim().length >= RECADO_MIN);
 
   const resumo = (
     <>
@@ -211,13 +232,27 @@ export function CallModal({
           <button onClick={onClose} className="rounded-lg px-4 py-2 text-slate-600 text-sm dark:text-slate-300">
             Fechar
           </button>
+          {!call.callResult && confirmandoRecado && (
+            <button
+              onClick={() => setConfirmandoRecado(false)}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 text-sm dark:border-white/10 dark:text-slate-200"
+            >
+              Voltar e completar
+            </button>
+          )}
           {!call.callResult && (
             <button
               onClick={salvar}
               disabled={!podeSalvar}
               className="rounded-lg bg-primary-600 px-4 py-2 font-medium text-sm text-white disabled:opacity-50"
             >
-              {salvando ? 'Salvando...' : resultado === 'agendar_visita' ? 'Agendar visita' : 'Salvar resultado'}
+              {salvando
+                ? 'Salvando...'
+                : resultado === 'agendar_visita'
+                  ? 'Agendar visita'
+                  : confirmandoRecado
+                    ? 'Confirmar recado e salvar'
+                    : 'Salvar resultado'}
             </button>
           )}
         </>
@@ -427,8 +462,38 @@ export function CallModal({
                 </div>
               )}
 
-              {resultado === 'nao_atendeu' && (
-                <p className="text-slate-500 text-sm">Fica registrado para o follow-up tentar de novo.</p>
+              {precisaRecado(resultado) && (
+                <div className={resultado === 'retornar' ? 'mt-3' : ''}>
+                  <label className={rotulo} htmlFor="recado">💬 Recado para a Marina</label>
+                  <textarea
+                    id="recado"
+                    rows={5}
+                    className={`${campo} scrollbar-custom resize-none`}
+                    value={recado}
+                    onChange={(e) => setRecado(e.target.value)}
+                    placeholder={EXEMPLO_RECADO[resultado!]}
+                  />
+                  <p className="mt-1 text-slate-500 text-xs leading-relaxed">
+                    {resultado === 'nao_atendeu' ? 'O cliente não entrou na reunião. ' : ''}A Marina vai usar este recado para
+                    entrar em contato de novo com o cliente. Conte o que ficou combinado, o que o cliente disse, quem decide,
+                    prazos e o que ela deve propor. Preço e condições ficam nas anotações: a Marina não fala de valores.
+                  </p>
+                  {recado.trim().length > 0 && recado.trim().length < RECADO_MIN && (
+                    <p className="mt-1 text-amber-600 text-xs">Escreva um pouco mais: com pouco contexto a mensagem da Marina fica genérica.</p>
+                  )}
+                  {confirmandoRecado && (
+                    <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900 text-sm dark:border-amber-500/30 dark:bg-amber-900/20 dark:text-amber-200">
+                      <p className="font-semibold">⚠️ Antes de confirmar</p>
+                      <p className="mt-1">
+                        A inteligência artificial vai usar este recado para escrever ao cliente e tentar trazê-lo de volta para o
+                        processo de venda. Coloque o máximo de contexto possível: quanto mais detalhe, melhor a mensagem.
+                      </p>
+                      <p className="mt-2 whitespace-pre-line rounded-md bg-white/70 p-2 text-slate-800 dark:bg-white/5 dark:text-slate-200">
+                        {recado.trim()}
+                      </p>
+                    </div>
+                  )}
+                </div>
               )}
             </section>
           )}
