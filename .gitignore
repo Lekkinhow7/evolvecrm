@@ -93,6 +93,8 @@ test/*.md
 .sb-pentest-*.log
 debug_navigation_failed_*.png
 *.png
+# Design system assets are source files (imported by the components)
+!design-system/assets/**/*.png
 .env*.local
 .dmux/
 
