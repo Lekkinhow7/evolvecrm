@@ -205,7 +205,7 @@ function Library({ theme }: { theme: Theme }) {
         <div style={{ display: 'flex', gap: 20, height: 600 }}>
           <Sidebar active={nav} onNavigate={setNav} notifications user={{ initials: 'AT', name: 'Alice Teixeira', role: 'Administradora' }}
             quick={[{ id: 'painel', label: 'Painel', icon: 'activity' }, { id: 'negocios', label: 'Negócios', icon: 'briefcase' }, { id: 'inbox', label: 'Inbox', icon: 'message-circle' }, { id: 'agenda', label: 'Agenda', icon: 'calendar' }]}
-            groups={[{ label: 'Relacionamento', items: [{ id: 'contatos', label: 'Contatos', icon: 'users', count: 124 }, { id: 'mensagens', label: 'Mensagens', icon: 'mail' }] }, { label: 'Gestão', items: [{ id: 'relatorios', label: 'Relatórios', icon: 'chart-column' }, { id: 'config', label: 'Configurações', icon: 'settings' }] }]} />
+            groups={[{ label: 'Relacionamento', items: [{ id: 'contatos', label: 'Contatos', icon: 'users', count: 124, href: '#contatos' }, { id: 'mensagens', label: 'Mensagens', icon: 'mail' }] }, { label: 'Gestão', items: [{ id: 'relatorios', label: 'Relatórios', icon: 'chart-column' }, { id: 'config', label: 'Configurações', icon: 'settings' }] }]} />
           <Sidebar collapsed active={nav} onNavigate={setNav} user={{ initials: 'AT', name: 'Alice Teixeira', role: 'Admin' }}
             quick={[{ id: 'painel', label: 'Painel', icon: 'activity' }, { id: 'negocios', label: 'Negócios', icon: 'briefcase' }]}
             groups={[{ label: 'Relacionamento', items: [{ id: 'contatos', label: 'Contatos', icon: 'users' }] }]} />
