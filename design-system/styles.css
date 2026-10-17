@@ -1,0 +1,18 @@
+/* Alice Teixeira design system — entry point.
+ * Tokens (light on :root / [data-theme="light"], dark on .dark / [data-theme="dark"])
+ * followed by the component stylesheets. Fonts are loaded by next/font in app/layout.tsx;
+ * standalone reference pages load them from reference/fonts.css instead. */
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/effects.css';
+@import './tokens/base.css';
+@import './components/actions/actions.css';
+@import './components/forms/forms.css';
+@import './components/display/display.css';
+@import './components/cards/cards.css';
+@import './components/lists/lists.css';
+@import './components/charts/charts.css';
+@import './components/calendar/calendar.css';
+@import './components/overlays/overlays.css';
+@import './components/navigation/navigation.css';

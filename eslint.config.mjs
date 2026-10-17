@@ -24,7 +24,41 @@ const eslintConfig = defineConfig([
     // Git worktrees created by Claude Code agents — isolated copies, not source
     ".claude/worktrees/**",
     ".dmux/worktrees/**",
+
+    // Design system: standalone reference HTMLs + the Claude Design runtime bundle they load.
+    "design-system/reference/**",
   ]),
+
+  // Design system adherence (ported from the Claude Design export's _adherence.oxlintrc.json).
+  // 1) Components come from the public entry point, never from internals.
+  {
+    files: ["**/*.{ts,tsx}"],
+    ignores: ["design-system/**"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{
+          group: ["@/design-system/components/*", "**/design-system/components/*"],
+          message: "Import design-system components from '@/design-system', not component internals.",
+        }],
+      }],
+    },
+  },
+  // 2) Inside the library and its showcase, colours and fonts come from tokens.
+  {
+    files: ["design-system/**/*.{ts,tsx}", "app/design-system/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        {
+          selector: "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+          message: "Raw hex color — use a design-system color token via var().",
+        },
+        {
+          selector: "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Onest|Pixelify Sans))/i]",
+          message: "Font not provided by the design system. Available: Onest, Pixelify Sans.",
+        },
+      ],
+    },
+  },
 
   // Scripts are CommonJS by design; allow require() there.
   {

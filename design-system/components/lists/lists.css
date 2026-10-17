@@ -1,0 +1,57 @@
+/* ---------- DataTable ---------- */
+.at-table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.at-table{width:100%;border-collapse:collapse;font-size:var(--fs-body);color:var(--text-primary)}
+.at-table th{height:48px;padding:0 16px;text-align:left;font-size:var(--fs-caption);font-weight:var(--weight-regular);color:var(--text-secondary);border-bottom:1px solid var(--border-hairline);white-space:nowrap}
+.at-table td{height:64px;padding:0 16px;border-bottom:1px solid var(--border-hairline);white-space:nowrap}
+.at-table tr:last-child td{border-bottom:0}
+.at-table tbody tr{transition:background var(--dur-fast)}
+.at-table--clickable tbody tr{cursor:pointer}
+.at-table--clickable tbody tr:hover{background:var(--surface-hover)}
+.at-table .at-table__num{font-variant-numeric:tabular-nums}
+.at-table__chev{width:56px;text-align:right}
+.at-table--compact td{height:52px}
+/* stacked cards on mobile */
+@media (max-width:640px){
+.at-table--stack thead{display:none}
+.at-table--stack,.at-table--stack tbody,.at-table--stack tr,.at-table--stack td{display:block;width:100%}
+.at-table--stack tr{padding:12px 0;border-bottom:1px solid var(--border-hairline)}
+.at-table--stack tr:last-child{border-bottom:0}
+.at-table--stack td{height:auto;padding:3px 4px;border:0;white-space:normal;display:flex;justify-content:space-between;gap:12px}
+.at-table--stack td::before{content:attr(data-label);color:var(--text-secondary);font-size:var(--fs-caption)}
+.at-table--stack td.at-table__chev{display:none}
+}
+
+/* ---------- ScheduleItem ---------- */
+.at-sched{display:flex;align-items:center;gap:14px;min-height:66px;padding:12px 16px;border-radius:var(--radius-lg);background:var(--surface-sunken);border:1px solid var(--border-hairline)}
+.at-sched__time{width:44px;flex:none;font-size:var(--fs-body-sm);color:var(--text-secondary);font-variant-numeric:tabular-nums}
+.at-sched__bar{width:3px;align-self:stretch;border-radius:3px;flex:none;background:var(--cyan-500)}
+.at-sched__body{flex:1;min-width:0}
+.at-sched__title{font-size:var(--fs-body);font-weight:var(--weight-medium);color:var(--text-primary)}
+.at-sched__sub{font-size:var(--fs-caption);color:var(--text-secondary);margin-top:2px}
+
+/* ---------- TaskCard (kanban) ---------- */
+.at-taskcard{position:relative;padding:10px 12px 10px 16px;border-radius:var(--radius-md);background:var(--surface-card);border:1px solid var(--border-hairline);box-shadow:var(--shadow-xs);min-width:0}
+.at-taskcard::before{content:"";position:absolute;left:7px;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--bar,var(--cyan-500))}
+.at-taskcard__title{font-size:var(--fs-body-sm);font-weight:var(--weight-semibold);color:var(--text-primary);line-height:1.25}
+.at-taskcard__sub{font-size:var(--fs-micro);color:var(--text-secondary);margin-top:3px}
+
+/* ---------- RiskItem ---------- */
+.at-risk{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-top:1px solid var(--border-hairline)}
+.at-risk:first-child{border-top:0}
+.at-risk__icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none}
+.at-risk__body{flex:1;min-width:0}
+.at-risk__title{font-size:var(--fs-body);font-weight:var(--weight-semibold);color:var(--text-primary)}
+.at-risk__unit{font-size:var(--fs-caption);color:var(--text-secondary)}
+.at-risk__meta{font-size:var(--fs-caption);color:var(--text-primary);margin-top:2px}
+.at-risk__badge{align-self:center;flex:none}
+
+/* ---------- ListRow ---------- */
+.at-row{display:flex;align-items:center;gap:14px;width:100%;padding:14px 0;border:0;border-top:1px solid var(--border-hairline);background:transparent;text-align:left;color:var(--text-primary);cursor:default}
+.at-row:first-child{border-top:0}
+button.at-row{cursor:pointer}
+button.at-row:hover .at-row__chev{transform:translateX(2px);color:var(--text-primary)}
+.at-row__icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none;background:var(--surface-muted);color:var(--text-accent)}
+.at-row__body{flex:1;min-width:0}
+.at-row__title{font-size:var(--fs-body);font-weight:var(--weight-medium)}
+.at-row__sub{font-size:var(--fs-caption);color:var(--text-secondary);margin-top:2px}
+.at-row__chev{color:var(--text-tertiary);transition:transform var(--dur-fast) var(--ease-out),color var(--dur-fast)}

@@ -1,0 +1,22 @@
+<!-- @dsCard group="Components" viewport="700x470" name="Lists" subtitle="DataTable, ScheduleItem, TaskCard, RiskItem, ListRow" -->
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../reference.css"><script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script><script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script><script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script><script src="../_ds_bundle.js"></script><style>body{margin:0;padding:24px;background:var(--bg-app);min-height:100vh}.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.col{display:flex;flex-direction:column;gap:14px}.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 8px}</style></head><body><div id="root"></div><script type="text/babel">
+const NS = window.AliceTeixeiraDesignSystem_69f9f3;
+const { DataTable, ScheduleItem, TaskCard, RiskItem, ListRow, Badge, Panel } = NS;
+function App(){ return (<div className="col">
+  <Panel padding="sm"><DataTable chevron density="compact" columns={[{key:'d',label:'Date'},{key:'o',label:'Operation'},{key:'a',label:'Area'},{key:'q',label:'Quantity',numeric:true},{key:'s',label:'Status',render:v=><Badge tone={v==='Overdue'?'danger':'info'}>{v}</Badge>}]}
+    rows={[{d:'02.09.2026',o:'Batch start',a:'R-205',q:'318 000',s:'Recorded'},{d:'01.09.2026',o:'Transfer',a:'R-207',q:'120 500',s:'Overdue'}]} /></Panel>
+  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+    <div className="col" style={{gap:8}}>
+      <ScheduleItem time="09:00" title="Take swabs, R-207" subtitle="Microbiological control" tone="success" badge="Due today" badgeTone="info" />
+      <ScheduleItem time="11:30" title="Check pressure, P-2" subtitle="Utility systems" tone="info" badge="In progress" badgeTone="active" />
+      <div className="row" style={{gap:8}}><TaskCard title="Swabs R-207" subtitle="Surface monitoring" /><TaskCard title="Waste report" subtitle="Approval" tone="warning" /><TaskCard title="Renew check" subtitle="9 days overdue" tone="danger" /></div>
+    </div>
+    <Panel padding="sm" style={{gap:0}}>
+      <RiskItem tone="danger" title="Swabs R-207" unit="Laboratory" meta="Was due 03.09.2026" badge="Overdue" />
+      <RiskItem tone="warning" title="Pressure P-2" unit="Quality unit" meta="Due 05.09.2026" badge="Due soon" />
+      <ListRow icon="graduation-cap" title="Qualification" subtitle="Zone B entry confirmed" onClick={()=>{}} />
+    </Panel>
+  </div>
+</div>); }
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script></body></html>

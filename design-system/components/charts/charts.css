@@ -1,0 +1,65 @@
+/* ---------- shared chart bits ---------- */
+.at-chart{position:relative;width:100%;min-width:0;color:var(--text-primary)}
+.at-chart__axis{font-size:var(--fs-micro);fill:var(--viz-axis);color:var(--viz-axis)}
+.at-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;font-size:var(--fs-caption);color:var(--text-secondary)}
+.at-legend__item{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.at-legend__item b{font-weight:var(--weight-medium);color:var(--text-primary);margin-left:6px}
+.at-legend__sw{width:12px;height:12px;border-radius:4px;flex:none}
+.at-legend__sw--dot{width:9px;height:9px;border-radius:50%}
+.at-legend__sw--hatch{background:var(--viz-hatch)!important;box-shadow:inset 0 0 0 1px rgba(27,159,192,0.25)}
+
+/* ---------- ChartTooltip ---------- */
+.at-tip{position:relative;display:inline-flex;flex-direction:column;gap:4px;padding:12px 16px 14px;border-radius:14px;background:var(--ink-800);color:#fff;box-shadow:var(--shadow-tooltip);white-space:nowrap;pointer-events:none}
+.at-tip__title{font-size:var(--fs-micro);color:rgba(255,255,255,0.68)}
+.at-tip__row{display:flex;align-items:baseline;gap:8px}
+.at-tip__value{font-size:26px;font-weight:var(--weight-semibold);letter-spacing:-0.01em;line-height:1.1}
+.at-tip__unit{font-size:var(--fs-caption);color:rgba(255,255,255,0.8)}
+.at-tip__chip{align-self:flex-start;margin-top:4px}
+.at-tip--line .at-tip__row{gap:10px}
+.at-tip--line .at-tip__row::before{content:"";width:3px;height:16px;border-radius:2px;background:var(--cyan-400);align-self:center}
+.at-tip--line .at-tip__value{font-size:var(--fs-body);font-weight:var(--weight-semibold)}
+.at-tip--line .at-tip__label{font-size:var(--fs-caption);color:rgba(255,255,255,0.7)}
+.at-tip__arrow{position:absolute;width:10px;height:10px;background:var(--ink-800);transform:rotate(45deg)}
+.at-tip--left .at-tip__arrow{left:-4px;top:50%;margin-top:-5px}
+.at-tip--bottom .at-tip__arrow{bottom:-4px;left:50%;margin-left:-5px}
+
+/* ---------- BarChart ---------- */
+.at-bars{display:grid;grid-template-columns:auto 1fr;gap:0 12px}
+.at-bars__y{display:flex;flex-direction:column;justify-content:space-between;font-size:var(--fs-micro);color:var(--viz-axis);text-align:right;padding-bottom:30px}
+.at-bars__plot{position:relative;display:flex;align-items:stretch;gap:var(--bar-gap,14px);padding-bottom:30px}
+.at-bars__col{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0;cursor:default}
+.at-bars__stack{position:relative;width:100%;max-width:var(--bar-w,64px);height:100%;display:flex;align-items:flex-end}
+.at-bars__total{position:absolute;left:0;right:0;bottom:0;border-radius:var(--radius-pill);background:var(--viz-hatch)}
+.at-bars__val{position:absolute;left:0;right:0;bottom:0;border-radius:var(--radius-pill);background:var(--viz-bar);transition:height var(--dur-slow) var(--ease-out)}
+.at-bars__val--lime{background:var(--viz-bar-lime)}
+.at-bars__empty{position:absolute;inset:0;border-radius:var(--radius-pill);border:1.5px dashed var(--border-dashed)}
+.at-bars__dot{position:absolute;left:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--lime-400);box-shadow:0 0 0 4px rgba(188,219,74,0.28)}
+.at-bars__x{position:absolute;bottom:-28px;left:0;right:0;text-align:center;font-size:var(--fs-caption);color:var(--viz-axis)}
+.at-bars__col--hl .at-bars__x{color:var(--text-primary);font-weight:var(--weight-medium)}
+.at-bars__tip{position:absolute;z-index:3;left:calc(50% + 18px);transform:translateY(-50%)}
+
+/* ---------- Donut ---------- */
+.at-donut{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.at-donut__center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.at-donut__hole{position:absolute;border-radius:50%;background:var(--surface-card);box-shadow:0 6px 18px rgba(6,46,53,0.10)}
+.at-donut__value{position:relative;font-family:var(--font-pixel);font-size:var(--fs-kpi);line-height:1;color:var(--text-primary)}
+.at-donut__label{position:relative;font-size:var(--fs-caption);color:var(--text-secondary);margin-top:6px}
+
+/* ---------- TickGauge ---------- */
+.at-gauge{position:relative;display:inline-block;flex:none}
+.at-gauge__center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px}
+.at-gauge__value{font-family:var(--font-pixel);line-height:1;color:var(--text-primary);letter-spacing:0.02em}
+.at-gauge__unit{font-size:var(--fs-caption);color:var(--text-secondary);align-self:flex-end;margin-bottom:0.2em}
+
+/* ---------- Heatmap ---------- */
+.at-heat{display:grid;gap:4px;min-width:0}
+.at-heat__cell{aspect-ratio:1;border-radius:var(--radius-xs);background:var(--status-neutral-bg)}
+.at-heat__cell--1{background:#C3E8F1}
+.at-heat__cell--2{background:#5DBDD5}
+.at-heat__cell--3{background:var(--red-500)}
+[data-theme="dark"] .at-heat__cell--1{background:rgba(127,211,229,0.3)}
+.at-heat__months{display:grid;font-size:var(--fs-caption);color:var(--text-secondary)}
+.at-heat__days{display:grid;font-size:var(--fs-micro);color:var(--text-secondary)}
+
+/* ---------- Sparkline ---------- */
+.at-spark{display:block;overflow:visible}

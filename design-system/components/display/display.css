@@ -1,0 +1,39 @@
+/* ---------- Badge ---------- */
+.at-badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--radius-pill);font-size:var(--fs-caption);line-height:1;white-space:nowrap;font-weight:var(--weight-regular)}
+.at-badge--sm{height:20px;padding:0 8px;font-size:var(--fs-micro)}
+.at-badge--md{height:26px;padding:0 11px}
+.at-badge__dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.at-badge--info{background:var(--status-info-bg);color:var(--status-info-fg)}
+.at-badge--success{background:var(--status-success-bg);color:var(--status-success-fg)}
+.at-badge--warning{background:var(--status-warning-bg);color:var(--status-warning-fg)}
+.at-badge--danger{background:var(--status-danger-bg);color:var(--status-danger-fg)}
+.at-badge--active{background:var(--status-active-bg);color:var(--status-active-fg)}
+.at-badge--neutral{background:var(--status-neutral-bg);color:var(--status-neutral-fg)}
+.at-badge--onDark{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.86)}
+.at-badge--lime{background:rgba(166,203,46,0.22);color:#CDEA6E}
+
+/* ---------- Tag (zone / grade tags) ---------- */
+.at-tag{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:var(--radius-pill);font-size:var(--fs-body);font-weight:var(--weight-medium);white-space:nowrap;border:1px solid transparent}
+.at-tag--sm{height:32px;padding:0 12px;font-size:var(--fs-body-sm)}
+.at-tag--cyan{background:linear-gradient(180deg,#C4EEF6 0%,#A6E2EF 100%);color:var(--ink-800);box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)}
+.at-tag--outline{background:var(--surface-card);color:var(--text-primary);border-color:var(--border-hairline);font-weight:var(--weight-medium)}
+.at-tag--ghostDark{background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.22)}
+.at-tag__sub{font-size:var(--fs-micro);font-weight:var(--weight-regular);color:var(--text-secondary)}
+.at-tag--ghostDark .at-tag__sub{color:rgba(255,255,255,0.55)}
+.at-tag--round{width:40px;padding:0;justify-content:center}
+
+/* ---------- Avatar ---------- */
+.at-avatar{display:inline-flex;align-items:center;justify-content:center;flex:none;background:var(--gradient-avatar);color:var(--ink-800);font-weight:var(--weight-medium);letter-spacing:0.02em;box-shadow:inset 0 1px 0 rgba(255,255,255,0.5)}
+.at-avatar--light{background:var(--cyan-100);color:var(--cyan-700)}
+
+/* ---------- ProgressBar / SegmentedProgress ---------- */
+.at-progress{position:relative;height:6px;border-radius:var(--radius-pill);background:var(--viz-track);overflow:hidden}
+.at-progress__fill{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:linear-gradient(90deg,#7FD3E5,#1B9FC0);transition:width var(--dur-slow) var(--ease-out)}
+.at-progress--lime .at-progress__fill{background:linear-gradient(90deg,#D4EC6E,#A6CB2E)}
+.at-progress--danger .at-progress__fill{background:var(--red-500)}
+.at-segs{display:flex;gap:6px}
+.at-segs__s{flex:1;height:6px;border-radius:var(--radius-pill);background:var(--viz-track)}
+.at-segs__s--on{background:var(--cyan-300)}
+.at-segs__s--strong{background:var(--cyan-500)}
+.at-segs--onDark .at-segs__s{background:rgba(255,255,255,0.12)}
+.at-segs--onDark .at-segs__s--on{background:rgba(127,211,229,0.6)}

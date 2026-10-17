@@ -1,0 +1,15 @@
+<!-- @dsCard group="Components" viewport="700x430" name="Forms" subtitle="Search, TextField, Segmented, ChipGroup, FileDrop / FileItem" -->
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../reference.css"><script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script><script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script><script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script><script src="../_ds_bundle.js"></script><style>body{margin:0;padding:24px;background:var(--bg-app);min-height:100vh}.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.col{display:flex;flex-direction:column;gap:14px}.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 8px}</style></head><body><div id="root"></div><script type="text/babel">
+const NS = window.AliceTeixeiraDesignSystem_69f9f3;
+const { SearchInput, TextField, Segmented, ChipGroup, FileDrop, FileItem } = NS;
+function App(){ const [l,setL]=React.useState('EN'); const [f,setF]=React.useState('All operations'); return (<div className="col">
+  <div className="row"><SearchInput placeholder="Search the table" style={{width:240}} /><ChipGroup options={['All operations','Starts','Release']} value={f} onChange={setF} /></div>
+  <div className="row"><Segmented options={['PT','EN']} value={l} onChange={setL} /><Segmented variant="text" size="sm" options={['Week','Month']} value="Week" /><div style={{width:200,background:'var(--surface-glass)',borderRadius:12,padding:'0 8px'}}><SearchInput variant="bare" /></div></div>
+  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+    <TextField label="Number" defaultValue="Medical Book No. 77-0421" />
+    <TextField label="Valid through" defaultValue="14.02.2027" icon="calendar" error="Date is in the past" />
+  </div>
+  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}><FileDrop /><FileItem name="Medical book, spreads" meta="2.4 MB · 14.02.2026" /></div>
+</div>); }
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script></body></html>

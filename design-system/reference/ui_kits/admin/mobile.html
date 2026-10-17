@@ -1,0 +1,31 @@
+<!-- @dsCard group="Admin dashboard" viewport="1320x1000" name="Admin dashboard — mobile" subtitle="The same app at 390px: drawer nav, stacked KPIs, bottom-sheet modals" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin dashboard — mobile</title>
+<link rel="stylesheet" href="../../reference.css">
+<style>
+body{margin:0;min-height:100vh;background:var(--pattern-dots),radial-gradient(90% 80% at 80% 20%,#12505B 0%,#062E35 55%,#041E24 100%);color:#fff;padding:48px 56px;font-family:var(--font-sans)}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:40px}
+.head h1{margin:12px 0 0;font-size:56px;font-weight:400;line-height:1.02;letter-spacing:-0.035em}
+.head p{margin:0;max-width:360px;color:rgba(255,255,255,0.7);font-size:17px}
+.phones{display:flex;gap:40px;flex-wrap:wrap;justify-content:center}
+.ph{display:flex;flex-direction:column;gap:14px}
+.ph span{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.7)}
+.ph iframe{width:390px;height:780px;border:10px solid rgba(214,232,237,0.9);border-radius:52px;background:#E7F2F5;box-shadow:0 40px 80px rgba(0,0,0,0.35)}
+</style>
+</head>
+<body>
+<div class="head">
+<div><div class="at-eyebrow" style="color:rgba(255,255,255,0.8)">Mobile operations</div><h1>Ready.<br>Wherever work happens.</h1></div>
+<p>Every desktop feature stays reachable: the sidebar becomes a drawer behind «, tables stack into cards, modals become bottom sheets.</p>
+</div>
+<div class="phones">
+<div class="ph"><span>01 / Tasks</span><iframe src="index.html#tasks" title="Tasks — mobile"></iframe></div>
+<div class="ph"><span>02 / My pass</span><iframe src="index.html#pass" title="My pass — mobile"></iframe></div>
+<div class="ph"><span>03 / Analytics</span><iframe src="index.html#analytics" title="Analytics — mobile"></iframe></div>
+</div>
+</body>
+</html>

@@ -15,28 +15,31 @@ const config = {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['var(--font-inter)', 'Inter', 'sans-serif'],
-                display: ['Space Grotesk', 'sans-serif'],
+                // Alice design system (DESIGN.md): Onest + Pixelify Sans for KPI numerals.
+                // Colour values below mirror design-system/tokens/colors.css.
+                sans: ['var(--font-onest)', 'Onest', 'sans-serif'],
+                pixel: ['GNF', 'var(--font-pixelify)', 'Pixelify Sans', 'monospace'],
+                display: ['var(--font-onest)', 'Onest', 'sans-serif'],
                 serif: ['Cinzel', 'serif'],
             },
             colors: {
                 primary: {
-                    50: '#f0f9ff',
-                    100: '#e0f2fe',
-                    200: '#bae6fd',
-                    300: '#7dd3fc',
-                    400: '#38bdf8',
-                    500: '#0ea5e9',
-                    600: '#0284c7',
-                    700: '#0369a1',
-                    800: '#075985',
-                    900: '#0c4a6e',
+                    50: '#EAF8FB',
+                    100: '#D4F1F6',
+                    200: '#B3E7F0',
+                    300: '#7FD3E5',
+                    400: '#43B7D4',
+                    500: '#1B9FC0',
+                    600: '#1B8FAE',
+                    700: '#127A95',
+                    800: '#0E6278',
+                    900: '#0B4A5B',
                 },
                 dark: {
-                    bg: '#020617',
-                    card: '#0f172a',
-                    border: '#1e293b',
-                    hover: '#334155',
+                    bg: '#06171C',
+                    card: '#0D252C',
+                    border: '#173B45',
+                    hover: '#14343D',
                 },
                 // Semantic tokens — bridge CSS vars (globals.css) to Tailwind utilities
                 // Usage: bg-surface, text-muted, bg-success, text-error-text, etc.

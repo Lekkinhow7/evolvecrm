@@ -528,7 +528,7 @@ Veja o guia completo em: [docs/webhooks.md](./docs/webhooks.md)
 - **Banco de Dados**: Supabase (PostgreSQL)
 - **Autenticação**: Supabase Auth
 - **IA**: AI SDK v6 (Google Gemini, OpenAI, Anthropic)
-- **UI**: Radix UI + Tailwind CSS
+- **UI**: Radix UI + Tailwind CSS + design system próprio em `design-system/` (contrato visual em `DESIGN.md`, vitrine em `/design-system`)
 
 ### Instalação para Desenvolvimento
 

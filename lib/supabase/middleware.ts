@@ -88,7 +88,9 @@ export async function updateSession(request: NextRequest) {
 
     // Protected routes - redirect to login if not authenticated
     const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/auth')
-    const isPublicRoute = pathname === '/' || pathname.startsWith('/join') || isSetupRoute || isInstallRoute
+    // Vitrine do design system: aberta só em desenvolvimento (sem dados); em produção exige login.
+    const isDevShowcase = process.env.NODE_ENV === 'development' && pathname.startsWith('/design-system')
+    const isPublicRoute = pathname === '/' || pathname.startsWith('/join') || isSetupRoute || isInstallRoute || isDevShowcase
 
     if (!user && !isAuthRoute && !isPublicRoute) {
         const url = request.nextUrl.clone()

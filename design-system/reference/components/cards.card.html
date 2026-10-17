@@ -1,0 +1,21 @@
+<!-- @dsCard group="Components" viewport="700x420" name="Cards" subtitle="StatCard variants, MetricCard, Panel, InfoTile, KeyValueList" -->
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../reference.css"><script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script><script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script><script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script><script src="../_ds_bundle.js"></script><style>body{margin:0;padding:24px;background:var(--bg-app);min-height:100vh}.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.col{display:flex;flex-direction:column;gap:14px}.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 8px}.k{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}</style></head><body><div id="root"></div><script type="text/babel">
+const NS = window.AliceTeixeiraDesignSystem_69f9f3;
+const { StatCard, MetricCard, Panel, InfoTile, KeyValueList, Badge } = NS;
+function App(){ return (<div className="col">
+  <div className="k">
+    <StatCard variant="ink" label="Overdue" value="1" unit="needs action" />
+    <StatCard label="Due today" value="3" />
+    <StatCard variant="cyan" label="Started this week" value="+12" unit="batches" />
+    <StatCard variant="lime" label="Closed this week" value="14" />
+  </div>
+  <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:12}}>
+    <MetricCard icon="refresh-cw" badge="within limits" value="98" unit="%" title="Validation on schedule" subtitle="Cycle no. 4412 overdue" segments={[0,0,0,1,0,1,2]} />
+    <Panel title="Area workload" meta={<Badge tone="neutral">7 days</Badge>} padding="sm">
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}><InfoTile label="Status" value="Valid" /><InfoTile label="Remaining" value="5 months" /><InfoTile label="Access" value="Zones A/B, C, D" /></div>
+      <KeyValueList items={[{label:'Free',value:'4 shifts'},{label:'Validation · R-207',value:'1 shift'},{label:'Stopped · R-101',value:'0'}]} density="compact" />
+    </Panel>
+  </div>
+</div>); }
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script></body></html>

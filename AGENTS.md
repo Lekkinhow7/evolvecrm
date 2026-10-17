@@ -22,6 +22,12 @@
 - **NEVER use** `queryKeys.*.list({ filter })` for optimistic updates - those are separate caches
 - **Prefer** `setQueryData` over `invalidateQueries` for instant UI updates
 
+## Design System
+- **Contract**: `DESIGN.md` (root) is the visual contract and source of truth for tokens; `design-system/tokens/*.css` implements it — change both in the same commit
+- **New UI** comes from `@/design-system` (never import component internals — ESLint enforces it)
+- **No hardcoded** color, font, spacing or radius: use tokens (`var(--…)`) or the remapped Tailwind families
+- **Library map**, reference HTMLs and how to add a component: `design-system/README.md`; showcase at `/design-system`
+
 ## Code Style
 - TypeScript 5.x strict, React 19, Tailwind CSS v4, Radix UI primitives
 - Shared components in `components/`, feature modules in `features/`

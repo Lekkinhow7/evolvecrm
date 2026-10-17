@@ -1,0 +1,29 @@
+<!-- @dsCard group="Components" viewport="700x600" name="Charts" subtitle="BarChart, AreaChart, Donut, TickGauge, Heatmap, Sparkline, Tooltip, Legend" -->
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../reference.css"><script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script><script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script><script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script><script src="../_ds_bundle.js"></script><style>body{margin:0;padding:24px;background:var(--bg-app);min-height:100vh}.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.col{display:flex;flex-direction:column;gap:14px}.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 8px}</style></head><body><div id="root"></div><script type="text/babel">
+const NS = window.AliceTeixeiraDesignSystem_69f9f3;
+const { BarChart, AreaChart, DonutChart, TickGauge, Heatmap, Sparkline, ChartTooltip, Legend, Panel, Badge } = NS;
+const weeks = Array.from({length:26},(_,w)=>Array.from({length:7},(_,d)=>{const r=(Math.sin(w*7.3+d*3.1)+1)/2; return r>0.985?3:r>0.62?2:r>0.4?1:0;}));
+function App(){ return (<div className="col" style={{gap:12}}>
+  <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:12}}>
+    <Panel title="Daily workload" padding="sm" meta={<Legend items={[{label:'Total',shape:'hatch'},{label:'Finished',color:'var(--cyan-500)'}]} />}>
+      <BarChart height={200} barWidth={40} gap={10} yTicks={['100%','50%','0%']} activeIndex={1} data={[{label:'25',total:84,value:46},{label:'26',total:62,value:34,tooltip:{title:'Wednesday, 26.08',value:'62%',unit:'load',chip:'Completed 34%'}},{label:'27',total:50,value:30},{label:'28',total:55,value:22},{label:'29',total:92,value:52},{label:'30',empty:true}]} />
+    </Panel>
+    <Panel title="Tasks by status" padding="sm" meta={<Badge tone="neutral">now</Badge>}>
+      <div className="row" style={{justifyContent:'space-around'}}>
+        <DonutChart size={130} thickness={20} value="25" label="total" segments={[{value:14,color:'var(--ink-800)'},{value:7,color:'var(--cyan-500)'},{value:3,color:'var(--lime-500)'},{value:1,color:'var(--red-500)'}]} />
+        <div className="col" style={{gap:6,alignItems:'center'}}><TickGauge value={84} size={96} /><TickGauge variant="arc" color="cyan" value={72} display="720" unit="m³" size={110} /></div>
+      </div>
+    </Panel>
+  </div>
+  <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:12}}>
+    <Panel title="Product output" padding="sm" meta={<Badge tone="neutral">7 days</Badge>}>
+      <AreaChart height={150} data={[17700,18050,18150,18040,17860,18100,18450,18300]} min={17600} max={18600} yTicks={3} activeIndex={3} labels={['Mon','','Tue','Wed','Thu','Fri','Sat','Sun']} renderTooltip={(v)=><ChartTooltip variant="line" title="Wed, 30 Aug" label="Output" value={v.toLocaleString('ru-RU')} unit="units" />} />
+    </Panel>
+    <Panel title="Entry map" padding="sm" meta={<Badge tone="neutral">13 weeks</Badge>}>
+      <Heatmap weeks={weeks} cellGap={3} days={null} months={[{label:'Oct',col:0},{label:'Nov',col:5},{label:'Dec',col:10},{label:'Jan',col:14},{label:'Feb',col:19}]} />
+      <div className="row" style={{justifyContent:'space-between'}}><span style={{fontSize:13,color:'var(--text-secondary)'}}>On shift · 38 of 60</span><Sparkline data={[2,5,7,6,5,7,7.4,7.5]} width={110} height={36} /></div>
+    </Panel>
+  </div>
+</div>); }
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script></body></html>

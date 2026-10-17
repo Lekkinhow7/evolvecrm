@@ -8,10 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- (Upcoming features will appear here)
+- Design system Alice Teixeira em `design-system/`: tokens, 50 componentes React tipados, assets e HTMLs de referência, importados do Claude Design
+- `DESIGN.md` na raiz como contrato visual e fonte da verdade dos tokens
+- Rota `/design-system` com a biblioteca inteira, estados e os dois temas
+- Regras de lint de aderência ao design system (imports pela entrada pública; sem hex/fonte avulsa na biblioteca)
 
 ### Changed
-- (Upcoming changes will appear here)
+- Fontes Onest + Pixelify Sans no lugar de Inter
+- Cores, raios e sombras do CRM passam a vir dos tokens do design system (paleta Tailwind remapeada em `app/globals.css`)
+- `components/ui/button` usa o visual dos botões do design system (pill, ink/cyan)
 
 ### Fixed
 - (Upcoming fixes will appear here)

@@ -1,0 +1,10 @@
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:var(--font-sans);font-size:var(--fs-body);line-height:var(--lh-body);color:var(--text-primary);background:var(--bg-page);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+a{color:var(--text-link);text-decoration:none;text-underline-offset:3px}
+a:hover{color:var(--cyan-700);text-decoration:underline}
+.dark a:hover,[data-theme="dark"] a:hover{color:var(--cyan-300)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.at-eyebrow{font:var(--type-eyebrow);letter-spacing:var(--tracking-eyebrow);text-transform:uppercase;color:var(--text-primary)}
+.at-num{font-family:var(--font-pixel);font-variant-numeric:tabular-nums;letter-spacing:0.02em}

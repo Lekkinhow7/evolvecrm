@@ -1,0 +1,21 @@
+<!-- @dsCard group="Components" viewport="700x400" name="Calendar" subtitle="Month Calendar (markers, shift cells) and ShiftCard" -->
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../reference.css"><script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script><script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script><script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script><script src="../_ds_bundle.js"></script><style>body{margin:0;padding:24px;background:var(--bg-app);min-height:100vh}.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.col{display:flex;flex-direction:column;gap:14px}.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 8px}</style></head><body><div id="root"></div><script type="text/babel">
+const NS = window.AliceTeixeiraDesignSystem_69f9f3;
+const { Calendar, ShiftCard, Panel, Badge } = NS;
+function App(){ const [s,setS]=React.useState(9); return (<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+  <Panel title="September 2026" padding="sm" meta={<Badge tone="neutral">9 tasks</Badge>}>
+    <Calendar year={2026} month={8} selected={s} onSelect={setS} cellHeight={34} gap={2} markers={{3:true,9:true,15:true,17:true,22:true,25:true}} />
+  </Panel>
+  <div className="col" style={{gap:12}}>
+    <Panel title="This week" padding="sm">
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+        <ShiftCard dayLabel="Mon" dayNumber={7} name="Morning" time="07:00–15:30" zone="Grade A/B · line 2" />
+        <ShiftCard dayLabel="Wed" dayNumber={9} tone="lime" name="Day" time="11:00–19:30" zone="Grade C · washing" />
+        <ShiftCard dayLabel="Sat" dayNumber={12} tone="off" name="Day off" />
+      </div>
+    </Panel>
+    <Panel padding="sm"><Calendar year={2026} month={8} outside={false} cellHeight={22} gap={3} weekdays={['M','T','W','T','F','S','S']} cells={{1:'cyan',2:'lime',3:'cyan',4:'cyan',7:'cyan',8:'lime',9:'cyan',10:'cyan',11:'lime',13:'ring'}} /></Panel>
+  </div>
+</div>); }
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script></body></html>

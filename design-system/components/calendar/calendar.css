@@ -1,0 +1,30 @@
+/* ---------- Calendar ---------- */
+.at-cal{display:flex;flex-direction:column;gap:12px;min-width:0}
+.at-cal__grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--cal-gap,6px)}
+.at-cal__dow{text-align:center;font-size:var(--fs-caption);color:var(--text-secondary);padding:4px 0}
+.at-cal__day{position:relative;display:flex;align-items:center;justify-content:center;height:var(--cal-h,44px);border:0;border-radius:var(--radius-md);background:transparent;font-size:var(--fs-body);color:var(--text-primary);cursor:pointer;font-variant-numeric:tabular-nums;transition:background var(--dur-fast),box-shadow var(--dur-fast)}
+.at-cal__day:hover{background:var(--surface-hover)}
+.at-cal__day--muted{color:var(--slate-300)}
+.at-cal__day--weekend{color:var(--text-secondary)}
+.at-cal__day--sel,.at-cal__day--sel:hover{background:var(--ink-800);color:#fff}
+[data-theme="dark"] .at-cal__day--sel{background:var(--cyan-600)}
+.at-cal__mark{position:absolute;bottom:5px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--cyan-500)}
+.at-cal__day--sel .at-cal__mark{background:var(--lime-400)}
+.at-cal__day--cyan{background:#CDEDF4}
+.at-cal__day--cyan:hover{background:#BFE7F0}
+.at-cal__day--lime{background:#E6F3B8}
+.at-cal__day--lime:hover{background:#DCEE9F}
+.at-cal__day--ring{box-shadow:inset 0 0 0 2px var(--ink-800)}
+[data-theme="dark"] .at-cal__day--cyan{background:rgba(27,159,192,0.28)}
+[data-theme="dark"] .at-cal__day--lime{background:rgba(166,203,46,0.26)}
+[data-theme="dark"] .at-cal__day--ring{box-shadow:inset 0 0 0 2px var(--cyan-400)}
+[data-theme="dark"] .at-cal__day--muted{color:var(--text-tertiary)}
+
+/* ---------- ShiftCard (week strip) ---------- */
+.at-shift{display:flex;flex-direction:column;justify-content:space-between;gap:24px;min-height:140px;padding:14px 14px 16px;border-radius:var(--radius-lg);color:var(--ink-800)}
+.at-shift--cyan{background:linear-gradient(180deg,#8FDAEA 0%,#55BFD8 100%)}
+.at-shift--lime{background:linear-gradient(180deg,#DDF07F 0%,#B9D93F 100%)}
+.at-shift--off{background:var(--surface-sunken);color:var(--text-secondary);border:1px dashed var(--border-dashed)}
+.at-shift__name{font-size:var(--fs-body);font-weight:var(--weight-medium)}
+.at-shift__time{font-size:var(--fs-body-sm);margin-top:4px}
+.at-shift__zone{font-size:var(--fs-micro);opacity:0.8}

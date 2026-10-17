@@ -1,0 +1,4 @@
+/* Onest — Google Fonts (official family used by the brand).
+   GNF (Nytrock pixel font) is NOT bundled: no binary was provided.
+   Substitute: Pixelify Sans (Google Fonts). If GNF is installed locally it wins via the stack in typography.css. */
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&family=Pixelify+Sans:wght@400;500;600&display=swap');

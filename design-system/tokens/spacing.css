@@ -1,0 +1,18 @@
+:root{
+--space-0:0;--space-1:2px;--space-2:4px;--space-3:6px;--space-4:8px;--space-5:10px;--space-6:12px;--space-7:14px;--space-8:16px;--space-10:20px;--space-12:24px;--space-14:28px;--space-16:32px;--space-20:40px;--space-24:48px;--space-32:64px;--space-40:80px;
+
+--radius-xs:4px;   /* heatmap cells, tiny marks */
+--radius-sm:8px;   /* small tiles, icon wells */
+--radius-md:12px;  /* nav items, icon buttons, task cards */
+--radius-lg:16px;  /* quick-access tiles, inputs (boxed), list rows */
+--radius-xl:24px;  /* cards, KPI cards, panels, sidebar */
+--radius-2xl:32px; /* modals, showcase frames */
+--radius-pill:999px; /* buttons, chips, badges, search */
+
+--control-sm:32px;/* @kind spacing */--control-md:40px;/* @kind spacing */--control-lg:44px;/* @kind spacing */--control-xl:52px;/* @kind spacing */
+
+--sidebar-width:272px;/* @kind spacing */--sidebar-collapsed:84px;/* @kind spacing */--topbar-height:56px;/* @kind spacing */
+--content-max:1440px;/* @kind spacing */--gutter:24px;/* @kind spacing */--card-gap:16px;/* @kind spacing */--card-pad:24px;/* @kind spacing */--card-pad-sm:20px;/* @kind spacing */
+
+--bp-mobile:640px;/* @kind other */--bp-tablet:1024px;/* @kind other */--bp-desktop:1280px;/* @kind other */
+}

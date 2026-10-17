@@ -1,0 +1,48 @@
+/* ---------- Icon ---------- */
+.at-icon{display:inline-flex;flex:none;vertical-align:middle;line-height:0}
+.at-icon svg{display:block;width:100%;height:100%}
+.at-icon3d{display:block;object-fit:contain;flex:none}
+
+/* ---------- Button ---------- */
+.at-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:var(--radius-pill);font-family:var(--font-sans);font-weight:var(--weight-regular);white-space:nowrap;cursor:pointer;transition:background var(--dur-fast) var(--ease-out),border-color var(--dur-fast) var(--ease-out),color var(--dur-fast) var(--ease-out),transform var(--dur-fast) var(--ease-out),box-shadow var(--dur-fast) var(--ease-out);text-decoration:none;-webkit-tap-highlight-color:transparent}
+.at-btn:active:not(:disabled){transform:scale(0.98)}
+.at-btn:disabled{opacity:0.45;cursor:not-allowed}
+.at-btn--sm{height:var(--control-sm);padding:0 14px;font-size:var(--fs-body-sm)}
+.at-btn--md{height:var(--control-lg);padding:0 22px;font-size:var(--fs-body)}
+.at-btn--lg{height:var(--control-xl);padding:0 28px;font-size:var(--fs-body-lg)}
+.at-btn--block{display:flex;width:100%}
+.at-btn--primary{background:var(--action-primary-bg);color:var(--action-primary-fg)}
+.at-btn--primary:hover:not(:disabled){background:var(--action-primary-bg-hover)}
+.at-btn--secondary{background:var(--action-secondary-bg);color:var(--action-secondary-fg);border-color:var(--action-secondary-border);box-shadow:var(--shadow-xs)}
+.at-btn--secondary:hover:not(:disabled){background:var(--action-secondary-bg-hover)}
+.at-btn--outline{background:transparent;color:var(--action-outline-fg);border-color:var(--action-outline-border)}
+.at-btn--outline:hover:not(:disabled){background:var(--surface-hover)}
+.at-btn--accent{background:var(--action-accent-bg);color:var(--action-accent-fg)}
+.at-btn--accent:hover:not(:disabled){background:var(--cyan-600);box-shadow:var(--shadow-glow-cyan)}
+.at-btn--accent-outline{background:transparent;color:var(--text-accent);border-color:var(--cyan-500)}
+.at-btn--accent-outline:hover:not(:disabled){background:var(--status-info-bg)}
+.at-btn--ghost{background:transparent;color:var(--text-primary)}
+.at-btn--ghost:hover:not(:disabled){background:var(--surface-hover)}
+.at-btn--inverse{background:#FFFFFF;color:var(--ink-800)}
+.at-btn--inverse:hover:not(:disabled){background:var(--cyan-50)}
+
+/* ---------- IconButton ---------- */
+.at-iconbtn{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;border:1px solid transparent;cursor:pointer;color:var(--text-primary);transition:background var(--dur-fast) var(--ease-out),transform var(--dur-fast) var(--ease-out),color var(--dur-fast);-webkit-tap-highlight-color:transparent;padding:0}
+.at-iconbtn:active:not(:disabled){transform:scale(0.95)}
+.at-iconbtn:disabled{opacity:0.45;cursor:not-allowed}
+.at-iconbtn--sm{width:32px;height:32px;border-radius:10px}
+.at-iconbtn--md{width:40px;height:40px;border-radius:var(--radius-md)}
+.at-iconbtn--lg{width:44px;height:44px;border-radius:14px}
+.at-iconbtn--soft{background:var(--surface-card);border-color:var(--border-hairline);box-shadow:var(--shadow-xs)}
+.at-iconbtn--soft:hover:not(:disabled){background:var(--surface-hover)}
+.at-iconbtn--ghost{background:transparent}
+.at-iconbtn--ghost:hover:not(:disabled){background:var(--surface-hover)}
+.at-iconbtn--tinted{background:var(--surface-muted)}
+.at-iconbtn--tinted:hover:not(:disabled){background:var(--chip-bg-hover)}
+.at-iconbtn--dark{background:var(--ink-800);color:#fff}
+.at-iconbtn--dark:hover:not(:disabled){background:var(--ink-700)}
+.at-iconbtn--round{border-radius:var(--radius-pill)!important}
+.at-iconbtn--tile{width:auto;flex:1;min-width:44px;height:44px;border-radius:14px;background:var(--surface-card);border-color:var(--border-hairline)}
+.at-iconbtn--tile:hover:not(:disabled){background:var(--surface-hover)}
+.at-iconbtn__dot{position:absolute;top:9px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:var(--red-500);box-shadow:0 0 0 2px var(--surface-card)}
+.at-iconbtn--md .at-iconbtn__dot,.at-iconbtn--sm .at-iconbtn__dot{top:6px;right:6px}

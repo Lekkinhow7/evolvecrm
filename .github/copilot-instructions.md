@@ -51,6 +51,7 @@
 - Ao mexer na IA:
   - mantenha o fluxo principal em `/api/ai/chat` + `lib/ai/*`.
   - se tocar em queries com service role, garanta filtro por `organization_id` (exemplos em `lib/ai/tools.ts`).
+- Ao mexer em UI: siga o `DESIGN.md` (contrato visual e tokens). Componentes novos vêm de `@/design-system`, sem cor, fonte, espaçamento ou raio hardcoded; mapa em `design-system/README.md`.
 
 ## Code Review - Diretrizes para GitHub Copilot
 
@@ -62,6 +63,7 @@ Ao realizar revisão de código neste repositório:
   - Zero warnings no ESLint (configurado em `eslint.config.mjs`)
   - Componentes devem seguir padrão: `components/` para compartilhados, `features/` para módulos específicos
   - Imports devem usar alias `@/` (ex: `@/lib/utils`, `@/components/ui`)
+  - UI nova usa `@/design-system` e tokens do `DESIGN.md` — sinalize cor/fonte/espaçamento/raio hardcoded
 - **Verifique segurança multi-tenant**:
   - Todas as queries devem filtrar por `organization_id`
   - Service role queries devem sempre incluir filtro de tenant

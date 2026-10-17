@@ -1,0 +1,21 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Actions" subtitle="Button variants & sizes, IconButton" -->
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../reference.css"><script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script><script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script><script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script><script src="../_ds_bundle.js"></script><style>body{margin:0;padding:24px;background:var(--bg-app);min-height:100vh}.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.col{display:flex;flex-direction:column;gap:14px}.lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 8px}</style></head><body><div id="root"></div><script type="text/babel">
+const NS = window.AliceTeixeiraDesignSystem_69f9f3;
+const { Button, IconButton } = NS;
+function App(){ return (<div className="col">
+  <div><p className="lbl">Variants</p><div className="row">
+    <Button>Create task</Button><Button variant="secondary">Export</Button><Button variant="outline">Task management</Button>
+    <Button variant="accent">New round</Button><Button variant="accent-outline">Learn more</Button><Button variant="ghost" icon="plus">Add</Button>
+  </div></div>
+  <div><p className="lbl">Sizes · icon · disabled</p><div className="row">
+    <Button size="sm">Close</Button><Button size="md" icon="download">Export report</Button><Button size="lg">Save</Button><Button disabled>Disabled</Button>
+    <Button variant="secondary" iconRight="arrow-right" size="sm">All entries</Button>
+  </div></div>
+  <div><p className="lbl">IconButton</p><div className="row">
+    <IconButton icon="chevrons-left" label="Collapse" /><IconButton icon="sun" label="Theme" round /><IconButton icon="x" label="Close" round />
+    <IconButton icon="chevron-right" label="Open" variant="tinted" size="sm" round /><IconButton icon="arrow-right" label="Go" variant="dark" round size="sm" />
+    <div style={{display:'flex',gap:8,width:240}}><IconButton icon="bell" label="Notifications" variant="tile" dot /><IconButton icon="log-out" label="Log out" variant="tile" /></div>
+  </div></div>
+</div>); }
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script></body></html>

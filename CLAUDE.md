@@ -46,6 +46,7 @@ lib/               # Utilitários e serviços compartilhados
   query/           # Query keys factory + hooks TanStack Query
   supabase/        # Clients e helpers Supabase (ver seção abaixo)
   stores/          # Zustand stores (somente UI state efêmero)
+design-system/     # Design system Alice Teixeira (tokens, 50 componentes, assets, referências) — ver DESIGN.md
 context/           # React context providers — fachadas sobre TanStack Query
   AuthContext.tsx  # Fornece user, profile, organizationId, signOut
 supabase/
@@ -131,6 +132,16 @@ const model = getModel(config.provider, config.apiKey, config.model)
 **maybeSingle() vs single()**: usar `.maybeSingle()` para lookups que podem retornar 0 rows; `.single()` lança erro se não encontrar.
 
 **Schema Supabase**: tabela `board_stages` (não `stages`), coluna `"order"` (não `position`)
+
+### Design System
+
+- **Contrato**: `DESIGN.md` na raiz (formato DESIGN.md do Google Stitch) é o contrato visual e a fonte da verdade dos tokens. `design-system/tokens/*.css` implementa e tem que bater com ele — mudou um, muda o outro no mesmo commit.
+- **Componentes novos** saem da biblioteca: `import { Button, Panel } from '@/design-system'` (nunca de `@/design-system/components/...` — o ESLint bloqueia).
+- **Nada hardcoded**: cor, fonte, espaçamento e raio vêm de token (`var(--brand-cyan)`, `var(--radius-xl)`, `var(--space-8)`…). As famílias Tailwind `slate/gray/zinc/neutral/sky/cyan/primary` e `rounded-*`/`shadow-*` já estão remapeadas para os tokens em `app/globals.css`.
+- **Tema**: claro em `:root`, escuro em `.dark` (classe no `<html>`, via `ThemeContext`) ou `[data-theme="dark"]`.
+- **Fontes**: Onest + Pixelify Sans via `next/font` em `app/layout.tsx` (`--font-onest`, `--font-pixelify`).
+- **Mapa da biblioteca**, HTMLs de referência (`design-system/reference/`) e passo a passo para criar componente: `design-system/README.md`.
+- **Showcase**: rota `/design-system` (aberta sem login só em `development`).
 
 ### AI — Fluxo de Dados
 
