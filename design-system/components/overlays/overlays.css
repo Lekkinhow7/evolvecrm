@@ -4,7 +4,7 @@
 .at-modal{position:relative;display:flex;flex-direction:column;width:100%;max-width:var(--modal-w,600px);max-height:calc(100vh - 48px);border-radius:var(--radius-2xl);background:var(--surface-card);box-shadow:var(--shadow-modal);overflow:hidden;animation:at-rise var(--dur-slow) var(--ease-out)}
 .at-modal-layer--inline .at-modal{animation:none;max-height:none}
 .at-modal__head{position:relative;display:flex;align-items:flex-start;gap:16px;padding:32px 32px 24px;background:linear-gradient(120deg,var(--surface-card) 30%,#D4F0F6 100%)}
-[data-theme="dark"] .at-modal__head{background:linear-gradient(120deg,var(--surface-card) 30%,#103A44 100%)}
+.dark .at-modal__head,[data-theme="dark"] .at-modal__head{background:linear-gradient(120deg,var(--surface-card) 30%,#103A44 100%)}
 .at-modal--plain .at-modal__head{background:none}
 .at-modal__lead{flex:none}
 .at-modal__titles{flex:1;min-width:0}

@@ -52,11 +52,11 @@ describe('Layout (moldura do design system)', () => {
   it('atualiza --app-sidebar-width conforme o menu recolhido', async () => {
     useUIState.setState({ sidebarCollapsed: true });
     render(<Layout><p>conteudo</p></Layout>);
-    await waitFor(() => expect(document.documentElement.style.getPropertyValue('--app-sidebar-width')).toBe('calc(var(--sidebar-collapsed) + 32px)'));
+    await waitFor(() => expect(document.documentElement.style.getPropertyValue('--app-sidebar-width')).toBe('calc(var(--sidebar-collapsed) + 16px)'));
   });
 
   it('usa a largura cheia quando o menu está aberto', async () => {
     render(<Layout><p>conteudo</p></Layout>);
-    await waitFor(() => expect(document.documentElement.style.getPropertyValue('--app-sidebar-width')).toBe('calc(var(--sidebar-width) + 32px)'));
+    await waitFor(() => expect(document.documentElement.style.getPropertyValue('--app-sidebar-width')).toBe('calc(var(--sidebar-width) + 16px)'));
   });
 });

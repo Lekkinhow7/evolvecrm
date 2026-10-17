@@ -7,7 +7,7 @@
 .at-cal__day--muted{color:var(--slate-300)}
 .at-cal__day--weekend{color:var(--text-secondary)}
 .at-cal__day--sel,.at-cal__day--sel:hover{background:var(--ink-800);color:#fff}
-[data-theme="dark"] .at-cal__day--sel{background:var(--cyan-600)}
+.dark .at-cal__day--sel,[data-theme="dark"] .at-cal__day--sel{background:var(--cyan-600)}
 .at-cal__mark{position:absolute;bottom:5px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--cyan-500)}
 .at-cal__day--sel .at-cal__mark{background:var(--lime-400)}
 .at-cal__day--cyan{background:#CDEDF4}
@@ -15,10 +15,10 @@
 .at-cal__day--lime{background:#E6F3B8}
 .at-cal__day--lime:hover{background:#DCEE9F}
 .at-cal__day--ring{box-shadow:inset 0 0 0 2px var(--ink-800)}
-[data-theme="dark"] .at-cal__day--cyan{background:rgba(27,159,192,0.28)}
-[data-theme="dark"] .at-cal__day--lime{background:rgba(166,203,46,0.26)}
-[data-theme="dark"] .at-cal__day--ring{box-shadow:inset 0 0 0 2px var(--cyan-400)}
-[data-theme="dark"] .at-cal__day--muted{color:var(--text-tertiary)}
+.dark .at-cal__day--cyan,[data-theme="dark"] .at-cal__day--cyan{background:rgba(27,159,192,0.28)}
+.dark .at-cal__day--lime,[data-theme="dark"] .at-cal__day--lime{background:rgba(166,203,46,0.26)}
+.dark .at-cal__day--ring,[data-theme="dark"] .at-cal__day--ring{box-shadow:inset 0 0 0 2px var(--cyan-400)}
+.dark .at-cal__day--muted,[data-theme="dark"] .at-cal__day--muted{color:var(--text-tertiary)}
 
 /* ---------- ShiftCard (week strip) ---------- */
 .at-shift{display:flex;flex-direction:column;justify-content:space-between;gap:24px;min-height:140px;padding:14px 14px 16px;border-radius:var(--radius-lg);color:var(--ink-800)}

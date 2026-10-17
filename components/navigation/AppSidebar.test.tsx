@@ -42,6 +42,16 @@ describe('AppSidebar', () => {
     expect(screen.getByText('AS')).toBeTruthy();
   });
 
+  it('só com primeiro nome, as iniciais vêm do nome e não do e-mail', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'contato@x.com', first_name: 'Alex' }} onSignOut={() => {}} />);
+    expect(screen.getByText('AL')).toBeTruthy();
+  });
+
+  it('mostra a foto do perfil quando existe', () => {
+    const { container } = render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com', avatar_url: 'https://x.com/a.png' }} onSignOut={() => {}} />);
+    expect(container.querySelector('img[src="https://x.com/a.png"]')).toBeTruthy();
+  });
+
   it('o cartão do usuário abre o perfil', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} />);
     fireEvent.click(screen.getByText('ana'));

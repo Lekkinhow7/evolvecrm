@@ -57,7 +57,7 @@
 .at-heat__cell--1{background:#C3E8F1}
 .at-heat__cell--2{background:#5DBDD5}
 .at-heat__cell--3{background:var(--red-500)}
-[data-theme="dark"] .at-heat__cell--1{background:rgba(127,211,229,0.3)}
+.dark .at-heat__cell--1,[data-theme="dark"] .at-heat__cell--1{background:rgba(127,211,229,0.3)}
 .at-heat__months{display:grid;font-size:var(--fs-caption);color:var(--text-secondary)}
 .at-heat__days{display:grid;font-size:var(--fs-micro);color:var(--text-secondary)}
 

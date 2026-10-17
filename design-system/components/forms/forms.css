@@ -38,7 +38,7 @@
 /* ---------- FileDrop / FileItem ---------- */
 .at-drop{display:flex;align-items:center;gap:16px;padding:18px 20px;border:1.5px dashed var(--border-dashed);border-radius:var(--radius-lg);background:transparent;cursor:pointer;text-align:left;width:100%;transition:border-color var(--dur-fast),background var(--dur-fast)}
 .at-drop:hover,.at-drop--over{border-color:var(--cyan-400);background:var(--cyan-50)}
-[data-theme="dark"] .at-drop:hover{background:rgba(27,159,192,0.08)}
+.dark .at-drop:hover,[data-theme="dark"] .at-drop:hover{background:rgba(27,159,192,0.08)}
 .at-drop__well{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--surface-muted);color:var(--text-accent);flex:none}
 .at-drop__title{font-size:var(--fs-body);font-weight:var(--weight-semibold);color:var(--text-primary)}
 .at-drop__hint{font-size:var(--fs-body-sm);color:var(--text-secondary)}

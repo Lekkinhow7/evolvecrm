@@ -11,13 +11,15 @@ export interface AvatarProps {
   /** Corner radius; defaults to 30% of size. Use size/2 for a circle. */
   radius?: number;
   variant?: 'gradient' | 'light';
+  /** Photo URL; falls back to the initials when absent */
+  src?: string;
   className?: string;
   style?: React.CSSProperties;
 }
 
-export function Avatar({ initials, size = 40, radius, variant = 'gradient', className = '', style }: AvatarProps) {
+export function Avatar({ initials, size = 40, radius, variant = 'gradient', src, className = '', style }: AvatarProps) {
   const r = radius != null ? radius : Math.round(size * 0.3);
   return (
-    <span className={'at-avatar ' + (variant === 'light' ? 'at-avatar--light ' : '') + className} style={Object.assign({ width: size, height: size, borderRadius: r, fontSize: Math.round(size * 0.36) }, style)}>{initials}</span>
+    <span className={'at-avatar ' + (variant === 'light' ? 'at-avatar--light ' : '') + className} style={Object.assign({ width: size, height: size, borderRadius: r, fontSize: Math.round(size * 0.36), overflow: src ? 'hidden' : undefined }, style)}>{src ? <img src={src} alt="" width={size} height={size} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}</span>
   );
 }

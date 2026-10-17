@@ -36,7 +36,7 @@ export interface SidebarProps {
   linkAs?: React.ElementType;
   /** Called on hover/focus of an item with its id (route prefetch) */
   onPrefetch?: (id: string) => void;
-  user?: { initials: string; name: string; role: string; onClick?: () => void };
+  user?: { initials: string; name: string; role: string; avatarUrl?: string; onClick?: () => void };
   /** Show red dot on the bell */
   notifications?: boolean;
   onNotifications?: () => void;
@@ -55,7 +55,7 @@ interface ItemTarget { href?: string; linkAs?: React.ElementType; onPrefetch?: (
 export interface NavItemProps extends ItemTarget { icon?: string; label: string; active?: boolean; count?: number | string; onClick?: () => void }
 export interface NavGroupProps { label: string; defaultOpen?: boolean; children?: React.ReactNode }
 export interface QuickTileProps extends ItemTarget { icon: string; label: string; active?: boolean; onClick?: () => void }
-export interface UserCardProps { initials: string; name: string; role: string; onClick?: () => void }
+export interface UserCardProps { initials: string; name: string; role: string; avatarUrl?: string; onClick?: () => void }
 
 function ItemShell({ href, linkAs, onPrefetch, onClick, className, active, label, children }: ItemTarget & {
   onClick?: () => void; className: string; active: boolean; label: string; children: React.ReactNode;
@@ -105,10 +105,10 @@ export function QuickTile({ icon, label, active = false, onClick, href, linkAs, 
   );
 }
 
-export function UserCard({ initials, name, role, onClick }: UserCardProps) {
+export function UserCard({ initials, name, role, avatarUrl, onClick }: UserCardProps) {
   return (
-    <button type="button" className="at-user" onClick={onClick}>
-      <Avatar initials={initials} size={38} radius={11} />
+    <button type="button" className="at-user" onClick={onClick} aria-label={name}>
+      <Avatar initials={initials} src={avatarUrl} size={38} radius={11} />
       <span className="at-user__text"><div className="at-user__name">{name}</div><div className="at-user__role">{role}</div></span>
     </button>
   );
@@ -145,7 +145,7 @@ export function Sidebar({ brand, search = true, searchPlaceholder, quickLabel = 
             </>
           )}
         </div>
-        {user ? <UserCard initials={user.initials} name={user.name} role={user.role} onClick={user.onClick} /> : null}
+        {user ? <UserCard initials={user.initials} name={user.name} role={user.role} avatarUrl={user.avatarUrl} onClick={user.onClick} /> : null}
       </div>
     </aside>
   );

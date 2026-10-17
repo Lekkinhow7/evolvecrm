@@ -42,10 +42,10 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-/** Largura ocupada pela sidebar no desktop (sidebar + 16px de respiro de cada lado). */
+/** Largura ocupada pela sidebar no desktop (sidebar + 16px de respiro à esquerda; o wrapper usa p-4 pr-0). */
 const SIDEBAR_SPACE = {
-  open: 'calc(var(--sidebar-width) + 32px)',
-  collapsed: 'calc(var(--sidebar-collapsed) + 32px)',
+  open: 'calc(var(--sidebar-width) + 16px)',
+  collapsed: 'calc(var(--sidebar-collapsed) + 16px)',
 };
 
 /**

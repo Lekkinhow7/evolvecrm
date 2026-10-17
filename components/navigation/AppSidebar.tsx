@@ -15,15 +15,20 @@ export interface SidebarProfile {
   first_name?: string | null;
   last_name?: string | null;
   nickname?: string | null;
+  avatar_url?: string | null;
 }
 
-/** Nome e iniciais exibidos no cartão do usuário (mesma regra do menu antigo). */
+/**
+ * Nome e iniciais do cartão do usuário.
+ * Nome: apelido → primeiro nome → parte do e-mail → "Usuário".
+ * Iniciais: nome + sobrenome quando existem; senão, as duas primeiras letras do nome exibido.
+ */
 export function getUserIdentity(profile: SidebarProfile | null | undefined): { name: string; initials: string } {
   const emailUser = profile?.email?.split('@')[0];
   const name = profile?.nickname || profile?.first_name || emailUser || 'Usuário';
   const initials = profile?.first_name && profile?.last_name
     ? `${profile.first_name[0]}${profile.last_name[0]}`
-    : (profile?.nickname || profile?.email || 'U').substring(0, 2);
+    : name.substring(0, 2);
   return { name, initials: initials.toUpperCase() };
 }
 
@@ -63,7 +68,7 @@ export function AppSidebar({ collapsed, unreadCount, profile, onSignOut }: AppSi
       linkAs={Link}
       onPrefetch={onPrefetch}
       collapsed={collapsed}
-      user={{ initials, name, role: profile?.email || '', onClick: () => router.push('/profile') }}
+      user={{ initials, name, role: profile?.email || '', avatarUrl: profile?.avatar_url || undefined, onClick: () => router.push('/profile') }}
       footer={<IconButton variant="tile" icon="log-out" label="Sair" onClick={onSignOut} />}
     />
   );

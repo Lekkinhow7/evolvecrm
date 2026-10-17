@@ -52,7 +52,7 @@
 
 /* UserCard */
 .at-user{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px 10px 10px;border:0;border-radius:18px;background:var(--gradient-ink);color:#fff;text-align:left;cursor:pointer}
-[data-theme="dark"] .at-user{background:linear-gradient(120deg,#0F3C46,#14525E)}
+.dark .at-user,[data-theme="dark"] .at-user{background:linear-gradient(120deg,#0F3C46,#14525E)}
 .at-user__text{min-width:0;flex:1}
 .at-user__name{font-size:var(--fs-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .at-user__role{font-size:var(--fs-caption);color:rgba(255,255,255,0.64);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -74,7 +74,7 @@
 .at-pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px 24px;flex-wrap:wrap}
 .at-pagehead__title{margin:0;font:var(--type-page-title);letter-spacing:var(--tracking-heading);color:var(--text-primary)}
 .at-pagehead__sub{margin:8px 0 0;font-size:var(--fs-body);color:var(--slate-600)}
-[data-theme="dark"] .at-pagehead__sub{color:var(--text-secondary)}
+.dark .at-pagehead__sub,[data-theme="dark"] .at-pagehead__sub{color:var(--text-secondary)}
 .at-pagehead__actions{display:flex;gap:10px;flex-wrap:wrap}
 
 /* ---------- AppShell (responsive) ---------- */
