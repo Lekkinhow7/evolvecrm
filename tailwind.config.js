@@ -15,10 +15,10 @@ const config = {
     theme: {
         extend: {
             fontFamily: {
-                // Alice design system (DESIGN.md): Onest + Pixelify Sans for KPI numerals.
+                // Alice design system (DESIGN.md): Onest everywhere, numerals included.
                 // Colour values below mirror design-system/tokens/colors.css.
                 sans: ['var(--font-onest)', 'Onest', 'sans-serif'],
-                pixel: ['GNF', 'var(--font-pixelify)', 'Pixelify Sans', 'monospace'],
+                pixel: ['var(--font-onest)', 'Onest', 'sans-serif'],
                 display: ['var(--font-onest)', 'Onest', 'sans-serif'],
                 serif: ['Cinzel', 'serif'],
             },

@@ -53,8 +53,8 @@ const eslintConfig = defineConfig([
           message: "Raw hex color — use a design-system color token via var().",
         },
         {
-          selector: "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Onest|Pixelify Sans))/i]",
-          message: "Font not provided by the design system. Available: Onest, Pixelify Sans.",
+          selector: "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Onest))/i]",
+          message: "Font not provided by the design system. Available: Onest.",
         },
       ],
     },

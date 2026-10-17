@@ -42,13 +42,13 @@
 .at-donut{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .at-donut__center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .at-donut__hole{position:absolute;border-radius:50%;background:var(--surface-card);box-shadow:0 6px 18px rgba(6,46,53,0.10)}
-.at-donut__value{position:relative;font-family:var(--font-pixel);font-size:var(--fs-kpi);line-height:1;color:var(--text-primary)}
+.at-donut__value{position:relative;font-family:var(--font-pixel);font-size:var(--fs-kpi);line-height:1;font-weight:600;letter-spacing:-0.03em;font-variant-numeric:proportional-nums lining-nums;color:var(--text-primary)}
 .at-donut__label{position:relative;font-size:var(--fs-caption);color:var(--text-secondary);margin-top:6px}
 
 /* ---------- TickGauge ---------- */
 .at-gauge{position:relative;display:inline-block;flex:none}
 .at-gauge__center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px}
-.at-gauge__value{font-family:var(--font-pixel);line-height:1;color:var(--text-primary);letter-spacing:0.02em}
+.at-gauge__value{font-family:var(--font-pixel);line-height:1;color:var(--text-primary);font-weight:600;letter-spacing:-0.03em;font-variant-numeric:proportional-nums lining-nums}
 .at-gauge__unit{font-size:var(--fs-caption);color:var(--text-secondary);align-self:flex-end;margin-bottom:0.2em}
 
 /* ---------- Heatmap ---------- */

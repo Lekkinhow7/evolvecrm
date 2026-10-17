@@ -124,10 +124,17 @@ typography:
     lineHeight: 1
     letterSpacing: 0.14em
   kpi:
-    fontFamily: Pixelify Sans
+    fontFamily: Onest
     fontSize: 36px
-    fontWeight: 400
+    fontWeight: 600
     lineHeight: 1
+    letterSpacing: -0.03em
+  kpi-card:
+    fontFamily: Onest
+    fontSize: 34px
+    fontWeight: 600
+    lineHeight: 1
+    letterSpacing: -0.03em
 rounded:
   xs: 4px
   sm: 8px
@@ -248,9 +255,9 @@ Quatro cores de identidade: **Ink** `#062E35` (texto, botão primário, cards es
 
 **Onest** em tudo (300/400/500/600). Display em Regular com tracking apertado (−0.035em), 56–112px, em dois tons. Título de página 40px Semibold, título de card 18px Medium, corpo 15px, legenda 13px.
 
-Números de KPI, gauges e totais de donut usam a fonte pixel (**GNF**, com fallback **Pixelify Sans**, que é a fonte carregada hoje). É a "assinatura digital" da marca: use só em números, pela classe `.at-num` ou `font-pixel`.
+Números de KPI, gauges e totais de donut usam **Onest semibold (600)** com `letter-spacing: -0.03em` e dígitos proporcionais (`proportional-nums lining-nums`). O valor do `StatCard` tem 34px (`--fs-kpi-card`). Em tabelas e colunas de valores use dígitos de largura fixa (`tabular-nums`, classe `.at-num`). A fonte pixel (GNF / Pixelify Sans) foi abandonada em 17/10/2026: o token `--font-pixel` continua existindo por compatibilidade e aponta para a Onest.
 
-No app as fontes vêm de `next/font` (`app/layout.tsx`) pelas variáveis `--font-onest` e `--font-pixelify`.
+No app a fonte vem de `next/font` (`app/layout.tsx`) pela variável `--font-onest`.
 
 ## Layout
 
@@ -285,6 +292,6 @@ Os primitivos antigos de `components/ui/` continuam valendo para as telas existe
 - **Faça:** componentes novos com a biblioteca de `@/design-system`; cores, fontes, espaçamentos e raios pelos tokens (`var(--…)` ou as classes Tailwind remapeadas).
 - **Faça:** confira cada tela nos dois temas.
 - **Faça:** se faltar um componente, crie dentro de `design-system/components/<grupo>/` seguindo `design-system/README.md`.
-- **Não faça:** cor hex, `px` solto de espaçamento/raio ou fonte fora de Onest/Pixelify no código novo.
+- **Não faça:** cor hex, `px` solto de espaçamento/raio ou fonte fora da Onest no código novo.
 - **Não faça:** emoji, roxo, gradiente atrás de texto ou borda colorida à esquerda em card.
 - **Não faça:** use os ícones 3D e as imagens de `design-system/assets/` em produção. São recortes da referência e precisam ser trocados por originais.

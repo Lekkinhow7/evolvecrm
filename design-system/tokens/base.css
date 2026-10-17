@@ -7,4 +7,4 @@ a:hover{color:var(--cyan-700);text-decoration:underline}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:none;box-shadow:var(--focus-ring)}
 .at-eyebrow{font:var(--type-eyebrow);letter-spacing:var(--tracking-eyebrow);text-transform:uppercase;color:var(--text-primary)}
-.at-num{font-family:var(--font-pixel);font-variant-numeric:tabular-nums;letter-spacing:0.02em}
+.at-num{font-family:var(--font-pixel);font-weight:600;font-variant-numeric:tabular-nums lining-nums;letter-spacing:-0.01em}

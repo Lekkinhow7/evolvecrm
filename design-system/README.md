@@ -11,7 +11,7 @@ Veja tudo funcionando em **`/design-system`** (`npm run dev` → http://localhos
 | `index.ts` | Entrada pública. Importe sempre de `@/design-system`. |
 | `styles.css` | Entrada CSS completa (tokens + base + componentes). O app importa as partes em `app/globals.css`, sem `tokens/base.css`. |
 | `tokens/colors.css` | Paleta, cores semânticas, status, data-viz e gradientes. Claro em `:root`/`[data-theme="light"]`, escuro em `.dark`/`[data-theme="dark"]`. |
-| `tokens/typography.css` | Famílias (Onest, pixel), escala de tamanhos, pesos e papéis (`--type-*`). |
+| `tokens/typography.css` | Famílias (Onest; `--font-pixel` também aponta para a Onest), escala de tamanhos, pesos e papéis (`--type-*`). |
 | `tokens/spacing.css` | Espaços (`--space-*`), raios (`--radius-*`), alturas de controle e medidas de layout. |
 | `tokens/effects.css` | Sombras, blur e movimento. |
 | `tokens/base.css` | Reset e utilitários `.at-eyebrow` / `.at-num`. Só carregado nas páginas de referência. |
@@ -53,7 +53,7 @@ O `_ds_bundle.js` é uma cópia compilada da versão original dos componentes. E
 
 1. Escolha o grupo em `components/` (ou crie um, com seu `<grupo>.css`).
 2. Crie `Componente.tsx` com `'use client'`, a interface `ComponenteProps` exportada e as classes com prefixo `.at-componente`.
-3. Escreva os estilos em `<grupo>.css` usando só tokens (`var(--…)`): nada de hex, `px` de espaçamento/raio solto ou fonte fora de Onest/Pixelify. O ESLint barra hex e fontes nos `.tsx` desta pasta.
+3. Escreva os estilos em `<grupo>.css` usando só tokens (`var(--…)`): nada de hex, `px` de espaçamento/raio solto ou fonte fora da Onest. O ESLint barra hex e fontes nos `.tsx` desta pasta.
 4. Se criou um `<grupo>.css` novo, importe-o em `styles.css` e em `app/globals.css` (`layer(components)`).
 5. Exporte em `index.ts`.
 6. Adicione o componente, com todos os estados, ao showcase em `app/design-system/Showcase.tsx`.
