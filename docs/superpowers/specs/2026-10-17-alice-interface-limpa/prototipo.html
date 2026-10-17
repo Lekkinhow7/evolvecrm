@@ -1,0 +1,172 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alice — telas limpas</title>
+<script>if (location.search.includes('dark')) document.documentElement.setAttribute('data-theme', 'dark');</script>
+<link rel="stylesheet" href="../../../../design-system/reference/reference.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../../../design-system/reference/_ds_bundle.js"></script>
+<style>
+  body{margin:0}
+  .stack{display:flex;flex-direction:column;gap:var(--card-gap)}
+  .row{display:grid;gap:var(--card-gap)}
+  .k4{grid-template-columns:repeat(4,1fr)}
+  .split{grid-template-columns:1.55fr 1fr}
+  .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .toolbar .sp{flex:1}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--card-gap);align-items:start}
+  .col{display:flex;flex-direction:column;gap:8px}
+  .empty{border:1px dashed var(--border-dashed);border-radius:var(--radius-lg);padding:22px 12px;text-align:center;color:var(--text-tertiary);font-size:var(--fs-caption)}
+  .mono{font-family:var(--font-mono);font-size:var(--fs-body-sm);color:var(--text-secondary)}
+  .who{display:flex;align-items:center;gap:10px}
+  .who small{display:block;color:var(--text-tertiary);font-size:var(--fs-micro)}
+  .note{display:flex;align-items:center;gap:12px}
+  .note p{margin:0;color:var(--text-secondary);font-size:var(--fs-body-sm)}
+  .note .sp{flex:1}
+  /* Números: Onest no lugar da fonte pixelada */
+  :root{--font-pixel:'Onest',ui-sans-serif,system-ui,sans-serif}
+  .at-stat__value,.at-metric__value,.at-donut__value,.at-gauge__value{font-weight:600;letter-spacing:-0.03em;font-variant-numeric:proportional-nums lining-nums}
+  .at-stat__value{font-size:34px}
+</style></head>
+<body><div id="root"></div>
+<script type="text/babel">
+const { AppShell, Sidebar, Topbar, PageHeader, Button, StatCard, Panel, InfoTile, KeyValueList, DonutChart, RiskItem,
+  Badge, DataTable, Avatar, ChipGroup, SearchInput, Segmented, TaskCard, Legend } = window.AliceTeixeiraDesignSystem_69f9f3;
+
+const page = new URLSearchParams(location.search).get('p') || (location.hash || '#visao').slice(1);
+const theme = document.documentElement.getAttribute('data-theme') || 'light';
+
+function Side({ active }) {
+  return <Sidebar search={false} quickLabel="Acesso rápido" active={active} notifications
+    user={{ initials: 'AS', name: 'Alex Santana', role: 'Administrador' }}
+    quick={[{ id: 'inbox', label: 'Inbox', icon: 'inbox' }, { id: 'visao', label: 'Visão geral', icon: 'activity' },
+            { id: 'negocios', label: 'Negócios', icon: 'briefcase' }, { id: 'agenda', label: 'Atividades', icon: 'calendar' }]}
+    groups={[{ label: 'Relacionamento', items: [{ id: 'contatos', label: 'Contatos', icon: 'users', count: 214 }, { id: 'mensagens', label: 'Mensagens', icon: 'message-circle', count: 99 }] },
+             { label: 'Gestão', items: [{ id: 'relatorios', label: 'Relatórios', icon: 'chart-column' }, { id: 'config', label: 'Configurações', icon: 'settings' }] }]} />;
+}
+function Chrome({ active, crumbs, children }) {
+  return (
+    <AppShell sidebar={<Side active={active} />}>
+      <Topbar crumbs={crumbs} langs={[]} theme={theme} onToggleTheme={() => {}} org="Alice Teixeira Advocacia" />
+      {children}
+    </AppShell>
+  );
+}
+
+function Visao() {
+  return (
+    <Chrome active="visao" crumbs={[{ label: 'Comercial' }, { label: 'Visão geral' }]}>
+      <PageHeader title="Visão geral" subtitle="Resumo comercial de outubro: funil, carteira e atendimento."
+        actions={<><Segmented options={['Mês', '7 dias', 'Hoje']} value="Mês" /><Button variant="secondary" icon="download">Exportar</Button></>} />
+      <div className="row k4">
+        <StatCard variant="ink" label="Negócios parados" value="135" unit="precisam de ação" />
+        <StatCard label="Negócios ativos" value="126" unit="+46,5% vs. setembro" />
+        <StatCard label="Conversão" value="0,0" unit="%" />
+        <StatCard variant="cyan" label="Novos contatos" value="+126" unit="no mês" />
+      </div>
+      <div className="row split">
+        <Panel title="Atendimento por mensagens" meta={<Badge tone="neutral">este mês</Badge>}>
+          <div className="tiles">
+            <InfoTile label="Mensagens enviadas" value="2.073" />
+            <InfoTile label="Tempo da 1ª resposta" value="4h 12min" />
+            <InfoTile label="Taxa de resposta" value="85%" />
+            <InfoTile label="Conversas medidas" value="104" />
+          </div>
+          <KeyValueList density="compact" items={[{ label: 'Enviadas por pessoas', value: '0' }, { label: 'Enviadas pela IA', value: '0' }, { label: 'Respondidas', value: '102 de 120' }]} />
+        </Panel>
+        <Panel title="Carteira" meta={<Badge tone="neutral">214 contatos</Badge>}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            <DonutChart size={132} thickness={18} value="214" label="ativos" segments={[{ value: 214, color: 'var(--cyan-500)' }, { value: 0.001, color: 'var(--ink-800)' }]} />
+            <KeyValueList density="compact" items={[{ label: 'Ativos', value: '214' }, { label: 'Inativos', value: '0' }, { label: 'Perdidos', value: '0' }]} />
+          </div>
+        </Panel>
+      </div>
+      <Panel title="Precisam de retorno" meta={<Badge tone="warning">164 sem resposta</Badge>} actions={<Button variant="ghost" size="sm" iconRight="arrow-right">Ver todos</Button>}>
+        <RiskItem tone="warning" title="Felipe" unit="WhatsApp" meta="Sem valor nem probabilidade" badge="Retornar" />
+        <RiskItem tone="warning" title="Drogasil Matatu 1" unit="WhatsApp" meta="Sem valor nem probabilidade" badge="Retornar" />
+        <RiskItem tone="warning" title="José" unit="WhatsApp" meta="Sem valor nem probabilidade" badge="Retornar" />
+      </Panel>
+    </Chrome>
+  );
+}
+
+const PEOPLE = [
+  ['AT', 'Alice Teixeira Advocacia', 'Sem empresa vinculada', 'Lead', '+55 71 8841-7064', 'WhatsApp', '03.10.2026'],
+  ['GI', 'Gilmar', 'Sem empresa vinculada', 'Lead', '+55 71 9703-7791', 'WhatsApp', '03.10.2026'],
+  ['MA', 'Mag Anjos', 'Sem empresa vinculada', 'Lead', '+55 71 9232-8960', 'WhatsApp', '02.10.2026'],
+  ['JH', 'Jefferson Henrique', 'Fraude bancária', 'Qualificado', '+55 71 9188-2210', 'Site', '01.10.2026'],
+  ['DM', 'Daniela Maciel Prudêncio', 'Sem empresa vinculada', 'Lead', '+55 71 9654-0032', 'WhatsApp', '30.09.2026'],
+  ['RS', 'Ramon Santos', 'Sem empresa vinculada', 'Lead', '+55 71 9911-4478', 'WhatsApp', '29.09.2026'],
+].map(([i, n, s, e, t, o, d]) => ({ i, n, s, e, t, o, d }));
+
+function Contatos() {
+  return (
+    <Chrome active="contatos" crumbs={[{ label: 'Relacionamento' }, { label: 'Contatos' }]}>
+      <PageHeader title="Contatos" subtitle="Pessoas e empresas com quem o escritório conversa."
+        actions={<><Button variant="secondary" icon="download">Exportar</Button><Button icon="plus">Novo contato</Button></>} />
+      <Panel variant="tint" padding="sm">
+        <div className="note"><Badge tone="warning" dot>Duplicados</Badge><p>1 grupo de contatos com o mesmo telefone.</p><span className="sp" /><Button variant="secondary" size="sm">Revisar</Button></div>
+      </Panel>
+      <div className="toolbar">
+        <ChipGroup value="Todos" options={[{ value: 'Todos', label: 'Todos', count: 214 }, { value: 'Leads', label: 'Leads', count: 213 }, { value: 'Qualificados', label: 'Qualificados', count: 1 }, { value: 'Clientes', label: 'Clientes', count: 0 }, { value: 'Perdidos', label: 'Perdidos', count: 0 }]} />
+        <span className="sp" />
+        <SearchInput placeholder="Buscar por nome ou telefone" style={{ width: 280 }} />
+      </div>
+      <Panel padding="none">
+        <DataTable chevron rowKey="n" onRowClick={() => {}} rows={PEOPLE} columns={[
+          { key: 'n', label: 'Nome', render: (v, r) => <div className="who"><Avatar initials={r.i} size={32} variant="light" /><div>{v}<small>{r.s}</small></div></div> },
+          { key: 'e', label: 'Etapa', render: (v) => <Badge tone={v === 'Qualificado' ? 'info' : 'neutral'}>{v}</Badge> },
+          { key: 't', label: 'Telefone', render: (v) => <span className="mono">{v}</span> },
+          { key: 'o', label: 'Origem' },
+          { key: 's', label: 'Situação', render: () => <Badge tone="success" dot>Ativo</Badge> },
+          { key: 'd', label: 'Criado em', render: (v) => <span className="mono">{v}</span> },
+        ]} />
+      </Panel>
+    </Chrome>
+  );
+}
+
+function Coluna({ title, total, children }) {
+  return (
+    <Panel variant="tint" padding="sm" title={title} meta={<Badge tone="neutral">{total}</Badge>}>
+      <div className="col">{children}</div>
+    </Panel>
+  );
+}
+function Negocios() {
+  return (
+    <Chrome active="negocios" crumbs={[{ label: 'Comercial' }, { label: 'Negócios' }]}>
+      <PageHeader title="Negócios" subtitle="Funil de atendimento, do primeiro contato ao contrato."
+        actions={<><Button variant="secondary" icon="settings-2">Configurar funil</Button><Button icon="plus">Novo negócio</Button></>} />
+      <div className="toolbar">
+        <Segmented variant="text" options={['Atendimento', 'Pós-venda']} value="Atendimento" />
+        <ChipGroup value="Em aberto" options={['Em aberto', 'Ganhos', 'Perdidos']} />
+        <span className="sp" />
+        <SearchInput placeholder="Filtrar negócios" style={{ width: 240 }} />
+      </div>
+      <div className="cols">
+        <Coluna title="Novo lead" total="210">
+          <TaskCard title="Daniela Maciel Prudêncio" subtitle="WhatsApp · R$ 0,00" />
+          <TaskCard title="Ramon Santos" subtitle="WhatsApp · R$ 0,00" />
+          <TaskCard title="Alice Teixeira Advocacia" subtitle="WhatsApp · R$ 0,00" />
+        </Coluna>
+        <Coluna title="Em atendimento" total="1">
+          <TaskCard title="Tinho Fest" subtitle="WhatsApp · R$ 0,00" />
+        </Coluna>
+        <Coluna title="Consulta agendada" total="1">
+          <TaskCard title="Jefferson Henrique" subtitle="Site · Fraude bancária" tone="warning" />
+        </Coluna>
+        <Coluna title="Análise de documentos" total="0">
+          <div className="empty">Nenhum negócio nesta etapa.</div>
+        </Coluna>
+      </div>
+    </Chrome>
+  );
+}
+
+const Page = { visao: Visao, contatos: Contatos, negocios: Negocios }[page] || Visao;
+ReactDOM.createRoot(document.getElementById('root')).render(<Page />);
+</script>
+</body></html>
