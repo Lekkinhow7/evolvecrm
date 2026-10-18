@@ -42,9 +42,9 @@ describe('formatBadge', () => {
 
 describe('estrutura da sidebar', () => {
   it('os grupos seguem a ordem do menu; IA fica no topo e Configurações e Perfil no cartão do usuário', () => {
-    expect(SIDEBAR_GROUPS.map((g) => g.label)).toEqual(['Dia a dia', 'Comercial']);
+    expect(SIDEBAR_GROUPS.map((g) => g.label)).toEqual(['Dia a dia', 'Comercial', 'Conta']);
     const ids = SIDEBAR_GROUPS.flatMap((g) => g.items);
     for (const id of ids) expect(SHELL_NAV[id].group).toBe(SIDEBAR_GROUPS.find((g) => g.items.includes(id))?.label);
-    expect(ids).toEqual(['inbox', 'agenda', 'messaging', 'activities', 'dashboard', 'boards', 'contacts', 'reports']);
+    expect(ids).toEqual(['inbox', 'agenda', 'messaging', 'activities', 'dashboard', 'boards', 'contacts', 'reports', 'settings']);
   });
 });

@@ -70,7 +70,7 @@ describe('AppSidebar', () => {
     expect(screen.getByText('Administrador')).toBeTruthy();
   });
 
-  it('Configurações abre pelo botão do cartão do usuário', () => {
+  it('Configurações fica no menu, no grupo Conta', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} />);
     expect(screen.getByRole('link', { name: 'Configurações' }).getAttribute('href')).toBe('/settings');
   });

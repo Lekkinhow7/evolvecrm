@@ -73,9 +73,6 @@ function badge(count: number | undefined, tone: BadgeTone, hint: (n: number) => 
   return text && count ? { text: text + suffix, tone, hint: hint(count) } : undefined;
 }
 
-const iconButton =
-  'grid place-items-center size-9 shrink-0 rounded-lg border border-[var(--border-default)] bg-[var(--surface-card)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
-
 /** Menu lateral do CRM: botão Novo, grupos com avisos, funis do Kanban, agenda de hoje e cartão do usuário com Configurações e Sair. Recolher fica no topo. */
 export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals, funnels = [], nextAppointment, profile, onSignOut }: AppSidebarProps) {
   const pathname = usePathname();
@@ -192,27 +189,36 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
           {!collapsed && activityStats ? (
             <section aria-label="Hoje" className="mt-3 flex flex-col gap-2">
               <div className="px-1 text-[length:var(--fs-caption)] text-[var(--text-tertiary)]">Hoje</div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-col gap-1.5">
                 {[
-                  { n: activityStats.todayAppointments, label: activityStats.todayAppointments === 1 ? 'reunião' : 'reuniões', a11y: 'hoje', icon: 'calendar-days', href: '/agenda', alert: false },
-                  { n: activityStats.todayTasks, label: activityStats.todayTasks === 1 ? 'tarefa' : 'tarefas', a11y: 'hoje', icon: 'list-checks', href: '/activities?filter=today', alert: false },
-                  { n: activityStats.overdue, label: activityStats.overdue === 1 ? 'atrasada' : 'atrasadas', a11y: '', icon: 'alarm-clock', href: '/activities?filter=overdue', alert: activityStats.overdue > 0 },
+                  { n: activityStats.todayAppointments, label: 'Reuniões', a11y: activityStats.todayAppointments === 1 ? 'reunião hoje' : 'reuniões hoje', icon: 'calendar-days', href: '/agenda', alert: false },
+                  { n: activityStats.todayTasks, label: 'Tarefas', a11y: activityStats.todayTasks === 1 ? 'tarefa hoje' : 'tarefas hoje', icon: 'list-checks', href: '/activities?filter=today', alert: false },
+                  { n: activityStats.overdue, label: 'Atrasadas', a11y: activityStats.overdue === 1 ? 'atrasada' : 'atrasadas', icon: 'alarm-clock', href: '/activities?filter=overdue', alert: activityStats.overdue > 0 },
                 ].map((t) => (
                   <Link
                     key={t.label}
                     href={t.href}
-                    aria-label={`${t.n} ${t.label}${t.a11y ? ` ${t.a11y}` : ''}`}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-center shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
+                    aria-label={`${t.n} ${t.a11y}`}
+                    className={`flex items-center gap-2.5 rounded-xl border py-1.5 pl-1.5 pr-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
                       t.alert
-                        ? 'border-[var(--status-danger-bg)] bg-[var(--status-danger-bg)] hover:border-[var(--status-danger-fg)]'
-                        : 'border-[var(--border-hairline)] bg-[var(--surface-card)] hover:border-[var(--border-default)] hover:bg-[var(--surface-hover)]'
+                        ? 'border-[var(--red-300)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)] hover:border-[var(--status-danger-fg)]'
+                        : 'border-[var(--border-hairline)] bg-[var(--surface-sunken)] text-[var(--text-primary)] hover:border-[var(--border-default)] hover:bg-[var(--surface-hover)]'
                     }`}
                   >
-                    <Icon name={t.icon} size={16} className={t.alert ? 'text-[var(--status-danger-fg)]' : 'text-[var(--text-accent)]'} />
-                    <span className="flex flex-col items-center">
-                      <span className={`text-xl font-semibold leading-none ${t.alert ? 'text-[var(--status-danger-fg)]' : 'text-[var(--text-primary)]'}`}>{t.n}</span>
-                      <span className={`mt-1 text-xs leading-tight ${t.alert ? 'font-medium text-[var(--status-danger-fg)]' : 'text-[var(--text-secondary)]'}`}>{t.label}</span>
+                    <span className={`grid size-6 shrink-0 place-items-center rounded-md ${t.alert ? 'bg-[var(--surface-card)]' : 'bg-[var(--cyan-50)] text-[var(--text-accent)]'}`}>
+                      <Icon name={t.icon} size={14} />
                     </span>
+                    <span className="flex-1">{t.label}</span>
+                    <span
+                      className={`grid h-5 min-w-6 place-items-center rounded-full px-2 text-xs font-semibold ${
+                        t.alert
+                          ? 'bg-[var(--status-danger-solid)] text-[var(--text-inverse)]'
+                          : 'border border-[var(--border-hairline)] bg-[var(--surface-card)] text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {t.n}
+                    </span>
+                    <Icon name="chevron-right" size={14} className="text-[var(--text-quiet)]" />
                   </Link>
                 ))}
               </div>
@@ -252,13 +258,13 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
       </div>
 
       {/* Usuário, Configurações e Sair */}
-      <div className={`mt-3 flex items-center gap-2.5 border-t border-[var(--border-hairline)] pt-3 ${collapsed ? 'flex-col' : 'px-1'}`}>
+      <div className={`mt-3 flex items-center gap-2 border-t border-[var(--border-hairline)] pt-3 ${collapsed ? 'flex-col' : 'pl-1.5'}`}>
         <button
           type="button"
           onClick={() => router.push('/profile')}
           aria-label={`${name}, abrir perfil`}
           title={collapsed ? name : undefined}
-          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+          className="flex min-w-0 flex-1 items-center gap-4 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
         >
           <Avatar initials={initials} size={38} src={profile?.avatar_url || undefined} />
           {collapsed ? null : (
@@ -268,12 +274,13 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
             </span>
           )}
         </button>
-        {collapsed ? null : (
-          <Link href="/settings" className={iconButton} aria-label="Configurações" title="Configurações" onMouseEnter={() => prefetch('settings')}>
-            <Icon name="settings" size={18} />
-          </Link>
-        )}
-        <button type="button" className={iconButton} onClick={onSignOut} aria-label="Sair" title="Sair">
+        <button
+          type="button"
+          onClick={onSignOut}
+          aria-label="Sair"
+          title="Sair"
+          className="grid size-9 shrink-0 place-items-center rounded-lg text-[var(--text-quiet)] transition-colors hover:bg-[var(--status-danger-bg)] hover:text-[var(--status-danger-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+        >
           <Icon name="log-out" size={18} />
         </button>
       </div>

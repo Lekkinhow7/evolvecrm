@@ -45,12 +45,13 @@ export const SHELL_NAV: Record<ShellNavId, ShellNavItem> = {
 };
 
 /**
- * Grupos do menu lateral. Configurações e Perfil ficam no cartão do usuário, no rodapé.
+ * Grupos do menu lateral. O Perfil abre pelo cartão do usuário, no rodapé, onde também fica o Sair.
  * Assistente IA e Sugestões da IA não entram no menu: a IA abre pelo botão do topo, à direita.
  */
 export const SIDEBAR_GROUPS: { label: CrumbGroup; items: ShellNavId[] }[] = [
   { label: 'Dia a dia', items: ['inbox', 'agenda', 'messaging', 'activities'] },
   { label: 'Comercial', items: ['dashboard', 'boards', 'contacts', 'reports'] },
+  { label: 'Conta', items: ['settings'] },
 ];
 
 /** Rotas antigas que pertencem a um item do menu. */
