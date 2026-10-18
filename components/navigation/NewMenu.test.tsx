@@ -20,7 +20,7 @@ describe('NewMenu', () => {
     expect(items.map((i) => i.getAttribute('href'))).toEqual([
       '/contacts?novo=1',
       '/boards?novo=1',
-      '/activities?novo=reuniao',
+      '/agenda?novo=reuniao',
       '/activities?novo=tarefa',
     ]);
     expect(screen.getByText('Nova reunião')).toBeTruthy();

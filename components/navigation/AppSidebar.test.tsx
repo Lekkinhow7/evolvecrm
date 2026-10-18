@@ -95,7 +95,7 @@ describe('AppSidebar', () => {
     expect(screen.getByText('14:30')).toBeTruthy();
     expect(screen.getByText('Reunião · Consulta')).toBeTruthy();
     expect(screen.getByText('Contrato Marcos')).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Abrir agenda/ }).getAttribute('href')).toBe('/activities?view=calendar');
+    expect(screen.getByRole('link', { name: /Abrir agenda/ }).getAttribute('href')).toBe('/agenda');
   });
 
   it('sem compromisso, o cartão avisa que não há nada marcado', () => {
@@ -129,7 +129,7 @@ describe('AppSidebar', () => {
   it('mostra o resumo de hoje e destaca as atrasadas', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
       activityStats={{ todayAppointments: 1, todayTasks: 2, overdue: 3 }} />);
-    expect(screen.getByRole('link', { name: '1 reunião hoje' }).getAttribute('href')).toBe('/activities?filter=today');
+    expect(screen.getByRole('link', { name: '1 reunião hoje' }).getAttribute('href')).toBe('/agenda');
     expect(screen.getByRole('link', { name: '2 tarefas hoje' })).toBeTruthy();
     expect(screen.getByRole('link', { name: '3 atrasadas' }).getAttribute('href')).toBe('/activities?filter=overdue');
   });
@@ -144,5 +144,13 @@ describe('AppSidebar', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
       funnels={[{ id: 'f1', name: 'Previdenciário' }]} />);
     expect(screen.queryByRole('list', { name: 'Funis' })).toBeNull();
+  });
+
+  it('a Agenda mostra quantos compromissos tem hoje', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
+      activityStats={{ todayAppointments: 3, todayTasks: 0, overdue: 0 }} />);
+    const agenda = screen.getByRole('link', { name: 'Agenda, 3 compromissos hoje' });
+    expect(agenda.getAttribute('href')).toBe('/agenda');
+    expect(agenda.textContent).toContain('3 hoje');
   });
 });

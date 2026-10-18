@@ -14,7 +14,14 @@ import { useToast } from '@/context/ToastContext';
  * Componente React `ActivitiesPage`.
  * @returns {Element} Retorna um valor do tipo `Element`.
  */
-export const ActivitiesPage: React.FC = () => {
+export interface ActivitiesPageProps {
+    /** Abre direto no calendário (rota /agenda). */
+    initialView?: 'list' | 'calendar';
+    title?: string;
+    subtitle?: string;
+}
+
+export const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ initialView, title, subtitle }) => {
     const {
         viewMode,
         setViewMode,
@@ -39,7 +46,7 @@ export const ActivitiesPage: React.FC = () => {
         handleDeleteActivity,
         handleToggleComplete,
         handleSubmit
-    } = useActivitiesController();
+    } = useActivitiesController({ initialView });
 
     const { addToast } = useToast();
     const [selectedActivities, setSelectedActivities] = useState<Set<string>>(new Set());
@@ -81,6 +88,8 @@ export const ActivitiesPage: React.FC = () => {
                 setViewMode={setViewMode}
                 onNewActivity={handleNewActivity}
                 dateFilter={dateFilter}
+                title={title}
+                subtitle={subtitle}
             />
 
             {viewMode === 'list' ? (

@@ -14,7 +14,7 @@ import {
 export const NEW_ITEMS = [
   { label: 'Novo contato', hint: 'Cadastrar cliente ou lead', icon: 'user-plus', href: '/contacts?novo=1' },
   { label: 'Novo negócio', hint: 'Abrir oportunidade no Kanban', icon: 'briefcase', href: '/boards?novo=1' },
-  { label: 'Nova reunião', hint: 'Marcar horário com cliente', icon: 'calendar-plus', href: '/activities?novo=reuniao' },
+  { label: 'Nova reunião', hint: 'Marcar horário com cliente', icon: 'calendar-plus', href: '/agenda?novo=reuniao' },
   { label: 'Nova tarefa', hint: 'Lembrete para a equipe', icon: 'list-plus', href: '/activities?novo=tarefa' },
 ] as const;
 

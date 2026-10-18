@@ -6,6 +6,7 @@ import type { RouteName } from '@/lib/prefetch';
  */
 export type ShellNavId =
   | 'inbox'
+  | 'agenda'
   | 'messaging'
   | 'activities'
   | 'dashboard'
@@ -30,6 +31,7 @@ export interface ShellNavItem {
 
 export const SHELL_NAV: Record<ShellNavId, ShellNavItem> = {
   inbox: { id: 'inbox', label: 'Minha mesa', href: '/inbox', icon: 'layout-list', prefetch: 'inbox', group: 'Dia a dia' },
+  agenda: { id: 'agenda', label: 'Agenda', href: '/agenda', icon: 'calendar-days', prefetch: 'activities', group: 'Dia a dia' },
   messaging: { id: 'messaging', label: 'Conversas', href: '/messaging', icon: 'message-circle', group: 'Dia a dia' },
   activities: { id: 'activities', label: 'Tarefas', href: '/activities', icon: 'list-checks', prefetch: 'activities', group: 'Dia a dia' },
   dashboard: { id: 'dashboard', label: 'Visão geral', href: '/dashboard', icon: 'layout-grid', prefetch: 'dashboard', group: 'Comercial' },
@@ -47,7 +49,7 @@ export const SHELL_NAV: Record<ShellNavId, ShellNavItem> = {
  * Assistente IA e Sugestões da IA não entram no menu: a IA abre pelo botão do topo, à direita.
  */
 export const SIDEBAR_GROUPS: { label: CrumbGroup; items: ShellNavId[] }[] = [
-  { label: 'Dia a dia', items: ['inbox', 'messaging', 'activities'] },
+  { label: 'Dia a dia', items: ['inbox', 'agenda', 'messaging', 'activities'] },
   { label: 'Comercial', items: ['dashboard', 'boards', 'contacts', 'reports'] },
 ];
 

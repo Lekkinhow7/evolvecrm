@@ -10,6 +10,7 @@ import {
   BarChart3,
   Settings,
   User,
+  CalendarDays,
 } from 'lucide-react';
 
 export type PrimaryNavId = 'inbox' | 'messaging' | 'boards' | 'contacts' | 'activities' | 'more';
@@ -31,7 +32,7 @@ export const PRIMARY_NAV: PrimaryNavItem[] = [
   { id: 'more', label: 'Mais', icon: MoreHorizontal },
 ];
 
-export type SecondaryNavId = 'dashboard' | 'reports' | 'settings' | 'profile';
+export type SecondaryNavId = 'agenda' | 'dashboard' | 'reports' | 'settings' | 'profile';
 
 export interface SecondaryNavItem {
   id: SecondaryNavId;
@@ -42,6 +43,7 @@ export interface SecondaryNavItem {
 
 /** Mirrors non-primary destinations available in the desktop sidebar/user menu. */
 export const SECONDARY_NAV: SecondaryNavItem[] = [
+  { id: 'agenda', label: 'Agenda', href: '/agenda', icon: CalendarDays },
   { id: 'dashboard', label: 'Visão geral', href: '/dashboard', icon: LayoutDashboard },
   { id: 'reports', label: 'Relatórios', href: '/reports', icon: BarChart3 },
   { id: 'settings', label: 'Configurações', href: '/settings', icon: Settings },

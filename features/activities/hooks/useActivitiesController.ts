@@ -18,7 +18,7 @@ import { useRealtimeSync } from '@/lib/realtime/useRealtimeSync';
  * Hook React `useActivitiesController` que encapsula uma lógica reutilizável.
  * @returns {{ viewMode: "list" | "calendar"; setViewMode: Dispatch<SetStateAction<"list" | "calendar">>; searchTerm: string; setSearchTerm: Dispatch<SetStateAction<string>>; ... 18 more ...; handleSubmit: (e: FormEvent<...>) => void; }} Retorna um valor do tipo `{ viewMode: "list" | "calendar"; setViewMode: Dispatch<SetStateAction<"list" | "calendar">>; searchTerm: string; setSearchTerm: Dispatch<SetStateAction<string>>; ... 18 more ...; handleSubmit: (e: FormEvent<...>) => void; }`.
  */
-export const useActivitiesController = () => {
+export const useActivitiesController = (options?: { initialView?: 'list' | 'calendar' }) => {
   const searchParams = useSearchParams();
 
   // Auth for tenant organization_id
@@ -38,7 +38,7 @@ export const useActivitiesController = () => {
 
   const { showToast } = useToast();
 
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>(options?.initialView ?? 'list');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<Activity['type'] | 'ALL'>('ALL');
   const [dateFilter, setDateFilter] = useState<'ALL' | 'overdue' | 'today' | 'upcoming'>('ALL');

@@ -54,12 +54,13 @@ export interface AppSidebarProps {
   onSignOut: () => void;
 }
 
-type BadgeTone = 'danger' | 'warning' | 'neutral';
+type BadgeTone = 'danger' | 'warning' | 'info' | 'neutral';
 interface NavBadge { text: string; tone: BadgeTone; hint: string }
 
 const BADGE_CLASS: Record<BadgeTone, string> = {
   danger: 'bg-[var(--status-danger-solid)] text-[var(--text-inverse)]',
   warning: 'bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]',
+  info: 'bg-[var(--status-info-bg)] text-[var(--status-info-fg)]',
   neutral: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
 };
 const DOT_CLASS: Partial<Record<BadgeTone, string>> = {
@@ -67,9 +68,9 @@ const DOT_CLASS: Partial<Record<BadgeTone, string>> = {
   warning: 'bg-[var(--status-warning-solid)]',
 };
 
-function badge(count: number | undefined, tone: BadgeTone, hint: (n: number) => string): NavBadge | undefined {
+function badge(count: number | undefined, tone: BadgeTone, hint: (n: number) => string, suffix = ''): NavBadge | undefined {
   const text = formatBadge(count);
-  return text && count ? { text, tone, hint: hint(count) } : undefined;
+  return text && count ? { text: text + suffix, tone, hint: hint(count) } : undefined;
 }
 
 const iconButton =
@@ -85,6 +86,7 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
   const todayTotal = activityStats ? activityStats.todayAppointments + activityStats.todayTasks : undefined;
   const badges: Partial<Record<ShellNavId, NavBadge>> = {
     inbox: badge(todayTotal, 'neutral', (n) => `${plural(n, 'pendência', 'pendências')} para hoje`),
+    agenda: badge(activityStats?.todayAppointments, 'info', (n) => `${plural(n, 'compromisso', 'compromissos')} hoje`, ' hoje'),
     messaging: badge(unreadCount, 'danger', (n) => plural(n, 'conversa não lida', 'conversas não lidas')),
     activities: badge(activityStats?.overdue, 'danger', (n) => plural(n, 'tarefa atrasada', 'tarefas atrasadas')),
     boards: badge(stalledDeals, 'warning', (n) => `${plural(n, 'negócio parado', 'negócios parados')} há mais de 10 dias`),
@@ -184,63 +186,67 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
             ))}
           </nav>
 
-          {/* Hoje e próximo compromisso, num cartão só. Fica embaixo; em tela baixa, rola junto com o menu. */}
+          {/* Hoje e próximo compromisso ficam embaixo; em tela baixa, rolam junto com o menu. */}
           <div className="flex-1" aria-hidden="true" />
-          {!collapsed && (activityStats || nextAppointment !== undefined) ? (
-            <section aria-label="Agenda de hoje" className="mt-3 overflow-hidden rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-sunken)]">
-              {activityStats ? (
-                <>
-                <div className="px-4 pt-3 text-xs font-medium text-[var(--text-accent)]">Hoje</div>
-                <div className="grid grid-cols-3 divide-x divide-[var(--border-hairline)] border-b border-[var(--border-hairline)]">
-                  {[
-                    { n: activityStats.todayAppointments, label: activityStats.todayAppointments === 1 ? 'reunião' : 'reuniões', a11y: 'hoje', href: '/activities?filter=today', alert: false },
-                    { n: activityStats.todayTasks, label: activityStats.todayTasks === 1 ? 'tarefa' : 'tarefas', a11y: 'hoje', href: '/activities?filter=today', alert: false },
-                    { n: activityStats.overdue, label: activityStats.overdue === 1 ? 'atrasada' : 'atrasadas', a11y: '', href: '/activities?filter=overdue', alert: activityStats.overdue > 0 },
-                  ].map((t) => (
-                    <Link
-                      key={t.label}
-                      href={t.href}
-                      aria-label={`${t.n} ${t.label}${t.a11y ? ` ${t.a11y}` : ''}`}
-                      className={`mt-2 flex flex-col items-center gap-0.5 px-1 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus-ring)] ${
-                        t.alert ? 'bg-[var(--status-danger-bg)] hover:brightness-95' : 'hover:bg-[var(--surface-hover)]'
-                      }`}
-                    >
-                      <span className={`text-xl font-semibold leading-none ${t.alert ? 'text-[var(--status-danger-fg)]' : 'text-[var(--text-primary)]'}`}>{t.n}</span>
-                      <span className={`text-center text-xs leading-tight ${t.alert ? 'font-medium text-[var(--status-danger-fg)]' : 'text-[var(--text-secondary)]'}`}>{t.label}</span>
-                    </Link>
-                  ))}
-                </div>
-                </>
-              ) : null}
-              {nextAppointment !== undefined ? (
-                <div className="flex flex-col gap-1.5 px-4 py-3.5">
-                  <div className="flex justify-between text-xs font-medium text-[var(--text-accent)]">
-                    <span>Próximo compromisso</span>
-                    {nextAppointment ? <span>{nextAppointment.day}</span> : null}
-                  </div>
-                  {nextAppointment ? (
-                    <>
-                      <div className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] proportional-nums">{nextAppointment.time}</div>
-                      <div className="line-clamp-2 text-sm font-medium text-[var(--text-primary)]">{nextAppointment.title}</div>
-                      {nextAppointment.dealTitle ? (
-                        <div className="flex items-center gap-1.5 truncate text-[length:var(--fs-caption)] text-[var(--text-secondary)]">
-                          <Icon name="briefcase" size={14} />
-                          <span className="truncate">{nextAppointment.dealTitle}</span>
-                        </div>
-                      ) : null}
-                    </>
-                  ) : (
-                    <div className="text-sm text-[var(--text-secondary)]">Nenhuma reunião ou ligação marcada.</div>
-                  )}
+          {/* Resumo de hoje: três botões separados, cada um leva à lista certa */}
+          {!collapsed && activityStats ? (
+            <section aria-label="Hoje" className="mt-3 flex flex-col gap-2">
+              <div className="px-1 text-[length:var(--fs-caption)] text-[var(--text-tertiary)]">Hoje</div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { n: activityStats.todayAppointments, label: activityStats.todayAppointments === 1 ? 'reunião' : 'reuniões', a11y: 'hoje', icon: 'calendar-days', href: '/agenda', alert: false },
+                  { n: activityStats.todayTasks, label: activityStats.todayTasks === 1 ? 'tarefa' : 'tarefas', a11y: 'hoje', icon: 'list-checks', href: '/activities?filter=today', alert: false },
+                  { n: activityStats.overdue, label: activityStats.overdue === 1 ? 'atrasada' : 'atrasadas', a11y: '', icon: 'alarm-clock', href: '/activities?filter=overdue', alert: activityStats.overdue > 0 },
+                ].map((t) => (
                   <Link
-                    href="/activities?view=calendar"
-                    className="mt-1.5 flex items-center justify-center gap-2 rounded-full bg-[var(--action-primary-bg)] py-2 text-sm font-medium text-[var(--action-primary-fg)] transition-colors hover:bg-[var(--action-primary-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                    key={t.label}
+                    href={t.href}
+                    aria-label={`${t.n} ${t.label}${t.a11y ? ` ${t.a11y}` : ''}`}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-center shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
+                      t.alert
+                        ? 'border-[var(--status-danger-bg)] bg-[var(--status-danger-bg)] hover:border-[var(--status-danger-fg)]'
+                        : 'border-[var(--border-hairline)] bg-[var(--surface-card)] hover:border-[var(--border-default)] hover:bg-[var(--surface-hover)]'
+                    }`}
                   >
-                    <Icon name="calendar-days" size={16} />
-                    Abrir agenda
+                    <Icon name={t.icon} size={16} className={t.alert ? 'text-[var(--status-danger-fg)]' : 'text-[var(--text-accent)]'} />
+                    <span className="flex flex-col items-center">
+                      <span className={`text-xl font-semibold leading-none ${t.alert ? 'text-[var(--status-danger-fg)]' : 'text-[var(--text-primary)]'}`}>{t.n}</span>
+                      <span className={`mt-1 text-xs leading-tight ${t.alert ? 'font-medium text-[var(--status-danger-fg)]' : 'text-[var(--text-secondary)]'}`}>{t.label}</span>
+                    </span>
                   </Link>
-                </div>
-              ) : null}
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {/* Próximo compromisso */}
+          {!collapsed && nextAppointment !== undefined ? (
+            <section aria-label="Próximo compromisso" className="mt-3 flex flex-col gap-1.5 rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-sunken)] px-4 py-3.5">
+              <div className="flex justify-between text-xs font-medium text-[var(--text-accent)]">
+                <span>Próximo compromisso</span>
+                {nextAppointment ? <span>{nextAppointment.day}</span> : null}
+              </div>
+              {nextAppointment ? (
+                <>
+                  <div className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] proportional-nums">{nextAppointment.time}</div>
+                  <div className="line-clamp-2 text-sm font-medium text-[var(--text-primary)]">{nextAppointment.title}</div>
+                  {nextAppointment.dealTitle ? (
+                    <div className="flex items-center gap-1.5 truncate text-[length:var(--fs-caption)] text-[var(--text-secondary)]">
+                      <Icon name="briefcase" size={14} />
+                      <span className="truncate">{nextAppointment.dealTitle}</span>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <div className="text-sm text-[var(--text-secondary)]">Nenhuma reunião ou ligação marcada.</div>
+              )}
+              <Link
+                href="/agenda"
+                className="mt-1.5 flex items-center justify-center gap-2 rounded-full bg-[var(--action-primary-bg)] py-2 text-sm font-medium text-[var(--action-primary-fg)] transition-colors hover:bg-[var(--action-primary-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+              >
+                <Icon name="calendar-days" size={16} />
+                Abrir agenda
+              </Link>
             </section>
           ) : null}
       </div>

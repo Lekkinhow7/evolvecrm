@@ -6,6 +6,9 @@ interface ActivitiesHeaderProps {
   setViewMode: (mode: 'list' | 'calendar') => void;
   onNewActivity: () => void;
   dateFilter?: 'ALL' | 'overdue' | 'today' | 'upcoming';
+  /** Título da tela (padrão "Atividades"; a rota /agenda usa "Agenda"). */
+  title?: string;
+  subtitle?: string;
 }
 
 /**
@@ -29,6 +32,8 @@ export const ActivitiesHeader: React.FC<ActivitiesHeaderProps> = ({
   setViewMode,
   onNewActivity,
   dateFilter = 'ALL',
+  title = 'Atividades',
+  subtitle = 'Gerencie suas tarefas e compromissos',
 }) => {
   const filterLabel =
     dateFilter === 'overdue'
@@ -43,10 +48,10 @@ export const ActivitiesHeader: React.FC<ActivitiesHeaderProps> = ({
     <div className="flex justify-between items-center mb-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white font-display">
-          Atividades
+          {title}
         </h1>
         <div className="mt-1 flex items-center gap-2">
-          <p className="text-slate-500 dark:text-slate-400">Gerencie suas tarefas e compromissos</p>
+          <p className="text-slate-500 dark:text-slate-400">{subtitle}</p>
           {filterLabel && (
             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300">
               Filtro: {filterLabel}
