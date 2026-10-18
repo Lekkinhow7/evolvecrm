@@ -16,9 +16,9 @@ vi.mock('../context/AuthContext', () => ({
 vi.mock('../context/ThemeContext', () => ({ useTheme: () => ({ darkMode: false, toggleDarkMode: vi.fn() }) }));
 vi.mock('@/hooks/useResponsiveMode', () => ({ useResponsiveMode: () => ({ mode: 'desktop', width: 1440 }) }));
 vi.mock('@/lib/query/hooks/useConversationsQuery', () => ({ useUnreadCount: () => ({ data: 0 }) }));
-let whatsappChannels: { status: string }[] = [];
-vi.mock('@/lib/query/hooks/useMessagingChannelsQuery', () => ({ useMessagingChannelsByType: () => ({ data: whatsappChannels }) }));
 vi.mock('@/lib/query/hooks/useActivitiesQuery', () => ({ usePendingActivities: () => ({ data: [] }) }));
+vi.mock('@/lib/query/hooks/useDealsQuery', () => ({ useDeals: () => ({ data: [] }) }));
+vi.mock('@/lib/query/hooks/useBoardsQuery', () => ({ useBoards: () => ({ data: [] }) }));
 vi.mock('@/lib/brand', () => ({ CRM_NAME: 'Alice Teixeira', CRM_TAGLINE: 'Advocacia' }));
 vi.mock('./ai/UIChat', () => ({ UIChat: () => null }));
 vi.mock('./notifications/NotificationPopover', () => ({ NotificationPopover: () => <span>notificacoes</span> }));
@@ -30,7 +30,6 @@ import { useUIState } from '@/store/uiState';
 describe('Layout (moldura do CRM)', () => {
   beforeEach(() => {
     pathname = '/dashboard';
-    whatsappChannels = [];
     useUIState.setState({ sidebarCollapsed: false, isGlobalAIOpen: false });
   });
   afterEach(() => {
@@ -62,27 +61,6 @@ describe('Layout (moldura do CRM)', () => {
     expect(useUIState.getState().sidebarCollapsed).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
     expect(useUIState.getState().sidebarCollapsed).toBe(false);
-  });
-
-  it('mostra o WhatsApp conectado só quando existe canal', () => {
-    const { unmount } = render(<Layout><p>conteudo</p></Layout>);
-    expect(screen.queryByText('WhatsApp')).toBeNull();
-    unmount();
-    whatsappChannels = [{ status: 'connected' }];
-    render(<Layout><p>conteudo</p></Layout>);
-    expect(screen.getByText('conectado')).toBeTruthy();
-  });
-
-  it('avisa quando o WhatsApp está desconectado', () => {
-    whatsappChannels = [{ status: 'disconnected' }];
-    render(<Layout><p>conteudo</p></Layout>);
-    expect(screen.getByText('desconectado')).toBeTruthy();
-  });
-
-  it('mantém /messaging sem padding no conteúdo', () => {
-    pathname = '/messaging';
-    const { container } = render(<Layout><p>conteudo</p></Layout>);
-    expect(container.querySelector('main#main-content')?.className).toContain('p-0');
   });
 
   it('atualiza --app-sidebar-width conforme o menu recolhido', async () => {

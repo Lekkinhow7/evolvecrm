@@ -316,6 +316,17 @@ export const useBoardsController = () => {
     stageId: string;
   } | null>(null);
 
+  // Atalho de funil do menu lateral: /boards?funil=<id> abre aquele funil.
+  useEffect(() => {
+    const funil = searchParams?.get('funil');
+    if (!funil) return;
+    setActiveBoardId(funil);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('funil');
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false });
+  }, [searchParams, setActiveBoardId, router]);
+
   // Botão Novo do menu lateral: /boards?novo=1 abre o cadastro de negócio.
   useNewParam(() => setIsCreateModalOpen(true));
 

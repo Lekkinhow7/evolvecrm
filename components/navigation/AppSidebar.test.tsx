@@ -79,7 +79,7 @@ describe('AppSidebar', () => {
     render(<AppSidebar collapsed unreadCount={5} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} />);
     expect(screen.queryByText('Minha mesa')).toBeNull();
     expect(screen.getByRole('link', { name: 'Minha mesa' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Conversas (5)' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Conversas, 5 conversas não lidas' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sair' })).toBeTruthy();
   });
 
@@ -109,5 +109,40 @@ describe('AppSidebar', () => {
     expect(screen.queryByText('Próximo compromisso')).toBeNull();
     rerender(<AppSidebar collapsed unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} nextAppointment={appt} />);
     expect(screen.queryByText('Próximo compromisso')).toBeNull();
+  });
+
+  it('mostra os avisos de cada item com a explicação', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
+      activityStats={{ todayAppointments: 2, todayTasks: 3, overdue: 4 }} stalledDeals={139} />);
+    expect(screen.getByRole('link', { name: 'Minha mesa, 5 pendências para hoje' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Tarefas, 4 tarefas atrasadas' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Kanban, 139 negócios parados há mais de 10 dias' })).toBeTruthy();
+    expect(screen.getByText('99+')).toBeTruthy();
+  });
+
+  it('não mostra aviso quando o número é zero', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
+      activityStats={{ todayAppointments: 0, todayTasks: 0, overdue: 0 }} stalledDeals={0} />);
+    expect(screen.getByRole('link', { name: 'Tarefas' }).textContent).toBe('Tarefas');
+  });
+
+  it('mostra o resumo de hoje e destaca as atrasadas', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
+      activityStats={{ todayAppointments: 1, todayTasks: 2, overdue: 3 }} />);
+    expect(screen.getByRole('link', { name: '1 reunião hoje' }).getAttribute('href')).toBe('/activities?filter=today');
+    expect(screen.getByRole('link', { name: '2 tarefas hoje' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: '3 atrasadas' }).getAttribute('href')).toBe('/activities?filter=overdue');
+  });
+
+  it('com mais de um funil, lista os funis embaixo do Kanban', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
+      funnels={[{ id: 'f1', name: 'Previdenciário' }, { id: 'f2', name: 'Trabalhista' }]} />);
+    expect(screen.getByRole('link', { name: 'Trabalhista' }).getAttribute('href')).toBe('/boards?funil=f2');
+  });
+
+  it('com um funil só, não repete o Kanban', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
+      funnels={[{ id: 'f1', name: 'Previdenciário' }]} />);
+    expect(screen.queryByRole('list', { name: 'Funis' })).toBeNull();
   });
 });

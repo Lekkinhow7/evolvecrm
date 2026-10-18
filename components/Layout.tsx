@@ -36,9 +36,11 @@ import { BottomNav, MoreMenuSheet, NavigationRail } from '@/components/navigatio
 import { AppSidebar } from '@/components/navigation/AppSidebar';
 import { AppTopbar } from '@/components/navigation/AppTopbar';
 import { useUnreadCount } from '@/lib/query/hooks/useConversationsQuery';
-import { useMessagingChannelsByType } from '@/lib/query/hooks/useMessagingChannelsQuery';
 import { usePendingActivities } from '@/lib/query/hooks/useActivitiesQuery';
 import { getNextAppointment } from '@/components/navigation/nextAppointment';
+import { countStalledDeals, getActivityStats } from '@/components/navigation/sidebarStats';
+import { useDeals } from '@/lib/query/hooks/useDealsQuery';
+import { useBoards } from '@/lib/query/hooks/useBoardsQuery';
 import { UIChat } from './ai/UIChat';
 
 interface LayoutProps {
@@ -74,15 +76,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Messaging unread count for notification badge
   const { data: unreadMessagesCount = 0 } = useUnreadCount();
 
-  // WhatsApp status for the sidebar footer (hidden when there is no WhatsApp channel)
-  const { data: whatsappChannels = [] } = useMessagingChannelsByType('whatsapp');
-  const whatsappStatus = whatsappChannels.length === 0
-    ? undefined
-    : whatsappChannels.some((c) => c.status === 'connected') ? 'connected' : 'disconnected';
-
   // Next meeting/call for the sidebar card (undefined while loading hides the card)
   const { data: pendingActivities } = usePendingActivities();
   const nextAppointment = pendingActivities ? (getNextAppointment(pendingActivities) ?? null) : undefined;
+  const activityStats = pendingActivities ? getActivityStats(pendingActivities) : undefined;
+
+  // Stalled deals badge on Kanban and funnel shortcuts (same caches the Kanban and Overview use)
+  const { data: deals } = useDeals();
+  const stalledDeals = deals ? countStalledDeals(deals) : undefined;
+  const { data: boards = [] } = useBoards();
+  const funnels = boards.map((b) => ({ id: b.id, name: b.name }));
 
   // If the user signed out (or session expired), leave protected shell ASAP.
   // This prevents rendering fallbacks like "Usuário" while unauthenticated.
@@ -139,7 +142,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <AppSidebar
             collapsed={sidebarCollapsed}
             unreadCount={unreadMessagesCount}
-            whatsapp={whatsappStatus}
+            activityStats={activityStats}
+            stalledDeals={stalledDeals}
+            funnels={funnels}
             nextAppointment={nextAppointment}
             profile={profile}
             onSignOut={signOut}

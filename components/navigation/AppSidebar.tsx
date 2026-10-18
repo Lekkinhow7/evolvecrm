@@ -10,6 +10,8 @@ import { SHELL_NAV, SIDEBAR_GROUPS, formatBadge, getActiveNavId } from './shellN
 import type { ShellNavId } from './shellNav';
 import type { NextAppointment } from './nextAppointment';
 import { NewMenu } from './NewMenu';
+import { plural } from './sidebarStats';
+import type { ActivityStats } from './sidebarStats';
 
 export interface SidebarProfile {
   email?: string | null;
@@ -19,9 +21,6 @@ export interface SidebarProfile {
   avatar_url?: string | null;
   role?: string | null;
 }
-
-/** Situação do WhatsApp mostrada no rodapé do menu. `undefined` esconde o aviso (sem canal de WhatsApp). */
-export type WhatsAppStatus = 'connected' | 'disconnected' | undefined;
 
 /**
  * Nome e iniciais do cartão do usuário.
@@ -43,24 +42,54 @@ const ROLE_LABEL: Record<string, string> = { admin: 'Administrador', vendedor: '
 export interface AppSidebarProps {
   collapsed: boolean;
   unreadCount: number;
-  whatsapp?: WhatsAppStatus;
+  /** Números das Tarefas (hoje e atrasadas). Sem eles, os avisos e o resumo de hoje somem. */
+  activityStats?: ActivityStats;
+  /** Negócios abertos parados há mais de 10 dias. */
+  stalledDeals?: number;
+  /** Funis do Kanban; com mais de um, aparecem como atalhos embaixo de Kanban. */
+  funnels?: { id: string; name: string }[];
   /** Próximo compromisso (reunião ou ligação). `null` mostra o cartão vazio; `undefined` esconde (carregando). */
   nextAppointment?: NextAppointment | null;
   profile: SidebarProfile | null | undefined;
   onSignOut: () => void;
 }
 
+type BadgeTone = 'danger' | 'warning' | 'neutral';
+interface NavBadge { text: string; tone: BadgeTone; hint: string }
+
+const BADGE_CLASS: Record<BadgeTone, string> = {
+  danger: 'bg-[var(--status-danger-solid)] text-[var(--text-inverse)]',
+  warning: 'bg-[var(--status-warning-bg)] text-[var(--status-warning-fg)]',
+  neutral: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
+};
+const DOT_CLASS: Partial<Record<BadgeTone, string>> = {
+  danger: 'bg-[var(--status-danger-solid)]',
+  warning: 'bg-[var(--status-warning-solid)]',
+};
+
+function badge(count: number | undefined, tone: BadgeTone, hint: (n: number) => string): NavBadge | undefined {
+  const text = formatBadge(count);
+  return text && count ? { text, tone, hint: hint(count) } : undefined;
+}
+
 const iconButton =
   'grid place-items-center size-9 shrink-0 rounded-lg border border-[var(--border-default)] bg-[var(--surface-card)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
 
-/** Menu lateral do CRM: grupos com nome, contador de conversas, aviso do WhatsApp e cartão do usuário com Configurações e Sair. Recolher fica no topo. */
-export function AppSidebar({ collapsed, unreadCount, whatsapp, nextAppointment, profile, onSignOut }: AppSidebarProps) {
+/** Menu lateral do CRM: botão Novo, grupos com avisos, funis do Kanban, agenda de hoje e cartão do usuário com Configurações e Sair. Recolher fica no topo. */
+export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals, funnels = [], nextAppointment, profile, onSignOut }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const active = getActiveNavId(pathname);
   const { name, initials } = getUserIdentity(profile);
   const role = (profile?.role && ROLE_LABEL[profile.role]) || profile?.email || '';
-  const counts: Partial<Record<ShellNavId, string | undefined>> = { messaging: formatBadge(unreadCount) };
+  const todayTotal = activityStats ? activityStats.todayAppointments + activityStats.todayTasks : undefined;
+  const badges: Partial<Record<ShellNavId, NavBadge>> = {
+    inbox: badge(todayTotal, 'neutral', (n) => `${plural(n, 'pendência', 'pendências')} para hoje`),
+    messaging: badge(unreadCount, 'danger', (n) => plural(n, 'conversa não lida', 'conversas não lidas')),
+    activities: badge(activityStats?.overdue, 'danger', (n) => plural(n, 'tarefa atrasada', 'tarefas atrasadas')),
+    boards: badge(stalledDeals, 'warning', (n) => `${plural(n, 'negócio parado', 'negócios parados')} há mais de 10 dias`),
+  };
+  const showFunnels = !collapsed && funnels.length > 1;
 
   const prefetch = (id: ShellNavId) => {
     const route = SHELL_NAV[id].prefetch;
@@ -90,105 +119,131 @@ export function AppSidebar({ collapsed, unreadCount, whatsapp, nextAppointment, 
         <NewMenu collapsed={collapsed} />
       </div>
 
-      {/* Grupos */}
-      <nav aria-label="Menu principal" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {SIDEBAR_GROUPS.map((group) => (
-          <div key={group.label} className="flex flex-col gap-0.5">
-            {collapsed ? (
-              <div className="mx-auto my-2 h-px w-10 bg-[var(--border-default)]" aria-hidden="true" />
-            ) : (
-              <div className="px-3 pb-1.5 pt-3.5 text-[length:var(--fs-caption)] text-[var(--text-tertiary)]">{group.label}</div>
-            )}
-            {group.items.map((id) => {
-              const item = SHELL_NAV[id];
-              const isActive = active === id;
-              const count = counts[id];
-              return (
-                <Link
-                  key={id}
-                  href={item.href}
-                  aria-current={isActive ? 'page' : undefined}
-                  aria-label={collapsed ? (count ? `${item.label} (${count})` : item.label) : undefined}
-                  title={collapsed ? item.label : undefined}
-                  onMouseEnter={() => prefetch(id)}
-                  onFocus={() => prefetch(id)}
-                  className={`relative flex items-center gap-3 rounded-lg py-2 text-[length:var(--fs-body)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
-                    collapsed ? 'justify-center px-2' : 'px-3'
-                  } ${
-                    isActive
-                      ? 'bg-[var(--surface-muted)] font-medium text-[var(--text-primary)]'
-                      : 'text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
-                  }`}
-                >
-                  <Icon name={item.icon} size={20} className={isActive ? 'text-[var(--brand-cyan)]' : 'text-[var(--text-secondary)]'} />
-                  {collapsed ? (
-                    count ? <span className="absolute right-2 top-1.5 size-2 rounded-full bg-[var(--status-danger-solid)]" aria-hidden="true" /> : null
-                  ) : (
+      {/* Menu e agenda de hoje rolam juntos; o cartão do usuário fica sempre visível. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          {/* Grupos */}
+          <nav aria-label="Menu principal" className="flex flex-col">
+            {SIDEBAR_GROUPS.map((group) => (
+              <div key={group.label} className="flex flex-col gap-0.5">
+                {collapsed ? (
+                  <div className="mx-auto my-2 h-px w-10 bg-[var(--border-default)]" aria-hidden="true" />
+                ) : (
+                  <div className="px-3 pb-1.5 pt-3.5 text-[length:var(--fs-caption)] text-[var(--text-tertiary)]">{group.label}</div>
+                )}
+                {group.items.map((id) => {
+                  const item = SHELL_NAV[id];
+                  const isActive = active === id;
+                  const count = badges[id];
+                  return (
+                    <React.Fragment key={id}>
+                    <Link
+                      href={item.href}
+                      aria-current={isActive ? 'page' : undefined}
+                      aria-label={count ? `${item.label}, ${count.hint}` : collapsed ? item.label : undefined}
+                      title={collapsed ? item.label : undefined}
+                      onMouseEnter={() => prefetch(id)}
+                      onFocus={() => prefetch(id)}
+                      className={`relative flex items-center gap-3 rounded-lg py-2 text-[length:var(--fs-body)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
+                        collapsed ? 'justify-center px-2' : 'px-3'
+                      } ${
+                        isActive
+                          ? 'bg-[var(--surface-muted)] font-medium text-[var(--text-primary)]'
+                          : 'text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                      }`}
+                    >
+                      <Icon name={item.icon} size={20} className={isActive ? 'text-[var(--brand-cyan)]' : 'text-[var(--text-secondary)]'} />
+                      {collapsed ? (
+                        count && DOT_CLASS[count.tone] ? <span className={`absolute right-2 top-1.5 size-2 rounded-full ${DOT_CLASS[count.tone]}`} aria-hidden="true" /> : null
+                      ) : (
+                        <>
+                          <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                          {count ? (
+                            <span title={count.hint} className={`rounded-full px-2 text-xs font-semibold leading-5 tabular-nums ${BADGE_CLASS[count.tone]}`}>{count.text}</span>
+                          ) : null}
+                        </>
+                      )}
+                    </Link>
+                    {id === 'boards' && showFunnels ? (
+                      <ul aria-label="Funis" className="mb-1 ml-[1.375rem] flex flex-col gap-0.5 border-l border-[var(--border-default)] pl-3">
+                        {funnels.map((f) => (
+                          <li key={f.id}>
+                            <Link
+                              href={`/boards?funil=${encodeURIComponent(f.id)}`}
+                              className="block truncate rounded-md px-2 py-1 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                            >
+                              {f.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+
+          {/* Hoje e próximo compromisso, num cartão só. Fica embaixo; em tela baixa, rola junto com o menu. */}
+          <div className="flex-1" aria-hidden="true" />
+          {!collapsed && (activityStats || nextAppointment !== undefined) ? (
+            <section aria-label="Agenda de hoje" className="mt-3 overflow-hidden rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-sunken)]">
+              {activityStats ? (
+                <>
+                <div className="px-4 pt-3 text-xs font-medium text-[var(--text-accent)]">Hoje</div>
+                <div className="grid grid-cols-3 divide-x divide-[var(--border-hairline)] border-b border-[var(--border-hairline)]">
+                  {[
+                    { n: activityStats.todayAppointments, label: activityStats.todayAppointments === 1 ? 'reunião' : 'reuniões', a11y: 'hoje', href: '/activities?filter=today', alert: false },
+                    { n: activityStats.todayTasks, label: activityStats.todayTasks === 1 ? 'tarefa' : 'tarefas', a11y: 'hoje', href: '/activities?filter=today', alert: false },
+                    { n: activityStats.overdue, label: activityStats.overdue === 1 ? 'atrasada' : 'atrasadas', a11y: '', href: '/activities?filter=overdue', alert: activityStats.overdue > 0 },
+                  ].map((t) => (
+                    <Link
+                      key={t.label}
+                      href={t.href}
+                      aria-label={`${t.n} ${t.label}${t.a11y ? ` ${t.a11y}` : ''}`}
+                      className={`mt-2 flex flex-col items-center gap-0.5 px-1 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus-ring)] ${
+                        t.alert ? 'bg-[var(--status-danger-bg)] hover:brightness-95' : 'hover:bg-[var(--surface-hover)]'
+                      }`}
+                    >
+                      <span className={`text-xl font-semibold leading-none ${t.alert ? 'text-[var(--status-danger-fg)]' : 'text-[var(--text-primary)]'}`}>{t.n}</span>
+                      <span className={`text-center text-xs leading-tight ${t.alert ? 'font-medium text-[var(--status-danger-fg)]' : 'text-[var(--text-secondary)]'}`}>{t.label}</span>
+                    </Link>
+                  ))}
+                </div>
+                </>
+              ) : null}
+              {nextAppointment !== undefined ? (
+                <div className="flex flex-col gap-1.5 px-4 py-3.5">
+                  <div className="flex justify-between text-xs font-medium text-[var(--text-accent)]">
+                    <span>Próximo compromisso</span>
+                    {nextAppointment ? <span>{nextAppointment.day}</span> : null}
+                  </div>
+                  {nextAppointment ? (
                     <>
-                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                      {count ? (
-                        <span className="rounded-full bg-[var(--status-danger-solid)] px-2 text-xs font-semibold leading-5 text-[var(--text-inverse)] tabular-nums">{count}</span>
+                      <div className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] proportional-nums">{nextAppointment.time}</div>
+                      <div className="line-clamp-2 text-sm font-medium text-[var(--text-primary)]">{nextAppointment.title}</div>
+                      {nextAppointment.dealTitle ? (
+                        <div className="flex items-center gap-1.5 truncate text-[length:var(--fs-caption)] text-[var(--text-secondary)]">
+                          <Icon name="briefcase" size={14} />
+                          <span className="truncate">{nextAppointment.dealTitle}</span>
+                        </div>
                       ) : null}
                     </>
+                  ) : (
+                    <div className="text-sm text-[var(--text-secondary)]">Nenhuma reunião ou ligação marcada.</div>
                   )}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* Próximo compromisso */}
-      {!collapsed && nextAppointment !== undefined ? (
-        <section aria-label="Próximo compromisso" className="mt-3 flex flex-col gap-1.5 rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-sunken)] px-4 py-3.5">
-          <div className="flex justify-between text-xs font-medium text-[var(--text-accent)]">
-            <span>Próximo compromisso</span>
-            {nextAppointment ? <span>{nextAppointment.day}</span> : null}
-          </div>
-          {nextAppointment ? (
-            <>
-              <div className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] proportional-nums">{nextAppointment.time}</div>
-              <div className="line-clamp-2 text-sm font-medium text-[var(--text-primary)]">{nextAppointment.title}</div>
-              {nextAppointment.dealTitle ? (
-                <div className="flex items-center gap-1.5 truncate text-[length:var(--fs-caption)] text-[var(--text-secondary)]">
-                  <Icon name="briefcase" size={14} />
-                  <span className="truncate">{nextAppointment.dealTitle}</span>
+                  <Link
+                    href="/activities?view=calendar"
+                    className="mt-1.5 flex items-center justify-center gap-2 rounded-full bg-[var(--action-primary-bg)] py-2 text-sm font-medium text-[var(--action-primary-fg)] transition-colors hover:bg-[var(--action-primary-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                  >
+                    <Icon name="calendar-days" size={16} />
+                    Abrir agenda
+                  </Link>
                 </div>
               ) : null}
-            </>
-          ) : (
-            <div className="text-sm text-[var(--text-secondary)]">Nenhuma reunião ou ligação marcada.</div>
-          )}
-          <Link
-            href="/activities?view=calendar"
-            className="mt-1.5 flex items-center justify-center gap-2 rounded-full bg-[var(--action-primary-bg)] py-2 text-sm font-medium text-[var(--action-primary-fg)] transition-colors hover:bg-[var(--action-primary-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
-          >
-            <Icon name="calendar-days" size={16} />
-            Abrir agenda
-          </Link>
-        </section>
-      ) : null}
-
-      {/* Aviso do WhatsApp */}
-      {whatsapp ? (
-        <div
-          className={`mt-3 flex items-center gap-2 rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-sunken)] py-2 text-[length:var(--fs-caption)] text-[var(--text-secondary)] ${collapsed ? 'justify-center px-2' : 'px-3.5'}`}
-          title={whatsapp === 'connected' ? 'WhatsApp conectado' : 'WhatsApp desconectado'}
-        >
-          <span
-            className={`size-2 shrink-0 rounded-full ${whatsapp === 'connected' ? 'bg-[var(--status-success-solid)]' : 'bg-[var(--status-danger-solid)]'}`}
-            aria-hidden="true"
-          />
-          {collapsed ? (
-            <span className="sr-only">{whatsapp === 'connected' ? 'WhatsApp conectado' : 'WhatsApp desconectado'}</span>
-          ) : (
-            <>
-              <span>WhatsApp</span>
-              <span className="ml-auto">{whatsapp === 'connected' ? 'conectado' : 'desconectado'}</span>
-            </>
-          )}
-        </div>
-      ) : null}
+            </section>
+          ) : null}
+      </div>
 
       {/* Usuário, Configurações e Sair */}
       <div className={`mt-3 flex items-center gap-2.5 border-t border-[var(--border-hairline)] pt-3 ${collapsed ? 'flex-col' : 'px-1'}`}>
