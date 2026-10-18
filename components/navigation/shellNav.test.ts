@@ -40,10 +40,10 @@ describe('formatBadge', () => {
 });
 
 describe('estrutura da sidebar', () => {
-  it('os grupos seguem a ordem do menu e deixam Configurações e Perfil para o cartão do usuário', () => {
-    expect(SIDEBAR_GROUPS.map((g) => g.label)).toEqual(['Dia a dia', 'Comercial', 'Inteligência']);
+  it('os grupos seguem a ordem do menu; IA fica no topo e Configurações e Perfil no cartão do usuário', () => {
+    expect(SIDEBAR_GROUPS.map((g) => g.label)).toEqual(['Dia a dia', 'Comercial']);
     const ids = SIDEBAR_GROUPS.flatMap((g) => g.items);
     for (const id of ids) expect(SHELL_NAV[id].group).toBe(SIDEBAR_GROUPS.find((g) => g.items.includes(id))?.label);
-    expect(ids).toEqual(['inbox', 'messaging', 'activities', 'dashboard', 'boards', 'contacts', 'reports', 'ai', 'decisions']);
+    expect(ids).toEqual(['inbox', 'messaging', 'activities', 'dashboard', 'boards', 'contacts', 'reports']);
   });
 });

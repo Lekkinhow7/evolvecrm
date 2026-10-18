@@ -40,7 +40,6 @@ const ROLE_LABEL: Record<string, string> = { admin: 'Administrador', vendedor: '
 
 export interface AppSidebarProps {
   collapsed: boolean;
-  onToggleCollapsed: () => void;
   unreadCount: number;
   whatsapp?: WhatsAppStatus;
   profile: SidebarProfile | null | undefined;
@@ -50,15 +49,14 @@ export interface AppSidebarProps {
 const iconButton =
   'grid place-items-center size-9 shrink-0 rounded-lg border border-[var(--border-default)] bg-[var(--surface-card)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
 
-/** Menu lateral do CRM: grupos com nome, contador de conversas, aviso do WhatsApp e cartão do usuário com Configurações e Sair. */
-export function AppSidebar({ collapsed, onToggleCollapsed, unreadCount, whatsapp, profile, onSignOut }: AppSidebarProps) {
+/** Menu lateral do CRM: grupos com nome, contador de conversas, aviso do WhatsApp e cartão do usuário com Configurações e Sair. Recolher fica no topo. */
+export function AppSidebar({ collapsed, unreadCount, whatsapp, profile, onSignOut }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const active = getActiveNavId(pathname);
   const { name, initials } = getUserIdentity(profile);
   const role = (profile?.role && ROLE_LABEL[profile.role]) || profile?.email || '';
   const counts: Partial<Record<ShellNavId, string | undefined>> = { messaging: formatBadge(unreadCount) };
-  const toggleLabel = collapsed ? 'Abrir menu' : 'Recolher menu';
 
   const prefetch = (id: ShellNavId) => {
     const route = SHELL_NAV[id].prefetch;
@@ -70,8 +68,8 @@ export function AppSidebar({ collapsed, onToggleCollapsed, unreadCount, whatsapp
       className="flex h-full flex-col border-r border-[var(--border-hairline)] bg-[var(--surface-card)] px-3 pb-3 pt-5 transition-[width] duration-200 motion-reduce:transition-none"
       style={{ width: collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)' }}
     >
-      {/* Marca e botão de recolher */}
-      <div className={`flex items-center gap-3 px-1.5 pb-4 ${collapsed ? 'flex-col' : ''}`}>
+      {/* Marca (o botão de recolher fica no topo, ao lado do caminho da tela) */}
+      <div className={`flex items-center gap-3 px-1.5 pb-4 ${collapsed ? 'justify-center' : ''}`}>
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--brand-ink)] text-[var(--text-inverse)]">
           <BrandMark height={22} title={CRM_NAME} color="var(--white)" />
         </span>
@@ -81,9 +79,6 @@ export function AppSidebar({ collapsed, onToggleCollapsed, unreadCount, whatsapp
             {CRM_TAGLINE ? <div className="truncate text-[length:var(--fs-caption)] text-[var(--text-secondary)]">{CRM_TAGLINE}</div> : null}
           </div>
         )}
-        <button type="button" className={iconButton} onClick={onToggleCollapsed} aria-label={toggleLabel} title={toggleLabel}>
-          <Icon name={collapsed ? 'panel-left-open' : 'panel-left-close'} size={18} />
-        </button>
       </div>
 
       {/* Grupos */}

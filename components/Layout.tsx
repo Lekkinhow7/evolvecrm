@@ -59,7 +59,7 @@ const SIDEBAR_SPACE = {
  * @returns {JSX.Element} Estrutura de layout completa
  */
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { isGlobalAIOpen, sidebarCollapsed, setSidebarCollapsed } = useUIState();
+  const { isGlobalAIOpen, sidebarCollapsed } = useUIState();
   const { user, loading, profile, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -132,7 +132,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="hidden md:flex shrink-0 z-20">
           <AppSidebar
             collapsed={sidebarCollapsed}
-            onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
             unreadCount={unreadMessagesCount}
             whatsapp={whatsappStatus}
             profile={profile}
@@ -146,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Middle Content (Header + Page) */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           <header className="shrink-0 z-40 px-6 pt-4" role="banner">
-            <AppTopbar />
+            <AppTopbar showSidebarToggle={isDesktop} />
           </header>
 
           <main

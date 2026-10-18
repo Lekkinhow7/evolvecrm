@@ -42,11 +42,13 @@ export const SHELL_NAV: Record<ShellNavId, ShellNavItem> = {
   profile: { id: 'profile', label: 'Perfil', href: '/profile', icon: 'user', group: 'Conta' },
 };
 
-/** Grupos do menu lateral. Configurações e Perfil ficam no cartão do usuário, no rodapé. */
+/**
+ * Grupos do menu lateral. Configurações e Perfil ficam no cartão do usuário, no rodapé.
+ * Assistente IA e Sugestões da IA não entram no menu: a IA abre pelo botão do topo, à direita.
+ */
 export const SIDEBAR_GROUPS: { label: CrumbGroup; items: ShellNavId[] }[] = [
   { label: 'Dia a dia', items: ['inbox', 'messaging', 'activities'] },
   { label: 'Comercial', items: ['dashboard', 'boards', 'contacts', 'reports'] },
-  { label: 'Inteligência', items: ['ai', 'decisions'] },
 ];
 
 /** Rotas antigas que pertencem a um item do menu. */

@@ -56,13 +56,13 @@ export function Topbar({ crumbs = [], onNavigate, onToggleSidebar, sidebarCollap
   return (
     <div className={'at-top ' + className}>
       <div className="at-top__left">
-        {onToggleSidebar ? <IconButton icon={sidebarCollapsed ? 'chevrons-right' : 'chevrons-left'} label={sidebarCollapsed ? 'Open menu' : 'Collapse menu'} onClick={onToggleSidebar} /> : null}
+        {onToggleSidebar ? <IconButton icon={sidebarCollapsed ? 'chevrons-right' : 'chevrons-left'} label={sidebarCollapsed ? 'Abrir menu' : 'Recolher menu'} onClick={onToggleSidebar} /> : null}
         <Breadcrumbs items={crumbs} onNavigate={onNavigate} />
       </div>
       <div className="at-top__right">
         {right}
         {langs && langs.length ? <Segmented options={langs} value={lang || langs[langs.length - 1]} onChange={onLang} /> : null}
-        {onToggleTheme ? <IconButton icon={theme === 'dark' ? 'moon' : 'sun'} label="Switch theme" round onClick={onToggleTheme} /> : null}
+        {onToggleTheme ? <IconButton icon={theme === 'dark' ? 'moon' : 'sun'} label="Alternar tema claro e escuro" round onClick={onToggleTheme} /> : null}
         {org ? <OrgSelector label={org} onClick={onOrg} /> : null}
       </div>
     </div>
