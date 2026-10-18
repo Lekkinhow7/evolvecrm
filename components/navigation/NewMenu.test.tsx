@@ -2,11 +2,13 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
-vi.mock('next/link', () => ({
-  default: React.forwardRef<HTMLAnchorElement, { href: string; children?: React.ReactNode }>(({ href, children, ...rest }, ref) => (
+vi.mock('next/link', () => {
+  const MockLink = React.forwardRef<HTMLAnchorElement, { href: string; children?: React.ReactNode }>(({ href, children, ...rest }, ref) => (
     <a ref={ref} href={href} {...rest}>{children}</a>
-  )),
-}));
+  ));
+  MockLink.displayName = 'MockLink';
+  return { default: MockLink };
+});
 
 import { NewMenu } from './NewMenu';
 
