@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useNewParam } from '@/hooks/useNewParam';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { Activity } from '@/types';
@@ -57,6 +58,8 @@ export const useActivitiesController = () => {
 
     // Qualquer outro valor (inclui vazio) cai no padrão.
     setDateFilter('ALL');
+    // /activities?view=calendar abre direto no calendário (botão "Abrir agenda" do menu lateral).
+    if (searchParams.get('view') === 'calendar') setViewMode('calendar');
   }, [searchParams]);
 
   const [formData, setFormData] = useState({
@@ -123,6 +126,13 @@ export const useActivitiesController = () => {
     });
     setIsModalOpen(true);
   };
+
+  // Botão Novo do menu lateral: /activities?novo=reuniao abre uma reunião; ?novo=tarefa, uma tarefa.
+  useNewParam((value) => {
+    handleNewActivity();
+    if (value === 'reuniao') setFormData((f) => ({ ...f, type: 'MEETING' }));
+    if (value === 'tarefa') setFormData((f) => ({ ...f, type: 'TASK' }));
+  });
 
   const handleEditActivity = (activity: Activity) => {
     setEditingActivity(activity);

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useNewParam } from '@/hooks/useNewParam';
 import { useToast } from '@/context/ToastContext';
 import { Contact, Company, ContactStage, PaginationState, ContactsServerFilters, DEFAULT_PAGE_SIZE, ContactSortableColumn } from '@/types';
 import {
@@ -180,6 +181,14 @@ export const useContactsController = () => {
     setFormData({ name: '', email: '', phone: '', role: '', companyName: '' });
     setIsModalOpen(true);
   };
+
+  // Botão Novo do menu lateral: /contacts?novo=1 abre o cadastro de contato.
+  useNewParam(() => {
+    setViewMode('people');
+    setEditingContact(null);
+    setFormData({ name: '', email: '', phone: '', role: '', companyName: '' });
+    setIsModalOpen(true);
+  });
 
   const openEditModal = (contact: Contact) => {
     setEditingContact(contact);

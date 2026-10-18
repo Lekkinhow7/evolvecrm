@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useNewParam } from '@/hooks/useNewParam';
 import { DealView, Board, CustomFieldDefinition } from '@/types';
 import {
   useBoards,
@@ -314,6 +315,9 @@ export const useBoardsController = () => {
     dealTitle: string;
     stageId: string;
   } | null>(null);
+
+  // Botão Novo do menu lateral: /boards?novo=1 abre o cadastro de negócio.
+  useNewParam(() => setIsCreateModalOpen(true));
 
   // Open deal from URL param (e.g., /boards?deal=xxx)
   useEffect(() => {

@@ -8,6 +8,8 @@ import { CRM_NAME, CRM_TAGLINE } from '@/lib/brand';
 import { prefetchRoute } from '@/lib/prefetch';
 import { SHELL_NAV, SIDEBAR_GROUPS, formatBadge, getActiveNavId } from './shellNav';
 import type { ShellNavId } from './shellNav';
+import type { NextAppointment } from './nextAppointment';
+import { NewMenu } from './NewMenu';
 
 export interface SidebarProfile {
   email?: string | null;
@@ -42,6 +44,8 @@ export interface AppSidebarProps {
   collapsed: boolean;
   unreadCount: number;
   whatsapp?: WhatsAppStatus;
+  /** Próximo compromisso (reunião ou ligação). `null` mostra o cartão vazio; `undefined` esconde (carregando). */
+  nextAppointment?: NextAppointment | null;
   profile: SidebarProfile | null | undefined;
   onSignOut: () => void;
 }
@@ -50,7 +54,7 @@ const iconButton =
   'grid place-items-center size-9 shrink-0 rounded-lg border border-[var(--border-default)] bg-[var(--surface-card)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
 
 /** Menu lateral do CRM: grupos com nome, contador de conversas, aviso do WhatsApp e cartão do usuário com Configurações e Sair. Recolher fica no topo. */
-export function AppSidebar({ collapsed, unreadCount, whatsapp, profile, onSignOut }: AppSidebarProps) {
+export function AppSidebar({ collapsed, unreadCount, whatsapp, nextAppointment, profile, onSignOut }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const active = getActiveNavId(pathname);
@@ -79,6 +83,11 @@ export function AppSidebar({ collapsed, unreadCount, whatsapp, profile, onSignOu
             {CRM_TAGLINE ? <div className="truncate text-[length:var(--fs-caption)] text-[var(--text-secondary)]">{CRM_TAGLINE}</div> : null}
           </div>
         )}
+      </div>
+
+      {/* Atalho de criação */}
+      <div className="px-1 pb-1">
+        <NewMenu collapsed={collapsed} />
       </div>
 
       {/* Grupos */}
@@ -128,6 +137,37 @@ export function AppSidebar({ collapsed, unreadCount, whatsapp, profile, onSignOu
           </div>
         ))}
       </nav>
+
+      {/* Próximo compromisso */}
+      {!collapsed && nextAppointment !== undefined ? (
+        <section aria-label="Próximo compromisso" className="mt-3 flex flex-col gap-1.5 rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-sunken)] px-4 py-3.5">
+          <div className="flex justify-between text-xs font-medium text-[var(--text-accent)]">
+            <span>Próximo compromisso</span>
+            {nextAppointment ? <span>{nextAppointment.day}</span> : null}
+          </div>
+          {nextAppointment ? (
+            <>
+              <div className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] proportional-nums">{nextAppointment.time}</div>
+              <div className="line-clamp-2 text-sm font-medium text-[var(--text-primary)]">{nextAppointment.title}</div>
+              {nextAppointment.dealTitle ? (
+                <div className="flex items-center gap-1.5 truncate text-[length:var(--fs-caption)] text-[var(--text-secondary)]">
+                  <Icon name="briefcase" size={14} />
+                  <span className="truncate">{nextAppointment.dealTitle}</span>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="text-sm text-[var(--text-secondary)]">Nenhuma reunião ou ligação marcada.</div>
+          )}
+          <Link
+            href="/activities?view=calendar"
+            className="mt-1.5 flex items-center justify-center gap-2 rounded-full bg-[var(--action-primary-bg)] py-2 text-sm font-medium text-[var(--action-primary-fg)] transition-colors hover:bg-[var(--action-primary-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+          >
+            <Icon name="calendar-days" size={16} />
+            Abrir agenda
+          </Link>
+        </section>
+      ) : null}
 
       {/* Aviso do WhatsApp */}
       {whatsapp ? (

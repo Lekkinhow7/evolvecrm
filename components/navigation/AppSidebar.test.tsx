@@ -88,4 +88,26 @@ describe('AppSidebar', () => {
     expect(screen.queryByText('Assistente IA')).toBeNull();
     expect(screen.queryByText('Sugestões da IA')).toBeNull();
   });
+
+  it('mostra o próximo compromisso com link para o calendário', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
+      nextAppointment={{ day: 'hoje', time: '14:30', title: 'Reunião · Consulta', dealTitle: 'Contrato Marcos' }} />);
+    expect(screen.getByText('14:30')).toBeTruthy();
+    expect(screen.getByText('Reunião · Consulta')).toBeTruthy();
+    expect(screen.getByText('Contrato Marcos')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Abrir agenda/ }).getAttribute('href')).toBe('/activities?view=calendar');
+  });
+
+  it('sem compromisso, o cartão avisa que não há nada marcado', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} nextAppointment={null} />);
+    expect(screen.getByText('Nenhuma reunião ou ligação marcada.')).toBeTruthy();
+  });
+
+  it('esconde o cartão enquanto carrega e quando o menu está recolhido', () => {
+    const appt = { day: 'hoje', time: '14:30', title: 'Reunião · Consulta' };
+    const { rerender } = render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} />);
+    expect(screen.queryByText('Próximo compromisso')).toBeNull();
+    rerender(<AppSidebar collapsed unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} nextAppointment={appt} />);
+    expect(screen.queryByText('Próximo compromisso')).toBeNull();
+  });
 });

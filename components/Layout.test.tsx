@@ -18,6 +18,7 @@ vi.mock('@/hooks/useResponsiveMode', () => ({ useResponsiveMode: () => ({ mode: 
 vi.mock('@/lib/query/hooks/useConversationsQuery', () => ({ useUnreadCount: () => ({ data: 0 }) }));
 let whatsappChannels: { status: string }[] = [];
 vi.mock('@/lib/query/hooks/useMessagingChannelsQuery', () => ({ useMessagingChannelsByType: () => ({ data: whatsappChannels }) }));
+vi.mock('@/lib/query/hooks/useActivitiesQuery', () => ({ usePendingActivities: () => ({ data: [] }) }));
 vi.mock('@/lib/brand', () => ({ CRM_NAME: 'Alice Teixeira', CRM_TAGLINE: 'Advocacia' }));
 vi.mock('./ai/UIChat', () => ({ UIChat: () => null }));
 vi.mock('./notifications/NotificationPopover', () => ({ NotificationPopover: () => <span>notificacoes</span> }));

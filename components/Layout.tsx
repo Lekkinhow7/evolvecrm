@@ -37,6 +37,8 @@ import { AppSidebar } from '@/components/navigation/AppSidebar';
 import { AppTopbar } from '@/components/navigation/AppTopbar';
 import { useUnreadCount } from '@/lib/query/hooks/useConversationsQuery';
 import { useMessagingChannelsByType } from '@/lib/query/hooks/useMessagingChannelsQuery';
+import { usePendingActivities } from '@/lib/query/hooks/useActivitiesQuery';
+import { getNextAppointment } from '@/components/navigation/nextAppointment';
 import { UIChat } from './ai/UIChat';
 
 interface LayoutProps {
@@ -77,6 +79,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const whatsappStatus = whatsappChannels.length === 0
     ? undefined
     : whatsappChannels.some((c) => c.status === 'connected') ? 'connected' : 'disconnected';
+
+  // Next meeting/call for the sidebar card (undefined while loading hides the card)
+  const { data: pendingActivities } = usePendingActivities();
+  const nextAppointment = pendingActivities ? (getNextAppointment(pendingActivities) ?? null) : undefined;
 
   // If the user signed out (or session expired), leave protected shell ASAP.
   // This prevents rendering fallbacks like "Usuário" while unauthenticated.
@@ -134,6 +140,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             collapsed={sidebarCollapsed}
             unreadCount={unreadMessagesCount}
             whatsapp={whatsappStatus}
+            nextAppointment={nextAppointment}
             profile={profile}
             onSignOut={signOut}
           />
