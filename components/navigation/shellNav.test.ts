@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { SHELL_NAV, SIDEBAR_GROUPS, SIDEBAR_QUICK, formatBadge, getActiveNavId, getBreadcrumbs } from './shellNav';
+import { SHELL_NAV, SIDEBAR_GROUPS, formatBadge, getActiveNavId, getBreadcrumbs } from './shellNav';
 
 describe('getActiveNavId', () => {
-  it('marca Negócios em /pipeline e em subrotas de /boards', () => {
+  it('marca Kanban em /pipeline e em subrotas de /boards', () => {
     expect(getActiveNavId('/pipeline')).toBe('boards');
     expect(getActiveNavId('/boards/abc')).toBe('boards');
   });
@@ -17,8 +17,10 @@ describe('getActiveNavId', () => {
 
 describe('getBreadcrumbs', () => {
   it('monta grupo e tela', () => {
-    expect(getBreadcrumbs('/contacts')).toEqual([{ label: 'Relacionamento' }, { label: 'Contatos' }]);
-    expect(getBreadcrumbs('/pipeline')).toEqual([{ label: 'Comercial' }, { label: 'Negócios' }]);
+    expect(getBreadcrumbs('/contacts')).toEqual([{ label: 'Comercial' }, { label: 'Contatos' }]);
+    expect(getBreadcrumbs('/pipeline')).toEqual([{ label: 'Comercial' }, { label: 'Kanban' }]);
+    expect(getBreadcrumbs('/inbox')).toEqual([{ label: 'Dia a dia' }, { label: 'Minha mesa' }]);
+    expect(getBreadcrumbs('/decisions')).toEqual([{ label: 'Inteligência' }, { label: 'Sugestões da IA' }]);
   });
   it('fica vazio em rota desconhecida', () => {
     expect(getBreadcrumbs('/desconhecida')).toEqual([]);
@@ -38,9 +40,10 @@ describe('formatBadge', () => {
 });
 
 describe('estrutura da sidebar', () => {
-  it('acesso rápido e grupos cobrem os 8 itens do menu, sem perfil', () => {
-    const ids = [...SIDEBAR_QUICK, ...SIDEBAR_GROUPS.flatMap((g) => g.items)];
-    for (const id of ids) expect(SHELL_NAV[id]).toBeDefined();
-    expect(new Set(ids)).toEqual(new Set(['inbox', 'messaging', 'dashboard', 'boards', 'contacts', 'activities', 'reports', 'settings']));
+  it('os grupos seguem a ordem do menu e deixam Configurações e Perfil para o cartão do usuário', () => {
+    expect(SIDEBAR_GROUPS.map((g) => g.label)).toEqual(['Dia a dia', 'Comercial', 'Inteligência']);
+    const ids = SIDEBAR_GROUPS.flatMap((g) => g.items);
+    for (const id of ids) expect(SHELL_NAV[id].group).toBe(SIDEBAR_GROUPS.find((g) => g.items.includes(id))?.label);
+    expect(ids).toEqual(['inbox', 'messaging', 'activities', 'dashboard', 'boards', 'contacts', 'reports', 'ai', 'decisions']);
   });
 });

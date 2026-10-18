@@ -3,8 +3,8 @@
  *
  * Componente de layout que fornece estrutura base para todas as páginas,
  * incluindo sidebar de navegação, header e área de conteúdo.
- * A moldura (menu lateral e topo) vem do design system da Alice
- * (`@/design-system`), montada em `components/navigation/AppSidebar` e `AppTopbar`.
+ * O menu lateral fica em `components/navigation/AppSidebar` e o topo em `AppTopbar`
+ * (este usa o Topbar do design system da Alice).
  *
  * @module components/Layout
  *
@@ -36,16 +36,17 @@ import { BottomNav, MoreMenuSheet, NavigationRail } from '@/components/navigatio
 import { AppSidebar } from '@/components/navigation/AppSidebar';
 import { AppTopbar } from '@/components/navigation/AppTopbar';
 import { useUnreadCount } from '@/lib/query/hooks/useConversationsQuery';
+import { useMessagingChannelsByType } from '@/lib/query/hooks/useMessagingChannelsQuery';
 import { UIChat } from './ai/UIChat';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-/** Largura ocupada pela sidebar no desktop (sidebar + 16px de respiro à esquerda; o wrapper usa p-4 pr-0). */
+/** Largura ocupada pela sidebar no desktop (o menu encosta na borda esquerda, sem respiro). */
 const SIDEBAR_SPACE = {
-  open: 'calc(var(--sidebar-width) + 16px)',
-  collapsed: 'calc(var(--sidebar-collapsed) + 16px)',
+  open: 'var(--sidebar-width)',
+  collapsed: 'var(--sidebar-collapsed)',
 };
 
 /**
@@ -58,7 +59,7 @@ const SIDEBAR_SPACE = {
  * @returns {JSX.Element} Estrutura de layout completa
  */
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { isGlobalAIOpen, sidebarCollapsed } = useUIState();
+  const { isGlobalAIOpen, sidebarCollapsed, setSidebarCollapsed } = useUIState();
   const { user, loading, profile, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -70,6 +71,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Messaging unread count for notification badge
   const { data: unreadMessagesCount = 0 } = useUnreadCount();
+
+  // WhatsApp status for the sidebar footer (hidden when there is no WhatsApp channel)
+  const { data: whatsappChannels = [] } = useMessagingChannelsByType('whatsapp');
+  const whatsappStatus = whatsappChannels.length === 0
+    ? undefined
+    : whatsappChannels.some((c) => c.status === 'connected') ? 'connected' : 'disconnected';
 
   // If the user signed out (or session expired), leave protected shell ASAP.
   // This prevents rendering fallbacks like "Usuário" while unauthenticated.
@@ -120,10 +127,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Tablet rail (shows full icon set; no "More" sheet needed) */}
       {isTablet ? <NavigationRail /> : null}
 
-      {/* Sidebar do design system (desktop) */}
+      {/* Menu lateral (desktop) */}
       {isDesktop ? (
-        <div className="hidden md:flex shrink-0 p-4 pr-0 z-20" aria-label="Menu principal" role="navigation">
-          <AppSidebar collapsed={sidebarCollapsed} unreadCount={unreadMessagesCount} profile={profile} onSignOut={signOut} />
+        <div className="hidden md:flex shrink-0 z-20">
+          <AppSidebar
+            collapsed={sidebarCollapsed}
+            onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
+            unreadCount={unreadMessagesCount}
+            whatsapp={whatsappStatus}
+            profile={profile}
+            onSignOut={signOut}
+          />
         </div>
       ) : null}
 
@@ -132,7 +146,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Middle Content (Header + Page) */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           <header className="shrink-0 z-40 px-6 pt-4" role="banner">
-            <AppTopbar showSidebarToggle={isDesktop} />
+            <AppTopbar />
           </header>
 
           <main

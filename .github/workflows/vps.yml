@@ -43,6 +43,7 @@ jobs:
               echo "NEXT_PUBLIC_SUPABASE_URL=https://iuoesrnvzakrloclzjto.supabase.co" >> "$GITHUB_ENV"
               echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1b2Vzcm52emFrcmxvY2x6anRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMjkyMzYsImV4cCI6MjEwNTgwNTIzNn0.qoryyqyyRP6OV421-N5vAnLFiaBPLiycXK2unIKEK7A" >> "$GITHUB_ENV"
               echo "NEXT_PUBLIC_CRM_NAME=Alice Teixeira" >> "$GITHUB_ENV"
+              echo "NEXT_PUBLIC_CRM_TAGLINE=Advocacia" >> "$GITHUB_ENV"
               ;;
             *)
               echo "Ramo sem cliente: $GITHUB_REF_NAME"

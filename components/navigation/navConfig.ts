@@ -23,11 +23,11 @@ export interface PrimaryNavItem {
 }
 
 export const PRIMARY_NAV: PrimaryNavItem[] = [
-  { id: 'inbox', label: 'Inbox', href: '/inbox', icon: Inbox },
-  { id: 'messaging', label: 'Mensagens', href: '/messaging', icon: MessageSquare },
-  { id: 'boards', label: 'Negócios', href: '/boards', icon: KanbanSquare },
+  { id: 'inbox', label: 'Minha mesa', href: '/inbox', icon: Inbox },
+  { id: 'messaging', label: 'Conversas', href: '/messaging', icon: MessageSquare },
+  { id: 'boards', label: 'Kanban', href: '/boards', icon: KanbanSquare },
   { id: 'contacts', label: 'Contatos', href: '/contacts', icon: Users },
-  { id: 'activities', label: 'Atividades', href: '/activities', icon: CheckSquare },
+  { id: 'activities', label: 'Tarefas', href: '/activities', icon: CheckSquare },
   { id: 'more', label: 'Mais', icon: MoreHorizontal },
 ];
 

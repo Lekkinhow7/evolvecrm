@@ -4,8 +4,19 @@ import type { RouteName } from '@/lib/prefetch';
  * Fonte única do menu lateral e do caminho (breadcrumbs) do topo.
  * Spec: docs/superpowers/specs/2026-10-17-alice-interface-limpa-design.md
  */
-export type ShellNavId = 'inbox' | 'messaging' | 'dashboard' | 'boards' | 'contacts' | 'activities' | 'reports' | 'settings' | 'profile';
-export type CrumbGroup = 'Trabalho' | 'Comercial' | 'Relacionamento' | 'Conta';
+export type ShellNavId =
+  | 'inbox'
+  | 'messaging'
+  | 'activities'
+  | 'dashboard'
+  | 'boards'
+  | 'contacts'
+  | 'reports'
+  | 'ai'
+  | 'decisions'
+  | 'settings'
+  | 'profile';
+export type CrumbGroup = 'Dia a dia' | 'Comercial' | 'Inteligência' | 'Conta';
 
 export interface ShellNavItem {
   id: ShellNavId;
@@ -18,22 +29,24 @@ export interface ShellNavItem {
 }
 
 export const SHELL_NAV: Record<ShellNavId, ShellNavItem> = {
-  inbox: { id: 'inbox', label: 'Inbox', href: '/inbox', icon: 'inbox', prefetch: 'inbox', group: 'Trabalho' },
-  messaging: { id: 'messaging', label: 'Mensagens', href: '/messaging', icon: 'message-circle', group: 'Trabalho' },
-  activities: { id: 'activities', label: 'Atividades', href: '/activities', icon: 'calendar-check', prefetch: 'activities', group: 'Trabalho' },
-  dashboard: { id: 'dashboard', label: 'Visão geral', href: '/dashboard', icon: 'activity', prefetch: 'dashboard', group: 'Comercial' },
-  boards: { id: 'boards', label: 'Negócios', href: '/boards', icon: 'briefcase', prefetch: 'boards', group: 'Comercial' },
+  inbox: { id: 'inbox', label: 'Minha mesa', href: '/inbox', icon: 'layout-list', prefetch: 'inbox', group: 'Dia a dia' },
+  messaging: { id: 'messaging', label: 'Conversas', href: '/messaging', icon: 'message-circle', group: 'Dia a dia' },
+  activities: { id: 'activities', label: 'Tarefas', href: '/activities', icon: 'list-checks', prefetch: 'activities', group: 'Dia a dia' },
+  dashboard: { id: 'dashboard', label: 'Visão geral', href: '/dashboard', icon: 'layout-grid', prefetch: 'dashboard', group: 'Comercial' },
+  boards: { id: 'boards', label: 'Kanban', href: '/boards', icon: 'kanban', prefetch: 'boards', group: 'Comercial' },
+  contacts: { id: 'contacts', label: 'Contatos', href: '/contacts', icon: 'users', prefetch: 'contacts', group: 'Comercial' },
   reports: { id: 'reports', label: 'Relatórios', href: '/reports', icon: 'chart-column', prefetch: 'reports', group: 'Comercial' },
-  contacts: { id: 'contacts', label: 'Contatos', href: '/contacts', icon: 'users', prefetch: 'contacts', group: 'Relacionamento' },
+  ai: { id: 'ai', label: 'Assistente IA', href: '/ai', icon: 'sparkles', group: 'Inteligência' },
+  decisions: { id: 'decisions', label: 'Sugestões da IA', href: '/decisions', icon: 'lightbulb', group: 'Inteligência' },
   settings: { id: 'settings', label: 'Configurações', href: '/settings', icon: 'settings', prefetch: 'settings', group: 'Conta' },
   profile: { id: 'profile', label: 'Perfil', href: '/profile', icon: 'user', group: 'Conta' },
 };
 
-export const SIDEBAR_QUICK: ShellNavId[] = ['inbox', 'dashboard', 'boards', 'activities'];
-
-export const SIDEBAR_GROUPS: { label: string; items: ShellNavId[] }[] = [
-  { label: 'Relacionamento', items: ['contacts', 'messaging'] },
-  { label: 'Gestão', items: ['reports', 'settings'] },
+/** Grupos do menu lateral. Configurações e Perfil ficam no cartão do usuário, no rodapé. */
+export const SIDEBAR_GROUPS: { label: CrumbGroup; items: ShellNavId[] }[] = [
+  { label: 'Dia a dia', items: ['inbox', 'messaging', 'activities'] },
+  { label: 'Comercial', items: ['dashboard', 'boards', 'contacts', 'reports'] },
+  { label: 'Inteligência', items: ['ai', 'decisions'] },
 ];
 
 /** Rotas antigas que pertencem a um item do menu. */
