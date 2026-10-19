@@ -63,7 +63,7 @@ export const ContactsPage: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6 p-8 max-w-[1600px] mx-auto">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-5">
             <ContactsHeader
                 viewMode={controller.viewMode}
                 search={controller.search}
@@ -97,12 +97,22 @@ export const ContactsPage: React.FC = () => {
                 />
             )}
 
-            {/* Stage Tabs - Funil de Contatos */}
-            <ContactsStageTabs
-                activeStage={controller.stageFilter}
-                onStageChange={controller.setStageFilter}
-                counts={controller.stageCounts}
-            />
+            {/* Pessoas/Empresas e, para pessoas, o filtro por estágio */}
+            <div className="flex flex-wrap items-center gap-3">
+                <ContactsTabs
+                    viewMode={controller.viewMode}
+                    setViewMode={controller.setViewMode}
+                    contactsCount={controller.totalCount}
+                    companiesCount={controller.companies.length}
+                />
+                {controller.viewMode === 'people' && (
+                    <ContactsStageTabs
+                        activeStage={controller.stageFilter}
+                        onStageChange={controller.setStageFilter}
+                        counts={controller.stageCounts}
+                    />
+                )}
+            </div>
 
             {duplicateGroups.length > 0 && (
                 <DuplicatesBanner
@@ -111,23 +121,16 @@ export const ContactsPage: React.FC = () => {
                 />
             )}
 
-            <ContactsTabs
-                viewMode={controller.viewMode}
-                setViewMode={controller.setViewMode}
-                contactsCount={controller.totalCount}
-                companiesCount={controller.companies.length}
-            />
-
             {/* Bulk Actions Bar */}
             {controller.selectedIds.size > 0 && (
-                <div className="flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg px-4 py-3">
+                <div className="flex items-center justify-between rounded-[var(--radius-lg)] border border-[var(--border-accent)] bg-[var(--surface-accent)] px-4 py-3">
                     <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                        <span className="text-sm font-medium text-[var(--text-primary)]">
                             {controller.selectedIds.size} {controller.viewMode === 'people' ? 'contato(s)' : 'empresa(s)'} selecionado(s)
                         </span>
                         <button
                             onClick={controller.clearSelection}
-                            className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                            className="text-xs text-[var(--text-link)] hover:underline"
                         >
                             Limpar seleção
                         </button>
@@ -135,7 +138,7 @@ export const ContactsPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => controller.setBulkDeleteConfirm(true)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+                            className="flex items-center gap-2 rounded-full bg-[var(--status-danger-solid)] px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
                         >
                             <Trash2 size={14} />
                             Excluir selecionados

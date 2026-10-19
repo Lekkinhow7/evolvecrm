@@ -11,7 +11,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge, Button, Icon, Panel } from '@/design-system';
 import { useAIMetricsQuery } from '@/lib/query/hooks';
-import { formatPercent } from '../format';
+import { formatPercent } from '@/lib/utils/brFormat';
 import { DashboardMetric, SplitBar } from './DashboardMetric';
 
 const GRID = 'grid grid-cols-2 gap-4 lg:grid-cols-4';

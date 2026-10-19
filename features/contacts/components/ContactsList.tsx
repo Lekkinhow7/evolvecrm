@@ -1,5 +1,6 @@
 import React from 'react';
-import { Building2, Mail, Phone, Plus, Calendar, Pencil, Trash2, Globe, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, GitMerge, Users } from 'lucide-react';
+import { Building2, Mail, Phone, Plus, Pencil, Trash2, Globe, ArrowUpDown, ArrowUp, ArrowDown, Users } from 'lucide-react';
+import { Badge } from '@/design-system';
 import { Contact, Company, ContactSortableColumn } from '@/types';
 import { StageBadge } from './ContactsStageTabs';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -18,7 +19,7 @@ const PT_BR_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('pt-BR', {
  * Formata uma data para exibição relativa (ex: "Hoje", "Ontem", "Há 3 dias", "15/11/2024")
  */
 function formatRelativeDate(dateString: string | undefined | null, now: Date): string {
-    if (!dateString) return '---';
+    if (!dateString) return '—';
     
     const date = new Date(dateString);
     
@@ -52,10 +53,10 @@ const SortableHeader: React.FC<SortableHeaderProps> = ({ label, column, currentS
     const isActive = currentSort === column;
     
     return (
-        <th scope="col" className="px-6 py-4">
+        <th scope="col" className="px-5 py-3">
             <button
                 onClick={() => onSort(column)}
-                className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider hover:text-primary-600 dark:hover:text-primary-400 transition-colors group"
+                className="group flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
                 aria-label={`Ordenar por ${label}`}
             >
                 {label}
@@ -181,45 +182,45 @@ export const ContactsList: React.FC<ContactsListProps> = ({
     const now = React.useMemo(() => new Date(), []);
     
     return (
-        <div className="glass rounded-xl border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-hairline)] bg-[var(--surface-card)] shadow-[var(--shadow-sm)]">
             <div className="overflow-x-auto">
                 {viewMode === 'people' ? (
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-200 dark:border-white/5">
+                        <thead className="border-b border-[var(--border-hairline)] bg-[var(--surface-sunken)]">
                             <tr>
-                                <th scope="col" className="w-12 px-6 py-4">
+                                <th scope="col" className="w-12 px-5 py-3">
                                     <input 
                                         type="checkbox" 
                                         checked={allSelected}
                                         ref={(el) => { if (el) el.indeterminate = someSelected; }}
                                         onChange={toggleSelectAll}
                                         aria-label={allSelected ? 'Desmarcar todos os contatos' : 'Selecionar todos os contatos'}
-                                        className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:bg-white/5 dark:border-white/10" 
+                                        className="size-4 rounded accent-[var(--action-primary-bg)]" 
                                     />
                                 </th>
                                 {onSort ? (
                                     <SortableHeader label="Nome" column="name" currentSort={sortBy} sortOrder={sortOrder} onSort={onSort} />
                                 ) : (
-                                    <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Nome</th>
+                                    <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Nome</th>
                                 )}
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Estágio</th>
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Cargo / Empresa</th>
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Contato</th>
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Status</th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Estágio</th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Cargo / Empresa</th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Contato</th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Status</th>
                                 {onSort ? (
                                     <SortableHeader label="Criado" column="created_at" currentSort={sortBy} sortOrder={sortOrder} onSort={onSort} />
                                 ) : (
-                                    <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Criado</th>
+                                    <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Criado</th>
                                 )}
                                 {onSort ? (
                                     <SortableHeader label="Modificado" column="updated_at" currentSort={sortBy} sortOrder={sortOrder} onSort={onSort} />
                                 ) : (
-                                    <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Modificado</th>
+                                    <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Modificado</th>
                                 )}
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider"><span className="sr-only">Ações</span></th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]"><span className="sr-only">Ações</span></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                        <tbody className="divide-y divide-[var(--border-hairline)]">
                             {filteredContacts.length === 0 ? (
                                 <tr>
                                     <td colSpan={9}>
@@ -227,68 +228,72 @@ export const ContactsList: React.FC<ContactsListProps> = ({
                                             icon={Users}
                                             title="Nenhum contato encontrado"
                                             description="Tente ajustar os filtros ou adicione um novo contato."
-                                            action={onAddContact ? { label: 'Adicionar Contato', onClick: onAddContact } : undefined}
+                                            action={onAddContact ? { label: 'Adicionar contato', onClick: onAddContact } : undefined}
                                         />
                                     </td>
                                 </tr>
                             ) : filteredContacts.map((contact) => (
-                                <tr key={contact.id} className={`hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group ${selectedIds.has(contact.id) ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''}`}>
-                                    <td className="px-6 py-4">
+                                <tr key={contact.id} className={`group transition-colors hover:bg-[var(--surface-hover)] ${selectedIds.has(contact.id) ? 'bg-[var(--surface-accent)]' : ''}`}>
+                                    <td className="px-5 py-3">
                                         <input 
                                             type="checkbox" 
                                             checked={selectedIds.has(contact.id)}
                                             onChange={() => toggleSelect(contact.id)}
                                             aria-label={`Selecionar ${contact.name}`}
-                                            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:bg-white/5 dark:border-white/10" 
+                                            className="size-4 rounded accent-[var(--action-primary-bg)]" 
                                         />
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-5 py-3">
                                         <div className="flex items-center gap-3">
                                             <button
                                                 type="button"
                                                 onClick={() => openEditModal(contact)}
-                                                className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 text-primary-700 dark:text-primary-200 flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-white dark:ring-white/5 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-dark-card"
+                                                className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
                                                 aria-label={`Editar contato: ${contact.name || 'Sem nome'}`}
                                                 title={contact.name || 'Sem nome'}
                                             >
                                                 {(contact.name || '?').charAt(0)}
                                             </button>
                                             <div>
-                                                <span className="font-semibold text-slate-900 dark:text-white block">
+                                                <span className="block font-medium text-[var(--text-primary)]">
                                                     {contact.name}
                                                     {duplicateContactIds?.has(contact.id) && (
-                                                        <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-full align-middle">
-                                                            <GitMerge size={10} />
-                                                            Duplicado
-                                                        </span>
+                                                        <Badge tone="warning" className="ml-2 align-middle">Duplicado</Badge>
                                                     )}
                                                 </span>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-5 py-3">
                                         <StageBadge stage={contact.stage} />
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div>
-                                            <span className="text-slate-900 dark:text-white font-medium block">{contact.role || 'Cargo não inf.'}</span>
-                                            <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                <Building2 size={10} />
-                                                <span>{getCompanyName(contact.clientCompanyId)}</span>
+                                    <td className="px-5 py-3">
+                                        {contact.role || contact.clientCompanyId ? (
+                                            <div>
+                                                {contact.role ? <span className="block text-[var(--text-primary)]">{contact.role}</span> : null}
+                                                {contact.clientCompanyId ? (
+                                                    <span className="mt-0.5 flex items-center gap-1 text-xs text-[var(--text-secondary)]">
+                                                        <Building2 size={12} aria-hidden="true" />
+                                                        {getCompanyName(contact.clientCompanyId)}
+                                                    </span>
+                                                ) : null}
                                             </div>
+                                        ) : (
+                                            <span className="text-[var(--text-quiet)]">—</span>
+                                        )}
+                                    </td>
+                                    <td className="px-5 py-3">
+                                        <div className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
+                                            {contact.phone ? (
+                                                <span className="flex items-center gap-2 tabular-nums"><Phone size={12} aria-hidden="true" /> {contact.phone}</span>
+                                            ) : null}
+                                            {contact.email ? (
+                                                <span className="flex items-center gap-2"><Mail size={12} aria-hidden="true" /> {contact.email}</span>
+                                            ) : null}
+                                            {!contact.phone && !contact.email ? <span className="text-[var(--text-quiet)]">—</span> : null}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs">
-                                                <Mail size={12} /> {contact.email || '---'}
-                                            </div>
-                                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs">
-                                                <Phone size={12} /> {contact.phone || '---'}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-5 py-3">
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => {
@@ -296,52 +301,51 @@ export const ContactsList: React.FC<ContactsListProps> = ({
                                                     updateContact(contact.id, { status: nextStatus });
                                                 }}
                                                 aria-label={`Alterar status de ${contact.name} de ${contact.status === 'ACTIVE' ? 'ativo' : contact.status === 'INACTIVE' ? 'inativo' : 'perdido'}`}
-                                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${contact.status === 'ACTIVE' ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20' :
-                                                    contact.status === 'INACTIVE' ? 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20' :
-                                                        'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
-                                                    }`}
+                                                className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                                title="Clique para trocar o status"
                                             >
-                                                {contact.status === 'ACTIVE' ? 'ATIVO' : contact.status === 'INACTIVE' ? 'INATIVO' : 'PERDIDO'}
+                                                <Badge tone={contact.status === 'ACTIVE' ? 'success' : contact.status === 'INACTIVE' ? 'warning' : 'danger'}>
+                                                    {contact.status === 'ACTIVE' ? 'Ativo' : contact.status === 'INACTIVE' ? 'Inativo' : 'Cancelado'}
+                                                </Badge>
                                             </button>
                                             <button
                                                 onClick={() => convertContactToDeal(contact.id)}
-                                                className="p-1 text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
-                                                aria-label={`Criar oportunidade para ${contact.name}`}
+                                                className="rounded-md p-1 text-[var(--text-quiet)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+                                                aria-label={`Criar negócio para ${contact.name}`}
+                                                title="Criar negócio"
                                             >
                                                 <Plus size={14} aria-hidden="true" />
                                             </button>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-5 py-3">
                                         <div
-                                            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs"
+                                            className="text-xs text-[var(--text-secondary)] tabular-nums"
                                             title={contact.createdAt ? PT_BR_DATE_TIME_FORMATTER.format(new Date(contact.createdAt)) : undefined}
                                         >
-                                            <Calendar size={14} className="text-slate-400" />
-                                            <span>{formatRelativeDate(contact.createdAt, now)}</span>
+                                                                                        <span>{formatRelativeDate(contact.createdAt, now)}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-5 py-3">
                                         <div
-                                            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs"
+                                            className="text-xs text-[var(--text-secondary)] tabular-nums"
                                             title={contact.updatedAt ? PT_BR_DATE_TIME_FORMATTER.format(new Date(contact.updatedAt)) : undefined}
                                         >
-                                            <Calendar size={14} className="text-slate-400" />
-                                            <span>{formatRelativeDate(contact.updatedAt, now)}</span>
+                                                                                        <span>{formatRelativeDate(contact.updatedAt, now)}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                    <td className="px-5 py-3 text-right">
+                                        <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                                             <button
                                                 onClick={() => openEditModal(contact)}
-                                                className="p-1.5 text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded transition-colors"
+                                                className="rounded-md p-1.5 text-[var(--text-quiet)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                                                 aria-label={`Editar ${contact.name}`}
                                             >
                                                 <Pencil size={16} aria-hidden="true" />
                                             </button>
                                             <button
                                                 onClick={() => setDeleteId(contact.id)}
-                                                className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-slate-400 hover:text-red-500 transition-colors"
+                                                className="rounded-md p-1.5 text-[var(--text-quiet)] transition-colors hover:bg-[var(--status-danger-bg)] hover:text-[var(--status-danger-fg)]"
                                                 aria-label={`Excluir ${contact.name}`}
                                             >
                                                 <Trash2 size={16} aria-hidden="true" />
@@ -354,26 +358,26 @@ export const ContactsList: React.FC<ContactsListProps> = ({
                     </table>
                 ) : (
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-200 dark:border-white/5">
+                        <thead className="border-b border-[var(--border-hairline)] bg-[var(--surface-sunken)]">
                             <tr>
-                                <th scope="col" className="w-12 px-6 py-4">
+                                <th scope="col" className="w-12 px-5 py-3">
                                     <input
                                         type="checkbox"
                                         checked={allSelected}
                                         ref={(el) => { if (el) el.indeterminate = someSelected; }}
                                         onChange={toggleSelectAll}
                                         aria-label={allSelected ? 'Desmarcar todas as empresas' : 'Selecionar todas as empresas'}
-                                        className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:bg-white/5 dark:border-white/10"
+                                        className="size-4 rounded accent-[var(--action-primary-bg)]"
                                     />
                                 </th>
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Empresa</th>
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Setor</th>
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Criado em</th>
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider">Pessoas Vinc.</th>
-                                <th scope="col" className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 font-display text-xs uppercase tracking-wider"><span className="sr-only">Ações</span></th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Empresa</th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Setor</th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Criado em</th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]">Pessoas</th>
+                                <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-tertiary)]"><span className="sr-only">Ações</span></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                        <tbody className="divide-y divide-[var(--border-hairline)]">
                             {filteredCompanies.length === 0 ? (
                                 <tr>
                                     <td colSpan={6}>
@@ -385,17 +389,17 @@ export const ContactsList: React.FC<ContactsListProps> = ({
                                     </td>
                                 </tr>
                             ) : filteredCompanies.map((company) => (
-                                <tr key={company.id} className={`hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group ${selectedIds.has(company.id) ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''}`}>
-                                    <td className="px-6 py-4">
+                                <tr key={company.id} className={`group transition-colors hover:bg-[var(--surface-hover)] ${selectedIds.has(company.id) ? 'bg-[var(--surface-accent)]' : ''}`}>
+                                    <td className="px-5 py-3">
                                         <input
                                             type="checkbox"
                                             checked={selectedIds.has(company.id)}
                                             onChange={() => toggleSelect(company.id)}
                                             aria-label={`Selecionar ${company.name}`}
-                                            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:bg-white/5 dark:border-white/10"
+                                            className="size-4 rounded accent-[var(--action-primary-bg)]"
                                         />
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-5 py-3">
                                         <div className="flex items-center gap-3">
                                             {(() => {
                                                 const firstLinkedContact = (contactsByCompanyId.get(company.id) ?? [])[0];
@@ -406,10 +410,8 @@ export const ContactsList: React.FC<ContactsListProps> = ({
                                                             if (firstLinkedContact) openEditModal(firstLinkedContact);
                                                         }}
                                                         disabled={!firstLinkedContact}
-                                                        className={`w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-dark-card ${
-                                                            firstLinkedContact
-                                                                ? 'hover:bg-slate-200 dark:hover:bg-white/15'
-                                                                : 'opacity-50 cursor-not-allowed'
+                                                        className={`grid size-9 place-items-center rounded-lg bg-[var(--surface-muted)] text-[var(--text-secondary)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
+                                                            firstLinkedContact ? 'hover:bg-[var(--surface-hover)]' : 'cursor-not-allowed opacity-50'
                                                         }`}
                                                         aria-label={
                                                             firstLinkedContact
@@ -427,26 +429,24 @@ export const ContactsList: React.FC<ContactsListProps> = ({
                                                 );
                                             })()}
                                             <div>
-                                                <span className="font-semibold text-slate-900 dark:text-white block">{company.name}</span>
+                                                <span className="block font-medium text-[var(--text-primary)]">{company.name}</span>
                                                 {company.website && (
-                                                    <a href={`https://${company.website}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-500 hover:underline flex items-center gap-1">
+                                                    <a href={`https://${company.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-[var(--text-link)] hover:underline">
                                                         <Globe size={10} /> {company.website}
                                                     </a>
                                                 )}
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-2 py-1 rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 text-xs font-medium">
-                                            {company.industry || 'Indefinido'}
-                                        </span>
+                                    <td className="px-5 py-3">
+                                        {company.industry ? <Badge tone="neutral">{company.industry}</Badge> : <span className="text-[var(--text-quiet)]">—</span>}
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-slate-600 dark:text-slate-400 text-xs">
+                                    <td className="px-5 py-3">
+                                        <span className="text-xs text-[var(--text-secondary)] tabular-nums">
                                             {PT_BR_DATE_FORMATTER.format(new Date(company.createdAt))}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-5 py-3">
                                         {/*
                                           Performance: this row used to call `contacts.filter(...)` twice per company.
                                           We pre-index contactsByCompanyId above to make this O(C + P) instead of O(C * P).
@@ -457,7 +457,7 @@ export const ContactsList: React.FC<ContactsListProps> = ({
                                                     key={c.id}
                                                     type="button"
                                                     onClick={() => openEditModal(c)}
-                                                    className="h-6 w-6 rounded-full ring-2 ring-white dark:ring-dark-card bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-[10px] font-bold text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-dark-card"
+                                                    className="grid size-7 place-items-center rounded-full bg-[var(--surface-muted)] text-xs font-semibold text-[var(--text-secondary)] ring-2 ring-[var(--surface-card)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-none focus-visible:ring-[var(--focus-ring)]"
                                                     title={c.name || 'Sem nome'}
                                                     aria-label={`Editar contato: ${c.name || 'Sem nome'}`}
                                                 >
@@ -465,22 +465,22 @@ export const ContactsList: React.FC<ContactsListProps> = ({
                                                 </button>
                                             ))}
                                             {(contactsByCompanyId.get(company.id) ?? []).length === 0 && (
-                                                <span className="text-slate-400 text-xs italic">Ninguém</span>
+                                                <span className="text-xs text-[var(--text-quiet)]">Ninguém ainda</span>
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                    <td className="px-5 py-3 text-right">
+                                        <div className="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                                             <button
                                                 onClick={() => openEditCompanyModal?.(company)}
-                                                className="p-1.5 text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded transition-colors"
+                                                className="rounded-md p-1.5 text-[var(--text-quiet)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
                                                 aria-label={`Editar ${company.name}`}
                                             >
                                                 <Pencil size={16} aria-hidden="true" />
                                             </button>
                                             <button
                                                 onClick={() => setDeleteCompanyId?.(company.id)}
-                                                className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-slate-400 hover:text-red-500 transition-colors"
+                                                className="rounded-md p-1.5 text-[var(--text-quiet)] transition-colors hover:bg-[var(--status-danger-bg)] hover:text-[var(--status-danger-fg)]"
                                                 aria-label={`Excluir ${company.name}`}
                                             >
                                                 <Trash2 size={16} aria-hidden="true" />

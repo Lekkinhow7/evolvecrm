@@ -11,7 +11,7 @@ import React, { useState } from 'react';
 import { Icon, Panel } from '@/design-system';
 import { useMessagingMetricsQuery, useOrgMembersQuery } from '@/lib/query/hooks';
 import type { PeriodFilter } from '../hooks/useDashboardMetrics';
-import { formatPercent } from '../format';
+import { formatPercent } from '@/lib/utils/brFormat';
 import { DASHBOARD_SELECT_CLASS, DashboardMetric, SplitBar } from './DashboardMetric';
 
 // =============================================================================

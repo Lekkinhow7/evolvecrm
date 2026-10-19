@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { PILL_SELECT_CLASS } from '@/components/filters/pillSelectClass';
 
 /**
  * Número de um bloco da Visão geral (dentro de um Panel): rótulo, valor e uma linha de apoio.
@@ -85,5 +86,4 @@ export function SplitBar({
 }
 
 /** Classe dos seletores do topo e dos blocos (funil, período, vendedor). */
-export const DASHBOARD_SELECT_CLASS =
-  'h-10 rounded-full border border-[var(--border-default)] bg-[var(--surface-card)] pl-4 pr-9 text-sm font-medium text-[var(--text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
+export const DASHBOARD_SELECT_CLASS = PILL_SELECT_CLASS;

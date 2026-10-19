@@ -1,4 +1,4 @@
-/** Formatos da Visão geral (pt-BR): dinheiro, percentual e variação. */
+/** Formatos pt-BR da interface: dinheiro, percentual e variação. */
 
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 const decimal1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });

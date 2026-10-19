@@ -98,17 +98,14 @@ export const BoardStrategyHeader: React.FC<BoardStrategyHeaderProps> = ({ board 
 
   if (!hasStrategy && !isEditing) {
     return (
-      <div className="mb-4">
+      <div className="-mt-2 mb-3">
         <button
+          type="button"
           onClick={() => setIsEditing(true)}
-          className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-primary-500 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-all group bg-slate-50/50 dark:bg-white/5"
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
         >
-          <div className="p-1.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm group-hover:scale-110 transition-transform">
-            <Target size={16} className="text-primary-500" />
-          </div>
-          <span className="font-medium text-sm">
-            Definir Estratégia do Board (Meta, Agente e Gatilhos)
-          </span>
+          <Target size={14} aria-hidden="true" />
+          Definir a estratégia deste funil (meta, assistente e gatilhos)
         </button>
       </div>
     );

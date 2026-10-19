@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { DealView } from '@/types';
-import { Building2, Hourglass, Trophy, XCircle } from 'lucide-react';
+import { Building2 } from 'lucide-react';
+import { Badge } from '@/design-system';
+import { formatBRL } from '@/lib/utils/brFormat';
 import { ActivityStatusIcon } from './ActivityStatusIcon';
 import { priorityAriaLabelPtBr } from '@/lib/utils/priority';
 
@@ -84,44 +86,16 @@ const DealCardComponent: React.FC<DealCardProps> = ({
     setLocalDragging(false);
   };
 
-  // Determine card styling based on won/lost status
-  const getCardClasses = () => {
-    const baseClasses = `
-      p-3 rounded-lg border-l-4 border-y border-r
-      shadow-sm cursor-grab active:cursor-grabbing group hover:shadow-md transition-all relative select-none
-    `;
-
-    if (deal.isWon) {
-      return `${baseClasses} 
-        bg-green-50 dark:bg-green-900/20 
-        border-green-200 dark:border-green-700/50
-        ${localDragging || isDragging ? 'opacity-50 rotate-2 scale-95' : ''}`;
-    }
-
-    if (deal.isLost) {
-      return `${baseClasses} 
-        bg-red-50 dark:bg-red-900/20 
-        border-red-200 dark:border-red-700/50 
-        ${localDragging || isDragging ? 'opacity-50 rotate-2 scale-95' : 'opacity-70'}`;
-    }
-
-    // Default - open deal
-    return `${baseClasses}
-      border-slate-200 dark:border-slate-700/50
-      ${localDragging || isDragging ? 'bg-green-100 dark:bg-green-900 opacity-50 rotate-2 scale-95' : 'bg-white dark:bg-slate-800 opacity-100'}
-      ${isRotting ? 'opacity-80 saturate-50 border-dashed' : ''}
-    `;
-  };
-
-  // Get border-left color class based on status
-  const getBorderLeftClass = () => {
-    if (deal.isWon) return '!border-l-green-500';
-    if (deal.isLost) return '!border-l-red-500';
-    // Priority-based colors for open deals
-    if (deal.priority === 'high') return '!border-l-red-500';
-    if (deal.priority === 'medium') return '!border-l-amber-500';
-    return '!border-l-blue-500';
-  };
+  // Card neutro (design system): a situação aparece nos selos, não na cor do card.
+  const dragging = localDragging || isDragging;
+  const cardClasses = [
+    'group relative cursor-grab select-none rounded-[var(--radius-lg)] border bg-[var(--surface-card)] p-3 shadow-[var(--shadow-sm)] transition-all active:cursor-grabbing',
+    'border-[var(--border-hairline)] hover:border-[var(--border-default)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
+    dragging ? 'rotate-1 scale-95 opacity-50' : '',
+    deal.isLost && !dragging ? 'opacity-70' : '',
+  ].join(' ');
+  const hasCompany = Boolean(deal.companyName) && deal.companyName !== 'Sem empresa';
+  const highPriority = !isClosed && deal.priority === 'high';
 
   // Build accessible label including visible text (tags)
   const getAriaLabel = () => {
@@ -140,7 +114,7 @@ const DealCardComponent: React.FC<DealCardProps> = ({
     // Main content
     parts.push(deal.title);
     if (deal.companyName) parts.push(deal.companyName);
-    parts.push(`$${deal.value.toLocaleString()}`);
+    parts.push(formatBRL(deal.value));
 
     // Additional context
     const priority = getPriorityLabel(deal.priority);
@@ -172,71 +146,38 @@ const DealCardComponent: React.FC<DealCardProps> = ({
       tabIndex={0}
       role="button"
       aria-label={getAriaLabel()}
-      className={`${getCardClasses()} ${getBorderLeftClass()}`}
+      className={cardClasses}
     >
-      {/* Won Badge */}
-      {deal.isWon && (
-        <div
-          className="absolute -top-2 -right-2 bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200 p-1 rounded-full shadow-sm z-10 flex items-center gap-0.5"
-          aria-label="Negócio ganho"
-        >
-          <Trophy size={12} aria-hidden="true" />
+      {(deal.isWon || deal.isLost || (isRotting && !isClosed) || highPriority || deal.tags.length > 0) && (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {deal.isWon && <Badge tone="success">Ganho</Badge>}
+          {deal.isLost && (
+            <Badge tone="danger">
+              <span title={deal.lossReason || undefined}>Perdido</span>
+            </Badge>
+          )}
+          {isRotting && !isClosed && (
+            <Badge tone="warning">
+              <span title="Mais de 10 dias sem mudar de etapa">Parado</span>
+            </Badge>
+          )}
+          {highPriority && <Badge tone="danger">Prioridade alta</Badge>}
+          {deal.tags.slice(0, isClosed ? 1 : 2).map((tag, index) => (
+            <Badge key={`${deal.id}-tag-${index}`} tone="neutral">{tag}</Badge>
+          ))}
         </div>
       )}
 
-      {/* Lost Badge */}
-      {deal.isLost && (
-        <div
-          className="absolute -top-2 -right-2 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 p-1 rounded-full shadow-sm z-10 flex items-center gap-0.5"
-          aria-label={deal.lossReason ? `Perdido: ${deal.lossReason}` : 'Negócio perdido'}
-        >
-          <XCircle size={12} aria-hidden="true" />
-        </div>
-      )}
-
-      {/* Rotting indicator - only for open deals */}
-      {isRotting && !isClosed && (
-        <div
-          className="absolute -top-2 -right-2 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 p-1 rounded-full shadow-sm z-10"
-          aria-label="Negócio estagnado, mais de 10 dias sem atualização"
-        >
-          <Hourglass size={12} aria-hidden="true" />
-        </div>
-      )}
-
-      <div className="flex gap-1 mb-2 flex-wrap">
-        {/* Won/Lost status badge */}
-        {deal.isWon && (
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-800/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
-            ✓ GANHO
-          </span>
-        )}
-        {deal.isLost && (
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-800/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700">
-            ✗ PERDIDO
-          </span>
-        )}
-        {/* Regular tags */}
-        {deal.tags.slice(0, isClosed ? 1 : 2).map((tag, index) => (
-          <span
-            key={`${deal.id}-tag-${index}`}
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/5"
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
-
-      <h4
-        className={`text-sm font-bold font-display leading-snug mb-0.5 ${isRotting ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}
-      >
+      <h4 className="mb-0.5 text-sm font-medium leading-snug text-[var(--text-primary)]">
         {deal.title}
       </h4>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-1">
-        <Building2 size={10} aria-hidden="true" /> {deal.companyName}
-      </p>
+      {hasCompany && (
+        <p className="flex items-center gap-1 text-xs text-[var(--text-secondary)]">
+          <Building2 size={12} aria-hidden="true" /> {deal.companyName}
+        </p>
+      )}
 
-      <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-white/5">
+      <div className="mt-3 flex items-center justify-between border-t border-[var(--border-hairline)] pt-2">
         <div className="flex items-center gap-2">
           {deal.owner && deal.owner.name !== 'Sem Dono' && (
             deal.owner.avatar ? (
@@ -245,22 +186,24 @@ const DealCardComponent: React.FC<DealCardProps> = ({
                 alt={`Responsável: ${deal.owner.name}`}
                 width={20}
                 height={20}
-                className="w-5 h-5 rounded-full ring-1 ring-white dark:ring-slate-800"
+                className="size-5 rounded-full ring-1 ring-[var(--surface-card)]"
                 title={`Responsável: ${deal.owner.name}`}
                 unoptimized
               />
             ) : (
               <div
-                className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 flex items-center justify-center text-[9px] font-bold ring-1 ring-white dark:ring-slate-800"
+                className="grid size-5 place-items-center rounded-full bg-[var(--surface-muted)] text-[10px] font-semibold text-[var(--text-secondary)] ring-1 ring-[var(--surface-card)]"
                 title={`Responsável: ${deal.owner.name}`}
               >
                 {getInitials(deal.owner.name)}
               </div>
             )
           )}
-          <span className="text-sm font-bold text-slate-700 dark:text-slate-200 font-mono">
-            ${deal.value.toLocaleString()}
-          </span>
+          {deal.value > 0 ? (
+            <span className="text-sm font-semibold text-[var(--text-primary)] tabular-nums">{formatBRL(deal.value)}</span>
+          ) : (
+            <span className="text-xs text-[var(--text-quiet)]">Sem valor</span>
+          )}
         </div>
 
         <div className="flex items-center">

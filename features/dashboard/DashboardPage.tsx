@@ -11,7 +11,7 @@ import { AIMetricsSection } from './components/AIMetricsSection';
 import { MessagingMetricsSection } from './components/MessagingMetricsSection';
 import { DASHBOARD_SELECT_CLASS, DashboardMetric, SplitBar } from './components/DashboardMetric';
 import { useDashboardMetrics, PeriodFilter, COMPARISON_LABELS } from './hooks/useDashboardMetrics';
-import { formatBRL, formatChange, formatPercent } from './format';
+import { formatBRL, formatChange, formatPercent } from '@/lib/utils/brFormat';
 import { PeriodFilterSelect } from '@/components/filters/PeriodFilterSelect';
 import { LazyFunnelChart, ChartWrapper } from '@/components/charts';
 import { SkeletonStatCard } from '@/components/ui/Skeleton';

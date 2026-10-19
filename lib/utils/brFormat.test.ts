@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBRL, formatChange, formatPercent } from './format';
+import { formatBRL, formatChange, formatPercent } from './brFormat';
 
 describe('formatos da Visão geral', () => {
   it('dinheiro em reais, com ponto no milhar e sem centavos', () => {
