@@ -124,7 +124,7 @@ describe('SettingsPage RBAC', () => {
     // Preferências pessoais seguem visíveis
     expect(screen.getByRole('heading', { name: /página inicial/i })).toBeInTheDocument()
     // Tabs pessoais seguem visíveis
-    expect(screen.getByRole('button', { name: /central de i\.a/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /inteligência artificial/i })).toBeInTheDocument()
   })
 
   it('admin vê seções de configuração do sistema', async () => {

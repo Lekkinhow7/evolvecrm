@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { PageHeader } from '@/design-system';
 import Image from 'next/image';
 import { getErrorMessage } from '@/lib/utils/errorUtils';
 import { useAuth } from '@/context/AuthContext';
@@ -79,19 +80,6 @@ export const ProfilePage: React.FC = () => {
         return null;
     }, [firstName, lastName]);
 
-    const gradient = useMemo(() => {
-        const colors = [
-            'from-violet-500 to-purple-600',
-            'from-blue-500 to-cyan-500',
-            'from-emerald-500 to-teal-500',
-            'from-orange-500 to-amber-500',
-            'from-pink-500 to-rose-500',
-            'from-indigo-500 to-blue-500',
-        ];
-        const email = profile?.email || '';
-        const colorIndex = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
-        return colors[colorIndex];
-    }, [profile?.email]);
 
     // Stable handlers (helps memoized children / prevents re-renders in some layouts).
     const triggerAvatarPicker = useCallback(() => {
@@ -301,14 +289,7 @@ export const ProfilePage: React.FC = () => {
     return (
         <div className="max-w-2xl mx-auto pb-10">
             {/* Header */}
-            <div className="mb-10">
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white font-display tracking-tight">
-                    Meu Perfil
-                </h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-2">
-                    Gerencie suas informações pessoais e segurança.
-                </p>
-            </div>
+            <PageHeader className="mb-6" title="Meu perfil" subtitle="Seus dados, foto e senha de acesso." />
 
             {/* Mensagem de feedback */}
             {message && (
@@ -337,7 +318,7 @@ export const ProfilePage: React.FC = () => {
                                     unoptimized
                                 />
                             ) : (
-                                <div className={`w-20 h-20 rounded-2xl bg-linear-to-br ${gradient} flex items-center justify-center text-white font-bold text-2xl shadow-xl`}>
+                                <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-semibold text-white" style={{ background: 'var(--gradient-avatar)' }}>
                                     {initials}
                                 </div>
                             )}

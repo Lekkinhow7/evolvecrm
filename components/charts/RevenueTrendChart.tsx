@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { formatBRL, formatBRLShort } from '@/lib/utils/brFormat';
 
 interface RevenueTrendChartProps {
   data: Array<{ month: string; revenue: number }>;
@@ -24,8 +25,8 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({ data }) =>
     <AreaChart data={data}>
       <defs>
         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
-          <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+          <stop offset="5%" stopColor="var(--viz-1)" stopOpacity={0.3} />
+          <stop offset="95%" stopColor="var(--viz-1)" stopOpacity={0} />
         </linearGradient>
       </defs>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
@@ -40,7 +41,8 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({ data }) =>
         axisLine={false}
         tickLine={false}
         tick={{ fill: 'var(--chart-text)', fontSize: 12 }}
-        tickFormatter={value => `$${value / 1000}k`}
+        allowDecimals={false}
+        tickFormatter={(value: number) => formatBRLShort(value)}
       />
       <Tooltip
         contentStyle={{
@@ -50,13 +52,14 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({ data }) =>
           color: 'var(--chart-tooltip-text)',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         }}
-        itemStyle={{ color: '#bae6fd' }}
+        itemStyle={{ color: 'var(--chart-tooltip-text)' }}
+        formatter={(value) => [formatBRL(Number(value)), 'Receita']}
         labelStyle={{ color: 'var(--chart-text)' }}
       />
       <Area
         type="monotone"
         dataKey="revenue"
-        stroke="#0ea5e9"
+        stroke="var(--viz-1)"
         strokeWidth={3}
         fillOpacity={1}
         fill="url(#colorRevenue)"

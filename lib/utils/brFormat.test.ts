@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { formatBRL, formatChange, formatPercent } from './brFormat';
+import { formatBRL, formatBRLShort, formatChange, formatPercent } from './brFormat';
 
 describe('formatos da Visão geral', () => {
   it('dinheiro em reais, com ponto no milhar e sem centavos', () => {
     expect(formatBRL(12500)).toBe('R$ 12.500');
     expect(formatBRL(0)).toBe('R$ 0');
     expect(formatBRL(Number.NaN)).toBe('R$ 0');
+  });
+
+  it('dinheiro abreviado para eixos', () => {
+    expect(formatBRLShort(12000)).toBe('R$ 12 mil');
+    expect(formatBRLShort(0)).toBe('R$ 0');
   });
 
   it('percentual com vírgula', () => {

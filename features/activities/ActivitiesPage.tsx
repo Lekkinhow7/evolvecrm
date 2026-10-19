@@ -82,7 +82,7 @@ export const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ initialView, tit
     };
 
     return (
-        <div className="p-8 max-w-400 mx-auto">
+        <div className="mx-auto max-w-400">
             <ActivitiesHeader
                 viewMode={viewMode}
                 setViewMode={setViewMode}

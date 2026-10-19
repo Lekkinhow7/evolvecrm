@@ -78,7 +78,7 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
       >
         <div className="p-5 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white font-display">
-            {editingActivity ? 'Editar Atividade' : 'Nova Atividade'}
+            {editingActivity ? 'Editar tarefa' : 'Nova tarefa'}
           </h2>
           <button
             onClick={onClose}

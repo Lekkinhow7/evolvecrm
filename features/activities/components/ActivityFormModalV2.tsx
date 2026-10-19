@@ -115,7 +115,7 @@ export const ActivityFormModalV2: React.FC<ActivityFormModalV2Props> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editingActivity ? 'Editar Atividade' : 'Nova Atividade'}
+      title={editingActivity ? 'Editar tarefa' : 'Nova tarefa'}
     >
       <ModalForm onSubmit={handleSubmit(handleFormSubmit)}>
         <InputField

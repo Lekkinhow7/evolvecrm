@@ -7,6 +7,7 @@ import { ViewModeToggle } from './components/ViewModeToggle';
 import { InboxOverviewView } from './components/InboxOverviewView';
 import { InboxListView } from './components/InboxListView';
 import { InboxFocusView } from './components/InboxFocusView';
+import { PageHeader } from '@/design-system';
 import { DebugFillButton } from '@/components/debug/DebugFillButton';
 
 /**
@@ -65,21 +66,14 @@ export const InboxPage: React.FC = () => {
   );
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-6">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold font-display text-slate-900 dark:text-white mb-1">
-            Prioridades
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400">O que precisa da sua atenção.</p>
-          <div className="mt-4 flex gap-2">
-            <DebugFillButton onClick={seedInboxDebug} label="Seed Inbox" variant="secondary" />
-          </div>
-        </div>
-
-        <ViewModeToggle mode={viewMode} onChange={setViewMode} />
-      </div>
+    <div className="mx-auto max-w-6xl">
+      <PageHeader
+        className="mb-6"
+        title="Prioridades"
+        subtitle="O que precisa da sua atenção: atrasadas, tarefas de hoje e avisos da IA."
+        actions={<ViewModeToggle mode={viewMode} onChange={setViewMode} />}
+      />
+      <DebugFillButton onClick={seedInboxDebug} label="Seed Inbox" variant="secondary" />
 
       {/* Views */}
       {viewMode === 'overview' ? (

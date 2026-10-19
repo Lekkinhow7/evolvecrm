@@ -77,7 +77,7 @@ export const ActivitiesList: React.FC<ActivitiesListProps> = ({
                     icon={CheckSquare}
                     title="Nenhuma atividade encontrada"
                     description="Crie uma atividade para começar a acompanhar seu trabalho."
-                    action={onAddActivity ? { label: 'Nova Atividade', onClick: onAddActivity } : undefined}
+                    action={onAddActivity ? { label: 'Nova tarefa', onClick: onAddActivity } : undefined}
                 />
             </div>
         );

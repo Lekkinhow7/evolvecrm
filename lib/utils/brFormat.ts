@@ -1,11 +1,17 @@
 /** Formatos pt-BR da interface: dinheiro, percentual e variação. */
 
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+const brlCompact = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 });
 const decimal1 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 /** "R$ 12.500" (sem centavos: os cartões mostram valores redondos). */
 export function formatBRL(value: number): string {
   return brl.format(Number.isFinite(value) ? value : 0).replace(/ /g, ' ');
+}
+
+/** "R$ 12 mil", "R$ 1,2 mi" (eixos de gráfico e cartões apertados). */
+export function formatBRLShort(value: number): string {
+  return brlCompact.format(Number.isFinite(value) ? value : 0).replace(/ /g, ' ');
 }
 
 /** "12,4%" */

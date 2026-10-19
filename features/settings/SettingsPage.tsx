@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { PageHeader } from '@/design-system';
 import { usePathname } from 'next/navigation';
 import { useSettingsController } from './hooks/useSettingsController';
 import { TagsManager } from './components/TagsManager';
@@ -60,7 +61,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ hash, isAdmin }) => {
               { value: '/dashboard', label: 'Dashboard' },
               { value: '/inbox-list', label: 'Inbox (Lista)' },
               { value: '/inbox-focus', label: 'Inbox (Foco)' },
-              { value: '/boards', label: 'Boards (Kanban)' },
+              { value: '/boards', label: 'Kanban' },
               { value: '/contacts', label: 'Contatos' },
               { value: '/activities', label: 'Atividades' },
               { value: '/reports', label: 'Relatórios' },
@@ -212,7 +213,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ tab: initialTab }) => {
     ...(profile?.role === 'admin' ? [{ id: 'products' as SettingsTab, name: 'Produtos/Serviços', icon: Package }] : []),
     ...(profile?.role === 'admin' ? [{ id: 'business-units' as SettingsTab, name: 'Unidades', icon: Building2 }] : []),
     ...(profile?.role === 'admin' ? [{ id: 'integrations' as SettingsTab, name: 'Integrações', icon: Plug }] : []),
-    { id: 'ai' as SettingsTab, name: 'Central de I.A', icon: Sparkles },
+    { id: 'ai' as SettingsTab, name: 'Inteligência artificial', icon: Sparkles },
     { id: 'data' as SettingsTab, name: 'Dados', icon: Database },
     ...(profile?.role === 'admin' ? [{ id: 'users' as SettingsTab, name: 'Equipe', icon: Users }] : []),
   ];
@@ -242,8 +243,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ tab: initialTab }) => {
 
   return (
     <div className="max-w-5xl mx-auto">
+      <PageHeader className="mb-6" title="Configurações" subtitle="Ajustes do CRM, da equipe, das integrações e da IA." />
       {/* Tabs minimalistas */}
-      <div className="flex items-center gap-1 mb-8 border-b border-slate-200 dark:border-white/10">
+      <div className="mb-8 flex items-center gap-1 overflow-x-auto border-b border-[var(--border-hairline)]">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -251,14 +253,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ tab: initialTab }) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${isActive
-                ? 'text-primary-600 dark:text-primary-400'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'text-[var(--text-primary)]'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
             >
               <tab.icon className="h-4 w-4" />
               {tab.name}
               {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400 rounded-full" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[var(--brand-cyan)]" />
               )}
             </button>
           );

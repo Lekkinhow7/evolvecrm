@@ -1,95 +1,55 @@
 import React from 'react';
-import { Plus, LayoutList, Calendar as CalendarIcon } from 'lucide-react';
+import { Badge, Button, PageHeader, Segmented } from '@/design-system';
 
 interface ActivitiesHeaderProps {
   viewMode: 'list' | 'calendar';
   setViewMode: (mode: 'list' | 'calendar') => void;
   onNewActivity: () => void;
   dateFilter?: 'ALL' | 'overdue' | 'today' | 'upcoming';
-  /** Título da tela (padrão "Atividades"; a rota /agenda usa "Agenda"). */
+  /** Título da tela (padrão "Tarefas"; a rota /agenda usa "Agenda"). */
   title?: string;
   subtitle?: string;
 }
 
-/**
- * Componente React `ActivitiesHeader`.
- *
- * @param {ActivitiesHeaderProps} {
-  viewMode,
-  setViewMode,
-  onNewActivity,
-  dateFilter = 'ALL',
-} - Parâmetro `{
-  viewMode,
-  setViewMode,
-  onNewActivity,
-  dateFilter = 'ALL',
-}`.
- * @returns {Element} Retorna um valor do tipo `Element`.
- */
+const FILTER_LABEL: Record<string, string> = { overdue: 'Atrasadas', today: 'Hoje', upcoming: 'Próximas' };
+
+/** Topo de Tarefas e Agenda: título, filtro ativo, lista/calendário e "Nova tarefa". */
 export const ActivitiesHeader: React.FC<ActivitiesHeaderProps> = ({
   viewMode,
   setViewMode,
   onNewActivity,
   dateFilter = 'ALL',
-  title = 'Atividades',
-  subtitle = 'Gerencie suas tarefas e compromissos',
+  title = 'Tarefas',
+  subtitle = 'Tarefas, ligações e reuniões da equipe.',
 }) => {
-  const filterLabel =
-    dateFilter === 'overdue'
-      ? 'Atrasados'
-      : dateFilter === 'today'
-        ? 'Hoje'
-        : dateFilter === 'upcoming'
-          ? 'Próximos'
-          : null;
+  const filterLabel = FILTER_LABEL[dateFilter];
 
   return (
-    <div className="flex justify-between items-center mb-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white font-display">
-          {title}
-        </h1>
-        <div className="mt-1 flex items-center gap-2">
-          <p className="text-slate-500 dark:text-slate-400">{subtitle}</p>
-          {filterLabel && (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300">
-              Filtro: {filterLabel}
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="flex bg-white dark:bg-dark-card p-1 rounded-lg border border-slate-200 dark:border-white/10">
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-2 rounded-md transition-all ${
-              viewMode === 'list'
-                ? 'bg-primary-50 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-            }`}
-          >
-            <LayoutList size={20} />
-          </button>
-          <button
-            onClick={() => setViewMode('calendar')}
-            className={`p-2 rounded-md transition-all ${
-              viewMode === 'calendar'
-                ? 'bg-primary-50 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-            }`}
-          >
-            <CalendarIcon size={20} />
-          </button>
-        </div>
-        <button
-          onClick={onNewActivity}
-          className="flex items-center gap-2 bg-primary-600 hover:bg-primary-500 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-primary-600/20"
-        >
-          <Plus size={20} />
-          Nova Atividade
-        </button>
-      </div>
-    </div>
+    <PageHeader
+      className="mb-6"
+      title={title}
+      subtitle={
+        <span className="inline-flex flex-wrap items-center gap-2">
+          {subtitle}
+          {filterLabel ? <Badge tone="info">Mostrando: {filterLabel}</Badge> : null}
+        </span>
+      }
+      actions={
+        <>
+          <Segmented
+            variant="text"
+            value={viewMode}
+            onChange={(value) => setViewMode(value as 'list' | 'calendar')}
+            options={[
+              { value: 'list', label: 'Lista' },
+              { value: 'calendar', label: 'Calendário' },
+            ]}
+          />
+          <Button icon="plus" onClick={onNewActivity}>
+            Nova tarefa
+          </Button>
+        </>
+      }
+    />
   );
 };

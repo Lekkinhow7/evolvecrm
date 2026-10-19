@@ -6,5 +6,5 @@ export const metadata: Metadata = { title: `Agenda | ${CRM_NAME}` };
 
 /** Agenda: as reuniões e compromissos das Tarefas no calendário. */
 export default function Agenda() {
-    return <ActivitiesPage initialView="calendar" title="Agenda" subtitle="Reuniões e compromissos no calendário" />
+    return <ActivitiesPage initialView="calendar" title="Agenda" subtitle="Reuniões e compromissos no calendário." />
 }

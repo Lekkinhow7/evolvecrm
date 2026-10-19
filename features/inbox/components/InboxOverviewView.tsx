@@ -30,18 +30,12 @@ const StatCard: React.FC<{
   hint?: string;
   onClick?: () => void;
 }> = ({ label, value, tone, hint, onClick }) => {
-  const toneStyles: Record<typeof tone, string> = {
-    neutral: 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5',
-    danger: 'border-red-200 dark:border-red-500/20 bg-red-50/60 dark:bg-red-500/10',
-    warning: 'border-orange-200 dark:border-orange-500/20 bg-orange-50/60 dark:bg-orange-500/10',
-    success: 'border-green-200 dark:border-green-500/20 bg-green-50/60 dark:bg-green-500/10',
-  };
-
-  const valueStyles: Record<typeof tone, string> = {
-    neutral: 'text-slate-900 dark:text-white',
-    danger: 'text-red-700 dark:text-red-300',
-    warning: 'text-orange-700 dark:text-orange-300',
-    success: 'text-green-700 dark:text-green-300',
+  // Cartão neutro (design system): o tom aparece só num ponto ao lado do rótulo.
+  const dotStyles: Record<typeof tone, string> = {
+    neutral: '',
+    danger: 'bg-[var(--status-danger-solid)]',
+    warning: 'bg-[var(--status-warning-solid)]',
+    success: 'bg-[var(--status-success-solid)]',
   };
 
   const Component = onClick ? 'button' : 'div';
@@ -50,16 +44,19 @@ const StatCard: React.FC<{
     <Component
       type={onClick ? 'button' : undefined}
       onClick={onClick}
-      className={`w-full text-left rounded-xl border p-4 transition-colors ${toneStyles[tone]} ${onClick ? 'hover:bg-slate-50 dark:hover:bg-white/10' : ''}`}
+      className={`w-full rounded-[var(--radius-lg)] border border-[var(--border-hairline)] bg-[var(--surface-card)] p-4 text-left shadow-[var(--shadow-sm)] transition-colors ${onClick ? 'hover:border-[var(--border-default)]' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
+          <div className="flex items-center gap-1.5 text-[length:var(--fs-caption)] text-[var(--text-secondary)]">
+            {dotStyles[tone] ? <span aria-hidden="true" className={`size-2 rounded-full ${dotStyles[tone]}`} /> : null}
+            {label}
+          </div>
           {hint ? (
-            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</div>
+            <div className="mt-1 text-xs text-[var(--text-tertiary)]">{hint}</div>
           ) : null}
         </div>
-        <div className={`text-2xl font-bold ${valueStyles[tone]}`}>{value}</div>
+        <div className="text-2xl font-semibold tracking-[-0.03em] text-[var(--text-primary)]">{value}</div>
       </div>
     </Component>
   );
