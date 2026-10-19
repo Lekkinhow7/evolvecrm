@@ -16,7 +16,10 @@ describe('getNextAppointment', () => {
       act({ title: 'Primeira', date: at(18, 14, 30) }),
       act({ title: 'Ligar', type: 'CALL', date: at(20, 8) }),
     ], now);
-    expect(next).toEqual({ day: 'hoje', time: '14:30', title: 'Reunião · Primeira', dealTitle: 'Contrato Marcos' });
+    expect(next).toEqual({
+      day: 'hoje', when: 'Hoje', month: 'OUT', dayOfMonth: '18',
+      time: '14:30', title: 'Reunião · Primeira', dealTitle: 'Contrato Marcos',
+    });
   });
 
   it('ignora concluídas, passadas e tarefas que não são compromisso', () => {
@@ -26,11 +29,11 @@ describe('getNextAppointment', () => {
       act({ title: 'Tarefa', type: 'TASK' }),
       act({ title: 'Ligar cliente', type: 'CALL', date: at(19, 11, 5) }),
     ], now);
-    expect(next).toMatchObject({ day: 'amanhã', time: '11:05', title: 'Ligação · Ligar cliente' });
+    expect(next).toMatchObject({ day: 'amanhã', when: 'Amanhã', dayOfMonth: '19', time: '11:05', title: 'Ligação · Ligar cliente' });
   });
 
   it('mostra a data como DD.MM depois de amanhã', () => {
-    expect(getNextAppointment([act({ date: at(25, 16) })], now)?.day).toBe('25.10');
+    expect(getNextAppointment([act({ date: at(25, 16) })], now)).toMatchObject({ day: '25.10', when: 'Dom', month: 'OUT', dayOfMonth: '25' });
   });
 
   it('sem compromisso futuro, devolve undefined', () => {

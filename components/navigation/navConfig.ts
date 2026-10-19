@@ -24,7 +24,7 @@ export interface PrimaryNavItem {
 }
 
 export const PRIMARY_NAV: PrimaryNavItem[] = [
-  { id: 'inbox', label: 'Minha mesa', href: '/inbox', icon: Inbox },
+  { id: 'inbox', label: 'Prioridades', href: '/inbox', icon: Inbox },
   { id: 'messaging', label: 'Conversas', href: '/messaging', icon: MessageSquare },
   { id: 'boards', label: 'Kanban', href: '/boards', icon: KanbanSquare },
   { id: 'contacts', label: 'Contatos', href: '/contacts', icon: Users },

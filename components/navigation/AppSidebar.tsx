@@ -73,7 +73,7 @@ function badge(count: number | undefined, tone: BadgeTone, hint: (n: number) => 
   return text && count ? { text: text + suffix, tone, hint: hint(count) } : undefined;
 }
 
-/** Menu lateral do CRM: botão Novo, grupos com avisos, funis do Kanban, agenda de hoje e cartão do usuário com Configurações e Sair. Recolher fica no topo. */
+/** Menu lateral do CRM: botão Novo, grupos com avisos, funis do Kanban, próximo compromisso, resumo de hoje e cartão do usuário com Sair. Recolher fica no topo. */
 export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals, funnels = [], nextAppointment, profile, onSignOut }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -97,11 +97,11 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
 
   return (
     <div
-      className="flex h-full flex-col border-r border-[var(--border-hairline)] bg-[var(--surface-card)] px-3 pb-3 pt-5 transition-[width] duration-200 motion-reduce:transition-none"
+      className="flex h-full flex-col border-r border-[var(--border-hairline)] bg-[var(--surface-card)] px-3 pb-2.5 pt-3.5 transition-[width] duration-200 motion-reduce:transition-none"
       style={{ width: collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)' }}
     >
       {/* Marca (o botão de recolher fica no topo, ao lado do caminho da tela) */}
-      <div className={`flex items-center gap-3 px-1.5 pb-4 ${collapsed ? 'justify-center' : ''}`}>
+      <div className={`flex items-center gap-3 px-1.5 pb-2.5 ${collapsed ? 'justify-center' : ''}`}>
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--brand-ink)] text-[var(--text-inverse)]">
           <BrandMark height={22} title={CRM_NAME} color="var(--white)" />
         </span>
@@ -118,7 +118,7 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
         <NewMenu collapsed={collapsed} />
       </div>
 
-      {/* Menu e agenda de hoje rolam juntos; o cartão do usuário fica sempre visível. */}
+      {/* Menu e resumo de hoje rolam juntos (só em tela baixa); o cartão do usuário fica sempre visível. */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto [scrollbar-color:var(--border-default)_transparent] [scrollbar-gutter:stable] [scrollbar-width:thin]">
           {/* Grupos */}
           <nav aria-label="Menu principal" className="flex flex-col">
@@ -127,7 +127,7 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
                 {collapsed ? (
                   <div className="mx-auto my-2 h-px w-10 bg-[var(--border-default)]" aria-hidden="true" />
                 ) : (
-                  <div className="px-3 pb-1.5 pt-3.5 text-[length:var(--fs-caption)] text-[var(--text-tertiary)]">{group.label}</div>
+                  <div className="px-3 pb-0.5 pt-1 text-[length:var(--fs-caption)] text-[var(--text-tertiary)]">{group.label}</div>
                 )}
                 {group.items.map((id) => {
                   const item = SHELL_NAV[id];
@@ -142,7 +142,7 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
                       title={collapsed ? item.label : undefined}
                       onMouseEnter={() => prefetch(id)}
                       onFocus={() => prefetch(id)}
-                      className={`relative flex items-center gap-3 rounded-lg py-2 text-[length:var(--fs-body)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
+                      className={`relative flex items-center gap-3 rounded-lg py-1.5 text-[length:var(--fs-body)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
                         collapsed ? 'justify-center px-2' : 'px-3'
                       } ${
                         isActive
@@ -183,13 +183,44 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
             ))}
           </nav>
 
-          {/* Hoje e próximo compromisso ficam embaixo; em tela baixa, rolam junto com o menu. */}
+          {/* Próximo compromisso, logo abaixo de Configurações: quadradinho com a data, dia e hora em destaque,
+              tipo e cliente embaixo. Em tela baixa (menos de 750px) some, para o menu não ganhar barra de rolagem;
+              a Agenda e o resumo de hoje seguem visíveis. */}
+          {!collapsed && nextAppointment !== undefined ? (
+            <Link
+              href="/agenda"
+              aria-label={nextAppointment ? `Próximo compromisso, ${nextAppointment.day} às ${nextAppointment.time}: ${nextAppointment.title}` : 'Próximo compromisso: nenhuma reunião ou ligação marcada'}
+              className="mt-1.5 hidden items-center gap-3 rounded-2xl border border-[var(--border-accent)] bg-[linear-gradient(135deg,var(--surface-accent)_0%,var(--surface-sunken)_80%)] py-2 pl-2 pr-3 transition-colors hover:border-[var(--border-accent-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] [@media(min-height:750px)]:flex"
+            >
+              <span className="flex h-[46px] w-11 shrink-0 flex-col items-center justify-center rounded-xl border border-[var(--border-hairline)] bg-[var(--surface-card)] shadow-[var(--shadow-sm)]">
+                {nextAppointment ? (
+                  <>
+                    <span className="text-[10px] font-semibold tracking-[0.08em] text-[var(--text-accent)]">{nextAppointment.month}</span>
+                    <span className="text-[19px] font-semibold leading-[1.1] text-[var(--text-primary)] proportional-nums">{nextAppointment.dayOfMonth}</span>
+                  </>
+                ) : (
+                  <Icon name="calendar-check" size={18} className="text-[var(--text-accent)]" />
+                )}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col gap-px">
+                <span className="truncate text-[11px] leading-[14px] text-[var(--text-tertiary)]">Próximo compromisso</span>
+                <span className="truncate text-[14.5px] font-semibold leading-[19px] tracking-[-0.01em] text-[var(--text-primary)]">
+                  {nextAppointment ? `${nextAppointment.when}, ${nextAppointment.time}` : 'Agenda livre'}
+                </span>
+                <span className="truncate text-xs leading-4 text-[var(--text-secondary)]">
+                  {nextAppointment ? nextAppointment.title : 'Nenhuma reunião marcada'}
+                </span>
+              </span>
+            </Link>
+          ) : null}
+
+          {/* Resumo de hoje fica embaixo; em tela baixa, rola junto com o menu. */}
           <div className="flex-1" aria-hidden="true" />
           {/* Resumo de hoje: três botões separados, cada um leva à lista certa */}
           {!collapsed && activityStats ? (
-            <section aria-label="Hoje" className="mt-3 flex flex-col gap-2">
+            <section aria-label="Hoje" className="mt-1.5 flex flex-col gap-1">
               <div className="px-1 text-[length:var(--fs-caption)] text-[var(--text-tertiary)]">Hoje</div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1">
                 {[
                   { n: activityStats.todayAppointments, label: 'Reuniões', a11y: activityStats.todayAppointments === 1 ? 'reunião hoje' : 'reuniões hoje', icon: 'calendar-days', href: '/agenda', alert: false },
                   { n: activityStats.todayTasks, label: 'Tarefas', a11y: activityStats.todayTasks === 1 ? 'tarefa hoje' : 'tarefas hoje', icon: 'list-checks', href: '/activities?filter=today&tipo=TASK', alert: false },
@@ -199,7 +230,7 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
                     key={t.label}
                     href={t.href}
                     aria-label={`${t.n} ${t.a11y}`}
-                    className={`flex items-center gap-2.5 rounded-xl border py-1.5 pl-1.5 pr-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
+                    className={`flex items-center gap-2.5 rounded-xl border py-0.5 pl-1.5 pr-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
                       t.alert
                         ? 'border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)] hover:border-[var(--status-danger-fg)]'
                         : 'border-[var(--border-hairline)] bg-[var(--surface-sunken)] text-[var(--text-primary)] hover:border-[var(--border-default)] hover:bg-[var(--surface-hover)]'
@@ -225,40 +256,10 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
             </section>
           ) : null}
 
-          {/* Próximo compromisso */}
-          {!collapsed && nextAppointment !== undefined ? (
-            <section aria-label="Próximo compromisso" className="mt-3 flex flex-col gap-1.5 rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-sunken)] px-4 py-3.5">
-              <div className="flex justify-between text-xs font-medium text-[var(--text-accent)]">
-                <span>Próximo compromisso</span>
-                {nextAppointment ? <span>{nextAppointment.day}</span> : null}
-              </div>
-              {nextAppointment ? (
-                <>
-                  <div className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] proportional-nums">{nextAppointment.time}</div>
-                  <div className="line-clamp-2 text-sm font-medium text-[var(--text-primary)]">{nextAppointment.title}</div>
-                  {nextAppointment.dealTitle ? (
-                    <div className="flex items-center gap-1.5 truncate text-[length:var(--fs-caption)] text-[var(--text-secondary)]">
-                      <Icon name="briefcase" size={14} />
-                      <span className="truncate">{nextAppointment.dealTitle}</span>
-                    </div>
-                  ) : null}
-                </>
-              ) : (
-                <div className="text-sm text-[var(--text-secondary)]">Nenhuma reunião ou ligação marcada.</div>
-              )}
-              <Link
-                href="/agenda"
-                className="mt-1.5 flex items-center justify-center gap-2 rounded-full bg-[var(--action-primary-bg)] py-2 text-sm font-medium text-[var(--action-primary-fg)] transition-colors hover:bg-[var(--action-primary-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
-              >
-                <Icon name="calendar-days" size={16} />
-                Abrir agenda
-              </Link>
-            </section>
-          ) : null}
       </div>
 
-      {/* Usuário, Configurações e Sair */}
-      <div className={`mt-3 flex items-center gap-2 border-t border-[var(--border-hairline)] pt-3 ${collapsed ? 'flex-col' : 'pl-1.5'}`}>
+      {/* Usuário e Sair */}
+      <div className={`mt-2 flex items-center gap-2 border-t border-[var(--border-hairline)] pt-2.5 ${collapsed ? 'flex-col' : 'pl-1.5'}`}>
         <button
           type="button"
           onClick={() => router.push('/profile')}

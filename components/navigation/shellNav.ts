@@ -30,7 +30,7 @@ export interface ShellNavItem {
 }
 
 export const SHELL_NAV: Record<ShellNavId, ShellNavItem> = {
-  inbox: { id: 'inbox', label: 'Minha mesa', href: '/inbox', icon: 'layout-list', prefetch: 'inbox', group: 'Dia a dia' },
+  inbox: { id: 'inbox', label: 'Prioridades', href: '/inbox', icon: 'layout-list', prefetch: 'inbox', group: 'Dia a dia' },
   agenda: { id: 'agenda', label: 'Agenda', href: '/agenda', icon: 'calendar-days', prefetch: 'activities', group: 'Dia a dia' },
   messaging: { id: 'messaging', label: 'Conversas', href: '/messaging', icon: 'message-circle', group: 'Dia a dia' },
   activities: { id: 'activities', label: 'Tarefas', href: '/activities', icon: 'list-checks', prefetch: 'activities', group: 'Dia a dia' },
@@ -47,9 +47,10 @@ export const SHELL_NAV: Record<ShellNavId, ShellNavItem> = {
 /**
  * Grupos do menu lateral. O Perfil abre pelo cartão do usuário, no rodapé, onde também fica o Sair.
  * Assistente IA e Sugestões da IA não entram no menu: a IA abre pelo botão do topo, à direita.
+ * Tarefas não entra: o resumo "Hoje", no pé do menu, leva às tarefas de hoje e às atrasadas.
  */
 export const SIDEBAR_GROUPS: { label: CrumbGroup; items: ShellNavId[] }[] = [
-  { label: 'Dia a dia', items: ['inbox', 'agenda', 'messaging', 'activities'] },
+  { label: 'Dia a dia', items: ['inbox', 'agenda', 'messaging'] },
   { label: 'Comercial', items: ['dashboard', 'boards', 'contacts', 'reports'] },
   { label: 'Conta', items: ['settings'] },
 ];

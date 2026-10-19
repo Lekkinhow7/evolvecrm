@@ -77,8 +77,8 @@ describe('AppSidebar', () => {
 
   it('recolhido, esconde os nomes mas mantém os links acessíveis e o Sair', () => {
     render(<AppSidebar collapsed unreadCount={5} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} />);
-    expect(screen.queryByText('Minha mesa')).toBeNull();
-    expect(screen.getByRole('link', { name: 'Minha mesa' })).toBeTruthy();
+    expect(screen.queryByText('Prioridades')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Prioridades' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Conversas, 5 conversas não lidas' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sair' })).toBeTruthy();
   });
@@ -89,33 +89,35 @@ describe('AppSidebar', () => {
     expect(screen.queryByText('Sugestões da IA')).toBeNull();
   });
 
-  it('mostra o próximo compromisso com link para o calendário', () => {
+  it('não mostra Tarefas no meio do menu', () => {
+    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} />);
+    expect(screen.queryByRole('link', { name: 'Tarefas' })).toBeNull();
+  });
+
+  it('mostra o próximo compromisso compacto, com link para a agenda', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
-      nextAppointment={{ day: 'hoje', time: '14:30', title: 'Reunião · Consulta', dealTitle: 'Contrato Marcos' }} />);
-    expect(screen.getByText('14:30')).toBeTruthy();
-    expect(screen.getByText('Reunião · Consulta')).toBeTruthy();
-    expect(screen.getByText('Contrato Marcos')).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Abrir agenda/ }).getAttribute('href')).toBe('/agenda');
+      nextAppointment={{ day: 'hoje', when: 'Hoje', month: 'OUT', dayOfMonth: '20', time: '14:30', title: 'Reunião · Consulta' }} />);
+    const card = screen.getByRole('link', { name: 'Próximo compromisso, hoje às 14:30: Reunião · Consulta' });
+    expect(card.getAttribute('href')).toBe('/agenda');
+    expect(card.textContent).toContain('Hoje, 14:30');
+    expect(card.textContent).toContain('OUT20');
+    expect(card.textContent).toContain('Reunião · Consulta');
   });
 
-  it('sem compromisso, o cartão avisa que não há nada marcado', () => {
-    render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} nextAppointment={null} />);
-    expect(screen.getByText('Nenhuma reunião ou ligação marcada.')).toBeTruthy();
-  });
-
-  it('esconde o cartão enquanto carrega e quando o menu está recolhido', () => {
-    const appt = { day: 'hoje', time: '14:30', title: 'Reunião · Consulta' };
-    const { rerender } = render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} />);
-    expect(screen.queryByText('Próximo compromisso')).toBeNull();
-    rerender(<AppSidebar collapsed unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} nextAppointment={appt} />);
-    expect(screen.queryByText('Próximo compromisso')).toBeNull();
+  it('sem compromisso, o cartão avisa que não há nada marcado; carregando ou recolhido, some', () => {
+    const { rerender } = render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} nextAppointment={null} />);
+    expect(screen.getByText('Agenda livre')).toBeTruthy();
+    rerender(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} />);
+    expect(screen.queryByText(/Próximo compromisso/)).toBeNull();
+    rerender(<AppSidebar collapsed unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}} nextAppointment={null} />);
+    expect(screen.queryByText(/Próximo compromisso/)).toBeNull();
   });
 
   it('mostra os avisos de cada item com a explicação', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
       activityStats={{ todayAppointments: 2, todayTasks: 3, todayTotal: 5, overdue: 4 }} stalledDeals={139} />);
-    expect(screen.getByRole('link', { name: 'Minha mesa, 5 pendências para hoje' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Tarefas, 4 tarefas atrasadas' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Prioridades, 5 pendências para hoje' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: '4 atrasadas' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Kanban, 139 negócios parados há mais de 10 dias' })).toBeTruthy();
     expect(screen.getByText('99+')).toBeTruthy();
   });
@@ -123,7 +125,7 @@ describe('AppSidebar', () => {
   it('não mostra aviso quando o número é zero', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
       activityStats={{ todayAppointments: 0, todayTasks: 0, todayTotal: 0, overdue: 0 }} stalledDeals={0} />);
-    expect(screen.getByRole('link', { name: 'Tarefas' }).textContent).toBe('Tarefas');
+    expect(screen.getByRole('link', { name: 'Kanban' }).textContent).toBe('Kanban');
   });
 
   it('mostra o resumo de hoje e destaca as atrasadas', () => {

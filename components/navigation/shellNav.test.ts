@@ -19,7 +19,7 @@ describe('getBreadcrumbs', () => {
   it('monta grupo e tela', () => {
     expect(getBreadcrumbs('/contacts')).toEqual([{ label: 'Comercial' }, { label: 'Contatos' }]);
     expect(getBreadcrumbs('/pipeline')).toEqual([{ label: 'Comercial' }, { label: 'Kanban' }]);
-    expect(getBreadcrumbs('/inbox')).toEqual([{ label: 'Dia a dia' }, { label: 'Minha mesa' }]);
+    expect(getBreadcrumbs('/inbox')).toEqual([{ label: 'Dia a dia' }, { label: 'Prioridades' }]);
     expect(getBreadcrumbs('/agenda')).toEqual([{ label: 'Dia a dia' }, { label: 'Agenda' }]);
     expect(getBreadcrumbs('/decisions')).toEqual([{ label: 'Inteligência' }, { label: 'Sugestões da IA' }]);
   });
@@ -45,6 +45,6 @@ describe('estrutura da sidebar', () => {
     expect(SIDEBAR_GROUPS.map((g) => g.label)).toEqual(['Dia a dia', 'Comercial', 'Conta']);
     const ids = SIDEBAR_GROUPS.flatMap((g) => g.items);
     for (const id of ids) expect(SHELL_NAV[id].group).toBe(SIDEBAR_GROUPS.find((g) => g.items.includes(id))?.label);
-    expect(ids).toEqual(['inbox', 'agenda', 'messaging', 'activities', 'dashboard', 'boards', 'contacts', 'reports', 'settings']);
+    expect(ids).toEqual(['inbox', 'agenda', 'messaging', 'dashboard', 'boards', 'contacts', 'reports', 'settings']);
   });
 });

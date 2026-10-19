@@ -70,9 +70,9 @@ export const InboxPage: React.FC = () => {
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold font-display text-slate-900 dark:text-white mb-1">
-            Inbox
+            Prioridades
           </h1>
-          <p className="text-slate-500 dark:text-slate-400">Sua mesa de trabalho.</p>
+          <p className="text-slate-500 dark:text-slate-400">O que precisa da sua atenção.</p>
           <div className="mt-4 flex gap-2">
             <DebugFillButton onClick={seedInboxDebug} label="Seed Inbox" variant="secondary" />
           </div>
