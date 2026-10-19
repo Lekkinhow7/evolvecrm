@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-    Phone,
-    Mail,
-    Calendar,
-    CheckCircle,
-    StickyNote,
-    ArrowRightLeft,
-    AlertCircle
-} from 'lucide-react';
+import { Icon } from '@/design-system';
 import { Activity } from '@/types';
 
 interface ActivityFeedItemProps {
@@ -22,8 +14,18 @@ const ACTIVITY_FEED_DATE_FORMATTER = new Intl.DateTimeFormat('pt-BR', {
     minute: '2-digit',
 });
 
+/** Ícone por tipo de atividade. Monocromático: o tipo se lê pelo desenho, não pela cor. */
+const TYPE_ICON: Record<string, string> = {
+    CALL: 'phone',
+    EMAIL: 'mail',
+    MEETING: 'calendar',
+    TASK: 'circle-check',
+    NOTE: 'sticky-note',
+    STATUS_CHANGE: 'arrow-right-left',
+};
+
 /**
- * Componente React `ActivityFeedItem`.
+ * Linha do feed "Atividades recentes" da Visão geral.
  *
  * @param {ActivityFeedItemProps} { activity } - Parâmetro `{ activity }`.
  * @returns {Element} Retorna um valor do tipo `Element`.
@@ -40,77 +42,30 @@ export const ActivityFeedItem: React.FC<ActivityFeedItemProps> = ({ activity }) 
                 ? 'MEETING'
                 : activity.type;
 
-    const icon = (() => {
-        switch (visualType) {
-            case 'CALL':
-                return (
-                    <div className="bg-blue-500/10 text-blue-500 p-2 rounded-full ring-1 ring-blue-500/20">
-                        <Phone size={16} />
-                    </div>
-                );
-            case 'EMAIL':
-                return (
-                    <div className="bg-purple-500/10 text-purple-500 p-2 rounded-full ring-1 ring-purple-500/20">
-                        <Mail size={16} />
-                    </div>
-                );
-            case 'MEETING':
-                return (
-                    <div className="bg-orange-500/10 text-orange-500 p-2 rounded-full ring-1 ring-orange-500/20">
-                        <Calendar size={16} />
-                    </div>
-                );
-            case 'TASK':
-                return (
-                    <div className="bg-emerald-500/10 text-emerald-500 p-2 rounded-full ring-1 ring-emerald-500/20">
-                        <CheckCircle size={16} />
-                    </div>
-                );
-            case 'NOTE':
-                return (
-                    <div className="bg-yellow-500/10 text-yellow-500 p-2 rounded-full ring-1 ring-yellow-500/20">
-                        <StickyNote size={16} />
-                    </div>
-                );
-            case 'STATUS_CHANGE':
-                return (
-                    <div className="bg-slate-500/10 text-slate-500 p-2 rounded-full ring-1 ring-slate-500/20">
-                        <ArrowRightLeft size={16} />
-                    </div>
-                );
-            default:
-                return (
-                    <div className="bg-slate-500/10 text-slate-500 p-2 rounded-full ring-1 ring-slate-500/20">
-                        <AlertCircle size={16} />
-                    </div>
-                );
-        }
-    })();
-
     // Formatar data relativa ou absoluta melhorada
     const formattedDate = ACTIVITY_FEED_DATE_FORMATTER.format(new Date(activity.date));
 
     return (
-        <div className="flex items-start gap-3 py-3 border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 px-2 rounded-lg transition-colors group">
-            <div className="mt-0.5 shrink-0">
-                {icon}
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+        <div className="flex items-start gap-3 border-b border-[var(--border-hairline)] px-1 py-3 last:border-0">
+            <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-[var(--surface-muted)] text-[var(--text-secondary)]">
+                <Icon name={TYPE_ICON[visualType] ?? 'circle-alert'} size={15} />
+            </span>
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-[var(--text-primary)]">
                     {activity.title}
                 </p>
                 {activity.dealTitle && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                        em <span className="font-medium text-slate-600 dark:text-slate-300">{activity.dealTitle}</span>
+                    <p className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">
+                        em <span className="font-medium text-[var(--text-primary)]">{activity.dealTitle}</span>
                     </p>
                 )}
                 {activity.description && (
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-1 italic">
-                        "{activity.description}"
+                    <p className="mt-1 line-clamp-1 text-xs text-[var(--text-tertiary)]">
+                        {activity.description}
                     </p>
                 )}
             </div>
-            <span className="text-[10px] text-slate-400 whitespace-nowrap bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded">
+            <span className="whitespace-nowrap text-xs text-[var(--text-tertiary)] tabular-nums">
                 {formattedDate}
             </span>
         </div>

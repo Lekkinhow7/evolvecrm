@@ -210,10 +210,10 @@ describe('US-AI-008: AIMetricsSection', () => {
   it('renderiza 4 cards de metricas', async () => {
     await renderSection();
 
-    expect(screen.getByText('Conversas Hoje')).toBeTruthy();
-    expect(screen.getByText('HITL Pendentes')).toBeTruthy();
-    expect(screen.getByText('Taxa Aprovação HITL')).toBeTruthy();
-    expect(screen.getByText('Auto-Avanços')).toBeTruthy();
+    expect(screen.getByText('Conversas hoje')).toBeTruthy();
+    expect(screen.getByText('Aprovações pendentes')).toBeTruthy();
+    expect(screen.getByText('Taxa de aprovação')).toBeTruthy();
+    expect(screen.getByText('Avanços automáticos')).toBeTruthy();
   });
 
   it('mostra zeros quando sem dados', async () => {
@@ -238,9 +238,7 @@ describe('US-AI-008: AIMetricsSection', () => {
     await renderSection();
 
     // When thisMonth.total === 0, component shows empty state instead
-    expect(
-      screen.getByText('Nenhuma conversa AI registrada ainda')
-    ).toBeTruthy();
+    expect(screen.getByText(/A IA ainda não atendeu nenhuma conversa/)).toBeTruthy();
   });
 
   it('mostra valores corretos quando tem dados', async () => {
@@ -255,7 +253,7 @@ describe('US-AI-008: AIMetricsSection', () => {
     expect(screen.getByText('3')).toBeTruthy();
 
     // Taxa Aprovação = 75%
-    expect(screen.getByText('75%')).toBeTruthy();
+    expect(screen.getByText('75,0%')).toBeTruthy();
 
     // Auto-Avanços = 8 (thisMonth.advancedStage)
     expect(screen.getByText('8')).toBeTruthy();
@@ -267,12 +265,12 @@ describe('US-AI-008: AIMetricsSection', () => {
     await renderSection();
 
     // Check distribution bar labels
-    expect(screen.getByText(/Respondidas \(25\)/)).toBeTruthy();
-    expect(screen.getByText(/Avançou \(8\)/)).toBeTruthy();
-    expect(screen.getByText(/Handoff \(5\)/)).toBeTruthy();
+    expect(screen.getByText(/Respondeu \(25\)/)).toBeTruthy();
+    expect(screen.getByText(/Avançou etapa \(8\)/)).toBeTruthy();
+    expect(screen.getByText(/Passou para a equipe \(5\)/)).toBeTruthy();
 
     // Total text
-    expect(screen.getByText(/Total: 42 interações/)).toBeTruthy();
+    expect(screen.getByText(/42 no total/)).toBeTruthy();
   });
 
   it('nao renderiza sem orgId', async () => {
