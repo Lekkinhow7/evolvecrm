@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/FormField';
 import { activityFormSchema } from '@/lib/validations/schemas';
 import type { ActivityFormData } from '@/lib/validations/schemas';
+import { toLocalDateInput } from '@/lib/utils/localDate';
 
 type FormActivityType = 'CALL' | 'MEETING' | 'EMAIL' | 'TASK';
 
@@ -63,7 +64,7 @@ export const ActivityFormModalV2: React.FC<ActivityFormModalV2Props> = ({
   editingActivity,
   deals,
 }) => {
-  const defaultDate = new Date().toISOString().split('T')[0];
+  const defaultDate = toLocalDateInput();
   const defaultTime = new Date().toTimeString().slice(0, 5);
 
   const form = useForm<ActivityFormData>({

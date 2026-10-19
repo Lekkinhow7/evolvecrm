@@ -80,7 +80,7 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
   const active = getActiveNavId(pathname);
   const { name, initials } = getUserIdentity(profile);
   const role = (profile?.role && ROLE_LABEL[profile.role]) || profile?.email || '';
-  const todayTotal = activityStats ? activityStats.todayAppointments + activityStats.todayTasks : undefined;
+  const todayTotal = activityStats?.todayTotal;
   const badges: Partial<Record<ShellNavId, NavBadge>> = {
     inbox: badge(todayTotal, 'neutral', (n) => `${plural(n, 'pendência', 'pendências')} para hoje`),
     agenda: badge(activityStats?.todayAppointments, 'info', (n) => `${plural(n, 'compromisso', 'compromissos')} hoje`, ' hoje'),
@@ -119,7 +119,7 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
       </div>
 
       {/* Menu e agenda de hoje rolam juntos; o cartão do usuário fica sempre visível. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto [scrollbar-color:var(--border-default)_transparent] [scrollbar-gutter:stable] [scrollbar-width:thin]">
           {/* Grupos */}
           <nav aria-label="Menu principal" className="flex flex-col">
             {SIDEBAR_GROUPS.map((group) => (
@@ -192,7 +192,7 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
               <div className="flex flex-col gap-1.5">
                 {[
                   { n: activityStats.todayAppointments, label: 'Reuniões', a11y: activityStats.todayAppointments === 1 ? 'reunião hoje' : 'reuniões hoje', icon: 'calendar-days', href: '/agenda', alert: false },
-                  { n: activityStats.todayTasks, label: 'Tarefas', a11y: activityStats.todayTasks === 1 ? 'tarefa hoje' : 'tarefas hoje', icon: 'list-checks', href: '/activities?filter=today', alert: false },
+                  { n: activityStats.todayTasks, label: 'Tarefas', a11y: activityStats.todayTasks === 1 ? 'tarefa hoje' : 'tarefas hoje', icon: 'list-checks', href: '/activities?filter=today&tipo=TASK', alert: false },
                   { n: activityStats.overdue, label: 'Atrasadas', a11y: activityStats.overdue === 1 ? 'atrasada' : 'atrasadas', icon: 'alarm-clock', href: '/activities?filter=overdue', alert: activityStats.overdue > 0 },
                 ].map((t) => (
                   <Link
@@ -201,11 +201,11 @@ export function AppSidebar({ collapsed, unreadCount, activityStats, stalledDeals
                     aria-label={`${t.n} ${t.a11y}`}
                     className={`flex items-center gap-2.5 rounded-xl border py-1.5 pl-1.5 pr-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
                       t.alert
-                        ? 'border-[var(--red-300)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)] hover:border-[var(--status-danger-fg)]'
+                        ? 'border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)] hover:border-[var(--status-danger-fg)]'
                         : 'border-[var(--border-hairline)] bg-[var(--surface-sunken)] text-[var(--text-primary)] hover:border-[var(--border-default)] hover:bg-[var(--surface-hover)]'
                     }`}
                   >
-                    <span className={`grid size-6 shrink-0 place-items-center rounded-md ${t.alert ? 'bg-[var(--surface-card)]' : 'bg-[var(--cyan-50)] text-[var(--text-accent)]'}`}>
+                    <span className={`grid size-6 shrink-0 place-items-center rounded-md ${t.alert ? 'bg-[var(--surface-card)]' : 'bg-[var(--surface-accent)] text-[var(--text-accent)]'}`}>
                       <Icon name={t.icon} size={14} />
                     </span>
                     <span className="flex-1">{t.label}</span>

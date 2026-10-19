@@ -113,7 +113,7 @@ describe('AppSidebar', () => {
 
   it('mostra os avisos de cada item com a explicação', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
-      activityStats={{ todayAppointments: 2, todayTasks: 3, overdue: 4 }} stalledDeals={139} />);
+      activityStats={{ todayAppointments: 2, todayTasks: 3, todayTotal: 5, overdue: 4 }} stalledDeals={139} />);
     expect(screen.getByRole('link', { name: 'Minha mesa, 5 pendências para hoje' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Tarefas, 4 tarefas atrasadas' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Kanban, 139 negócios parados há mais de 10 dias' })).toBeTruthy();
@@ -122,15 +122,15 @@ describe('AppSidebar', () => {
 
   it('não mostra aviso quando o número é zero', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
-      activityStats={{ todayAppointments: 0, todayTasks: 0, overdue: 0 }} stalledDeals={0} />);
+      activityStats={{ todayAppointments: 0, todayTasks: 0, todayTotal: 0, overdue: 0 }} stalledDeals={0} />);
     expect(screen.getByRole('link', { name: 'Tarefas' }).textContent).toBe('Tarefas');
   });
 
   it('mostra o resumo de hoje e destaca as atrasadas', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
-      activityStats={{ todayAppointments: 1, todayTasks: 2, overdue: 3 }} />);
+      activityStats={{ todayAppointments: 1, todayTasks: 2, todayTotal: 3, overdue: 3 }} />);
     expect(screen.getByRole('link', { name: '1 reunião hoje' }).getAttribute('href')).toBe('/agenda');
-    expect(screen.getByRole('link', { name: '2 tarefas hoje' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: '2 tarefas hoje' }).getAttribute('href')).toBe('/activities?filter=today&tipo=TASK');
     expect(screen.getByRole('link', { name: '3 atrasadas' }).getAttribute('href')).toBe('/activities?filter=overdue');
   });
 
@@ -148,7 +148,7 @@ describe('AppSidebar', () => {
 
   it('a Agenda mostra quantos compromissos tem hoje', () => {
     render(<AppSidebar collapsed={false} unreadCount={0} profile={{ email: 'ana@x.com' }} onSignOut={() => {}}
-      activityStats={{ todayAppointments: 3, todayTasks: 0, overdue: 0 }} />);
+      activityStats={{ todayAppointments: 3, todayTasks: 0, todayTotal: 3, overdue: 0 }} />);
     const agenda = screen.getByRole('link', { name: 'Agenda, 3 compromissos hoje' });
     expect(agenda.getAttribute('href')).toBe('/agenda');
     expect(agenda.textContent).toContain('3 hoje');

@@ -1,6 +1,6 @@
 import type { Activity, Deal } from '@/types';
 
-/** Reunião e ligação contam como compromisso; o resto (tarefa, e-mail…) como tarefa. */
+/** Reunião e ligação contam como compromisso. */
 const APPOINTMENT_TYPES: Activity['type'][] = ['MEETING', 'CALL'];
 /** Notas e mudanças de status são registro, não algo a fazer. */
 const NOT_TODO_TYPES: Activity['type'][] = ['NOTE', 'STATUS_CHANGE'];
@@ -8,8 +8,10 @@ const NOT_TODO_TYPES: Activity['type'][] = ['NOTE', 'STATUS_CHANGE'];
 export interface ActivityStats {
   /** Reuniões e ligações pendentes marcadas para hoje */
   todayAppointments: number;
-  /** Demais tarefas pendentes para hoje */
+  /** Tarefas (tipo Tarefa) pendentes para hoje — mesmo critério do filtro "Tarefas" da tela de Tarefas */
   todayTasks: number;
+  /** Tudo o que está pendente para hoje (reuniões, ligações, tarefas, e-mails) */
+  todayTotal: number;
   /** Pendentes com data antes de hoje (mesma regra do filtro "Atrasadas" das Tarefas) */
   overdue: number;
 }
@@ -22,14 +24,15 @@ export function getActivityStats(activities: Activity[], now: Date = new Date())
   const todayTs = today.getTime();
   const tomorrowTs = tomorrow.getTime();
 
-  const stats: ActivityStats = { todayAppointments: 0, todayTasks: 0, overdue: 0 };
+  const stats: ActivityStats = { todayAppointments: 0, todayTasks: 0, todayTotal: 0, overdue: 0 };
   for (const a of activities) {
     if (a.completed || NOT_TODO_TYPES.includes(a.type)) continue;
     const ts = Date.parse(a.date);
     if (ts < todayTs) stats.overdue += 1;
     else if (ts < tomorrowTs) {
+      stats.todayTotal += 1;
       if (APPOINTMENT_TYPES.includes(a.type)) stats.todayAppointments += 1;
-      else stats.todayTasks += 1;
+      else if (a.type === 'TASK') stats.todayTasks += 1;
     }
   }
   return stats;

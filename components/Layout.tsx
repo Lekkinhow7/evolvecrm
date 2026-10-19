@@ -47,6 +47,33 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+/**
+ * Menu lateral do desktop com os números que ele mostra (hoje, atrasadas, negócios parados, funis).
+ * Fica num componente próprio para essas consultas só rodarem quando o menu aparece (não no celular/tablet).
+ */
+function DesktopSidebar(props: Omit<React.ComponentProps<typeof AppSidebar>, 'activityStats' | 'stalledDeals' | 'funnels' | 'nextAppointment'>) {
+  // Próximo compromisso e resumo de hoje (undefined enquanto carrega esconde os blocos)
+  const { data: pendingActivities } = usePendingActivities();
+  const nextAppointment = pendingActivities ? (getNextAppointment(pendingActivities) ?? null) : undefined;
+  const activityStats = pendingActivities ? getActivityStats(pendingActivities) : undefined;
+
+  // Negócios parados no Kanban e atalhos dos funis (mesmos caches do Kanban e da Visão geral)
+  const { data: deals } = useDeals();
+  const stalledDeals = deals ? countStalledDeals(deals) : undefined;
+  const { data: boards = [] } = useBoards();
+  const funnels = boards.map((b) => ({ id: b.id, name: b.name }));
+
+  return (
+    <AppSidebar
+      {...props}
+      activityStats={activityStats}
+      stalledDeals={stalledDeals}
+      funnels={funnels}
+      nextAppointment={nextAppointment}
+    />
+  );
+}
+
 /** Largura ocupada pela sidebar no desktop (o menu encosta na borda esquerda, sem respiro). */
 const SIDEBAR_SPACE = {
   open: 'var(--sidebar-width)',
@@ -75,17 +102,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Messaging unread count for notification badge
   const { data: unreadMessagesCount = 0 } = useUnreadCount();
-
-  // Next meeting/call for the sidebar card (undefined while loading hides the card)
-  const { data: pendingActivities } = usePendingActivities();
-  const nextAppointment = pendingActivities ? (getNextAppointment(pendingActivities) ?? null) : undefined;
-  const activityStats = pendingActivities ? getActivityStats(pendingActivities) : undefined;
-
-  // Stalled deals badge on Kanban and funnel shortcuts (same caches the Kanban and Overview use)
-  const { data: deals } = useDeals();
-  const stalledDeals = deals ? countStalledDeals(deals) : undefined;
-  const { data: boards = [] } = useBoards();
-  const funnels = boards.map((b) => ({ id: b.id, name: b.name }));
 
   // If the user signed out (or session expired), leave protected shell ASAP.
   // This prevents rendering fallbacks like "Usuário" while unauthenticated.
@@ -139,13 +155,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Menu lateral (desktop) */}
       {isDesktop ? (
         <div className="hidden md:flex shrink-0 z-20">
-          <AppSidebar
+          <DesktopSidebar
             collapsed={sidebarCollapsed}
             unreadCount={unreadMessagesCount}
-            activityStats={activityStats}
-            stalledDeals={stalledDeals}
-            funnels={funnels}
-            nextAppointment={nextAppointment}
             profile={profile}
             onSignOut={signOut}
           />

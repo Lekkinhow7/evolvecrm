@@ -27,7 +27,7 @@ export function NewMenu({ collapsed }: { collapsed: boolean }) {
           type="button"
           aria-label={collapsed ? 'Novo' : undefined}
           title={collapsed ? 'Novo' : undefined}
-          className={`group flex items-center gap-3 rounded-xl border border-[var(--cyan-100)] bg-[var(--cyan-50)] text-[length:var(--fs-body)] font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--cyan-200)] hover:bg-[var(--cyan-100)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] data-[state=open]:border-[var(--cyan-200)] data-[state=open]:bg-[var(--cyan-100)] ${
+          className={`group flex items-center gap-3 rounded-xl border border-[var(--border-accent)] bg-[var(--surface-accent)] text-[length:var(--fs-body)] font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--border-accent-strong)] hover:bg-[var(--surface-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] data-[state=open]:border-[var(--border-accent-strong)] data-[state=open]:bg-[var(--surface-accent-hover)] ${
             collapsed ? 'mx-auto size-11 justify-center p-0' : 'w-full py-2 pl-2 pr-3'
           }`}
         >

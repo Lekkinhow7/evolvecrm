@@ -20,7 +20,7 @@ describe('getActivityStats', () => {
       act({ type: 'TASK', date: at(16, 10), completed: true }), // concluída, fora
       act({ type: 'NOTE', date: at(17, 10) }), // nota, fora
     ], now);
-    expect(stats).toEqual({ todayAppointments: 2, todayTasks: 1, overdue: 1 });
+    expect(stats).toEqual({ todayAppointments: 2, todayTasks: 1, todayTotal: 3, overdue: 1 });
   });
 });
 

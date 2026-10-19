@@ -90,17 +90,16 @@ export const useActivitiesByDeal = (dealId: string | undefined) => {
 /**
  * Hook to fetch pending activities (not completed)
  */
-export const usePendingActivities = () => {
+export const usePendingActivities = (options?: { enabled?: boolean }) => {
   const { user, loading: authLoading } = useAuth();
   return useQuery({
     queryKey: queryKeys.activities.list({ completed: false }),
     queryFn: async () => {
-      const { data, error } = await activitiesService.getAll();
+      const { data, error } = await activitiesService.getPending();
       if (error) throw error;
-      const filtered = (data || []).filter(a => !a.completed);
-      return sortActivitiesSmart(filtered);
+      return data || [];
     },
-    enabled: !authLoading && !!user,
+    enabled: !authLoading && !!user && (options?.enabled ?? true),
   });
 };
 

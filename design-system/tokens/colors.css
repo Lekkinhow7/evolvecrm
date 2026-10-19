@@ -24,6 +24,10 @@
 --surface-sunken:var(--slate-50);
 --surface-muted:var(--slate-100);
 --surface-hover:#EEF4F6;
+--surface-accent:var(--cyan-50);
+--surface-accent-hover:var(--cyan-100);
+--border-accent:var(--cyan-100);
+--border-accent-strong:var(--cyan-200);
 --surface-inverse:var(--ink-800);
 --surface-overlay:rgba(6,46,53,0.32);
 
@@ -65,7 +69,7 @@
 --status-info-bg:var(--cyan-100);--status-info-fg:var(--cyan-700);--status-info-solid:var(--cyan-500);
 --status-success-bg:var(--lime-100);--status-success-fg:var(--lime-700);--status-success-solid:var(--lime-500);
 --status-warning-bg:var(--amber-100);--status-warning-fg:var(--amber-700);--status-warning-solid:var(--amber-500);
---status-danger-bg:var(--red-100);--status-danger-fg:var(--red-600);--status-danger-solid:var(--red-500);
+--status-danger-bg:var(--red-100);--status-danger-fg:var(--red-600);--status-danger-solid:var(--red-500);--status-danger-border:var(--red-300);
 --status-active-bg:var(--ink-800);--status-active-fg:#FFFFFF;
 --status-neutral-bg:#EEF3F5;--status-neutral-fg:var(--slate-500);
 
@@ -100,6 +104,10 @@
 --surface-sunken:#0A1F25;
 --surface-muted:#112D35;
 --surface-hover:#14343D;
+--surface-accent:rgba(27,159,192,0.12);
+--surface-accent-hover:rgba(27,159,192,0.2);
+--border-accent:rgba(27,159,192,0.28);
+--border-accent-strong:rgba(67,183,212,0.45);
 --surface-inverse:#E8F2F4;
 --surface-overlay:rgba(1,10,13,0.6);
 --text-primary:#E8F2F4;
@@ -130,7 +138,7 @@
 --status-info-bg:rgba(27,159,192,0.18);--status-info-fg:#6FD0E6;
 --status-success-bg:rgba(166,203,46,0.18);--status-success-fg:#C6E25E;
 --status-warning-bg:rgba(240,164,58,0.18);--status-warning-fg:#F4C06E;
---status-danger-bg:rgba(229,83,61,0.2);--status-danger-fg:#F28A79;
+--status-danger-bg:rgba(229,83,61,0.2);--status-danger-fg:#F28A79;--status-danger-border:rgba(242,138,121,0.45);
 --status-active-bg:var(--cyan-600);--status-active-fg:#FFFFFF;
 --status-neutral-bg:rgba(255,255,255,0.07);--status-neutral-fg:#93ADB4;
 --viz-2:#E8F2F4;

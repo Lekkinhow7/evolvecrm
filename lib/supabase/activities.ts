@@ -152,6 +152,35 @@ export const activitiesService = {
   },
 
   /**
+   * Busca só as atividades não concluídas (menu lateral: hoje, atrasadas e próximo compromisso).
+   * O filtro roda no banco, então o limite de segurança vale só para as pendentes.
+   *
+   * @returns Promise com array de atividades pendentes ou erro.
+   */
+  async getPending(): Promise<{ data: Activity[] | null; error: Error | null }> {
+    try {
+      const sb = supabase;
+      if (!sb) return { data: null, error: new Error('Supabase não configurado') };
+
+      const { data, error } = await sb
+        .from('activities')
+        .select(`
+          *,
+          deals:deal_id (title)
+        `)
+        .eq('completed', false)
+        .order('date', { ascending: true })
+        .limit(1000); // Safety limit for non-paginated access
+
+      if (error) return { data: null, error };
+      const activities = (data || []).map(a => transformActivity(a as DbActivityWithDeal));
+      return { data: sortActivitiesSmart(activities), error: null };
+    } catch (e) {
+      return { data: null, error: e as Error };
+    }
+  },
+
+  /**
    * Cria uma nova atividade.
    * 
    * @param activity - Dados da atividade (sem id e createdAt).

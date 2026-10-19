@@ -13,6 +13,10 @@ import {
 import { useDeals } from '@/lib/query/hooks/useDealsQuery';
 import { useContacts, useCompanies } from '@/lib/query/hooks/useContactsQuery';
 import { useRealtimeSync } from '@/lib/realtime/useRealtimeSync';
+import { toLocalDateInput } from '@/lib/utils/localDate';
+
+/** Tipos aceitos no `?tipo=` da URL (os mesmos do filtro de tipo da tela). */
+const URL_TYPES: Activity['type'][] = ['CALL', 'MEETING', 'EMAIL', 'TASK'];
 
 /**
  * Hook React `useActivitiesController` que encapsula uma lógica reutilizável.
@@ -46,9 +50,14 @@ export const useActivitiesController = (options?: { initialView?: 'list' | 'cale
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
 
-  // Permite deep-link do Inbox: /activities?filter=overdue|today|upcoming
+  // Permite deep-link do Inbox: /activities?filter=overdue|today|upcoming (e do menu: &tipo=TASK).
+  // Depende só desses parâmetros: tirar o `novo` da URL não apaga o filtro escolhido.
+  const filterParam = (searchParams.get('filter') || '').toLowerCase();
+  const typeParam = searchParams.get('tipo') || '';
+  const viewParam = searchParams.get('view');
   useEffect(() => {
-    const filter = (searchParams.get('filter') || '').toLowerCase();
+    const filter = filterParam;
+    setFilterType(URL_TYPES.includes(typeParam as Activity['type']) ? (typeParam as Activity['type']) : 'ALL');
 
     if (filter === 'overdue' || filter === 'today' || filter === 'upcoming') {
       setDateFilter(filter);
@@ -59,13 +68,13 @@ export const useActivitiesController = (options?: { initialView?: 'list' | 'cale
     // Qualquer outro valor (inclui vazio) cai no padrão.
     setDateFilter('ALL');
     // /activities?view=calendar abre direto no calendário (botão "Abrir agenda" do menu lateral).
-    if (searchParams.get('view') === 'calendar') setViewMode('calendar');
-  }, [searchParams]);
+    if (viewParam === 'calendar') setViewMode('calendar');
+  }, [filterParam, typeParam, viewParam]);
 
   const [formData, setFormData] = useState({
     title: '',
     type: 'CALL' as Activity['type'],
-    date: new Date().toISOString().split('T')[0],
+    date: toLocalDateInput(),
     time: '09:00',
     description: '',
     dealId: '',
@@ -119,7 +128,7 @@ export const useActivitiesController = (options?: { initialView?: 'list' | 'cale
     setFormData({
       title: '',
       type: 'CALL',
-      date: new Date().toISOString().split('T')[0],
+      date: toLocalDateInput(),
       time: '09:00',
       description: '',
       dealId: '',
@@ -140,7 +149,7 @@ export const useActivitiesController = (options?: { initialView?: 'list' | 'cale
     setFormData({
       title: activity.title,
       type: activity.type,
-      date: date.toISOString().split('T')[0],
+      date: toLocalDateInput(date),
       time: date.toTimeString().slice(0, 5),
       description: activity.description || '',
       dealId: activity.dealId,
