@@ -3,6 +3,7 @@
  * (cliente Supabase do servidor) e organização vinda do perfil.
  */
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { AgendaN8nError } from '@/lib/agenda/n8n'
 
@@ -33,4 +34,21 @@ export function respostaFalhaN8n(erro: unknown) {
   }
   console.error('[agenda] erro inesperado', erro)
   return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+}
+
+const ehDataIso = (s: string) => /^\d{4}-\d{2}-\d{2}T/.test(s) && !Number.isNaN(Date.parse(s))
+
+/** Início e fim em ISO 8601 (o fim depois do início se confere com fimDepoisDoInicio). */
+export const DatasDaReuniao = z.object({
+  inicio: z.string().refine(ehDataIso, 'Data de início inválida'),
+  fim: z.string().refine(ehDataIso, 'Data de fim inválida'),
+})
+export const fimDepoisDoInicio = (v: { inicio: string; fim: string }) => Date.parse(v.fim) > Date.parse(v.inicio)
+
+export function respostaFalhaAoGravar(erro: unknown) {
+  console.error('[agenda] falha ao gravar no CRM', erro)
+  return NextResponse.json(
+    { error: 'Não foi possível salvar no CRM', code: 'FALHA_AO_GRAVAR' },
+    { status: 500 },
+  )
 }

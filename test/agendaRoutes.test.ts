@@ -6,6 +6,8 @@ const state = {
   user: { id: 'u1' } as { id: string } | null,
   queues: {} as Record<string, unknown[]>,
   updates: [] as Array<{ table: string; row: any; eqs: Array<[string, unknown]> }>,
+  selects: [] as Array<{ table: string; eqs: Array<[string, unknown]> }>,
+  updateError: null as unknown,
 }
 
 function fakeSb() {
@@ -13,6 +15,7 @@ function fakeSb() {
     auth: { getUser: async () => ({ data: { user: state.user }, error: null }) },
     from(table: string) {
       const eqs: Array<[string, unknown]> = []
+      state.selects.push({ table, eqs })
       const b: any = {}
       for (const m of ['select', 'is']) b[m] = () => b
       b.eq = (c: string, v: unknown) => (eqs.push([c, v]), b)
@@ -21,7 +24,7 @@ function fakeSb() {
         return b
       }
       b.maybeSingle = async () => ({ data: state.queues[table]?.shift() ?? null, error: null })
-      b.then = (res: any) => res({ data: null, error: null })
+      b.then = (res: any) => res({ data: null, error: state.updateError })
       return b
     },
   }
@@ -59,6 +62,8 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {})
   state.user = { id: 'u1' }
   state.updates = []
+  state.selects = []
+  state.updateError = null
   state.queues = { profiles: [{ organization_id: ORG }, { organization_id: ORG }, { organization_id: ORG }] }
 })
 
@@ -82,6 +87,9 @@ describe('GET /api/agenda/horarios-livres', () => {
 })
 
 describe('POST /api/agenda/reunioes', () => {
+  beforeEach(() => {
+    state.queues.deals = [{ id: 'd1' }]
+  })
   const corpo = { deal_id: 'd1', inicio: '2026-11-01T10:00:00-03:00', fim: '2026-11-01T11:00:00-03:00', formato: 'online' }
   it('401 sem usuário', async () => {
     state.user = null
@@ -123,6 +131,20 @@ describe('POST /api/agenda/reunioes', () => {
     expect((await criar(json('POST', { deal_id: 'd1' }))).status).toBe(400)
     expect(n8n).not.toHaveBeenCalled()
   })
+  it('400 com datas inválidas ou fim antes do início', async () => {
+    expect((await criar(json('POST', { ...corpo, inicio: 'a', fim: 'b' }))).status).toBe(400)
+    expect((await criar(json('POST', { ...corpo, inicio: corpo.fim, fim: corpo.inicio }))).status).toBe(400)
+    expect(n8n).not.toHaveBeenCalled()
+  })
+  it('negócio de outra organização: 404 sem n8n nem registro', async () => {
+    state.queues.deals = []
+    const r = await criar(json('POST', corpo))
+    expect(r.status).toBe(404)
+    expect(n8n).not.toHaveBeenCalled()
+    expect(registrarReuniao).not.toHaveBeenCalled()
+    const s = state.selects.find((x) => x.table === 'deals')!
+    expect(s.eqs).toContainEqual(['organization_id', ORG])
+  })
 })
 
 describe('PATCH /api/agenda/reunioes/[id]', () => {
@@ -138,6 +160,9 @@ describe('PATCH /api/agenda/reunioes/[id]', () => {
     const r = await alterar(json('PATCH', { acao: 'cancelar' }), ctx('a1'))
     expect(r.status).toBe(404)
     expect(n8n).not.toHaveBeenCalled()
+    const s = state.selects.find((x) => x.table === 'activities')!
+    expect(s.eqs).toContainEqual(['organization_id', ORG])
+    expect(s.eqs).toContainEqual(['type', 'MEETING'])
   })
   it('cancelar manda agendamento_id e depois cancela no CRM', async () => {
     n8n.mockResolvedValue({ ok: true })
@@ -165,10 +190,23 @@ describe('PATCH /api/agenda/reunioes/[id]', () => {
   })
   it('remarcar com horário ocupado: 409', async () => {
     n8n.mockResolvedValue({ ocupado: true })
-    const body = { acao: 'remarcar', inicio: 'a', fim: 'b' }
+    const body = { acao: 'remarcar', inicio: '2026-11-02T10:00:00-03:00', fim: '2026-11-02T11:00:00-03:00' }
     const r = await alterar(json('PATCH', body), ctx('a1'))
     expect(r.status).toBe(409)
     expect(registrarReuniao).not.toHaveBeenCalled()
+  })
+  it('remarcar com datas inválidas ou fim antes do início: 400', async () => {
+    const a = { acao: 'remarcar', inicio: 'a', fim: 'b' }
+    const b = { acao: 'remarcar', inicio: '2026-11-02T11:00:00-03:00', fim: '2026-11-02T10:00:00-03:00' }
+    expect((await alterar(json('PATCH', a), ctx('a1'))).status).toBe(400)
+    expect((await alterar(json('PATCH', b), ctx('a1'))).status).toBe(400)
+    expect(n8n).not.toHaveBeenCalled()
+  })
+  it('status com erro de gravação: 500 FALHA_AO_GRAVAR', async () => {
+    state.updateError = { message: 'boom' }
+    const r = await alterar(json('PATCH', { acao: 'status', status: 'realizada' }), ctx('a1'))
+    expect(r.status).toBe(500)
+    expect((await r.json()).code).toBe('FALHA_AO_GRAVAR')
   })
   it('status grava direto, filtrado por organização, sem n8n', async () => {
     const r = await alterar(json('PATCH', { acao: 'status', status: 'realizada' }), ctx('a1'))
@@ -211,5 +249,14 @@ describe('POST /api/agenda/pedir-documentos', () => {
     state.queues.deals = []
     expect((await pedirDocs(json('POST', { deal_id: 'd1' }))).status).toBe(404)
     expect(n8n).not.toHaveBeenCalled()
+    const s = state.selects.find((x) => x.table === 'deals')!
+    expect(s.eqs).toContainEqual(['organization_id', ORG])
+  })
+  it('erro ao gravar awaiting_documents: 500 FALHA_AO_GRAVAR', async () => {
+    n8n.mockResolvedValue({ ok: true })
+    state.updateError = { message: 'boom' }
+    const r = await pedirDocs(json('POST', { deal_id: 'd1' }))
+    expect(r.status).toBe(500)
+    expect((await r.json()).code).toBe('FALHA_AO_GRAVAR')
   })
 })

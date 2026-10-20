@@ -7,14 +7,17 @@ import { z } from 'zod'
 import { createStaticAdminClient } from '@/lib/supabase/staticAdminClient'
 import { chamarAgendaNoN8n } from '@/lib/agenda/n8n'
 import { registrarReuniao } from '@/lib/agenda/reunioes'
-import { autenticarRotaInterna, respostaFalhaN8n } from '@/lib/agenda/rotaInterna'
+import {
+  DatasDaReuniao,
+  autenticarRotaInterna,
+  fimDepoisDoInicio,
+  respostaFalhaN8n,
+} from '@/lib/agenda/rotaInterna'
 
-const Corpo = z.object({
+const Corpo = DatasDaReuniao.extend({
   deal_id: z.string().min(1),
-  inicio: z.string().min(1),
-  fim: z.string().min(1),
   formato: z.enum(['online', 'presencial']),
-})
+}).refine(fimDepoisDoInicio, { message: 'O fim deve ser depois do início' })
 
 export async function POST(request: Request) {
   const auth = await autenticarRotaInterna()
@@ -22,6 +25,15 @@ export async function POST(request: Request) {
   const parsed = Corpo.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
   const { deal_id, inicio, fim, formato } = parsed.data
+
+  const { data: negocio } = await auth.sb
+    .from('deals')
+    .select('id')
+    .eq('organization_id', auth.organizationId)
+    .eq('id', deal_id)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!negocio) return NextResponse.json({ error: 'Negócio não encontrado' }, { status: 404 })
 
   try {
     const r = await chamarAgendaNoN8n<{ agendamento_id?: string; link?: string; ocupado?: boolean }>(

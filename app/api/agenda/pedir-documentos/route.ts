@@ -5,7 +5,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { chamarAgendaNoN8n } from '@/lib/agenda/n8n'
-import { autenticarRotaInterna, respostaFalhaN8n } from '@/lib/agenda/rotaInterna'
+import { autenticarRotaInterna, respostaFalhaAoGravar, respostaFalhaN8n } from '@/lib/agenda/rotaInterna'
 
 const Corpo = z.object({ deal_id: z.string().min(1) })
 
@@ -30,10 +30,11 @@ export async function POST(request: Request) {
   } catch (e) {
     return respostaFalhaN8n(e)
   }
-  await auth.sb
+  const { error } = await auth.sb
     .from('deals')
     .update({ awaiting_documents: true })
     .eq('organization_id', auth.organizationId)
     .eq('id', deal_id)
+  if (error) return respostaFalhaAoGravar(error)
   return NextResponse.json({ ok: true })
 }

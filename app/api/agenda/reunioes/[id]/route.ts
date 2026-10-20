@@ -8,10 +8,16 @@ import { z } from 'zod'
 import { createStaticAdminClient } from '@/lib/supabase/staticAdminClient'
 import { chamarAgendaNoN8n } from '@/lib/agenda/n8n'
 import { cancelarReuniao, registrarReuniao } from '@/lib/agenda/reunioes'
-import { autenticarRotaInterna, respostaFalhaN8n } from '@/lib/agenda/rotaInterna'
+import {
+  DatasDaReuniao,
+  autenticarRotaInterna,
+  fimDepoisDoInicio,
+  respostaFalhaAoGravar,
+  respostaFalhaN8n,
+} from '@/lib/agenda/rotaInterna'
 
 const Corpo = z.discriminatedUnion('acao', [
-  z.object({ acao: z.literal('remarcar'), inicio: z.string().min(1), fim: z.string().min(1) }),
+  DatasDaReuniao.extend({ acao: z.literal('remarcar') }),
   z.object({ acao: z.literal('cancelar') }),
   z.object({ acao: z.literal('status'), status: z.enum(['realizada', 'nao_compareceu']) }),
 ])
@@ -23,22 +29,27 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   const parsed = Corpo.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
   const corpo = parsed.data
+  if (corpo.acao === 'remarcar' && !fimDepoisDoInicio(corpo)) {
+    return NextResponse.json({ error: 'O fim deve ser depois do início' }, { status: 400 })
+  }
 
   const { data: atividade } = await auth.sb
     .from('activities')
     .select('id, external_ref, deal_id')
     .eq('organization_id', auth.organizationId)
     .eq('id', id)
+    .eq('type', 'MEETING')
     .is('deleted_at', null)
     .maybeSingle()
   if (!atividade) return NextResponse.json({ error: 'Reunião não encontrada' }, { status: 404 })
 
   if (corpo.acao === 'status') {
-    await auth.sb
+    const { error } = await auth.sb
       .from('activities')
       .update({ meeting_status: corpo.status })
       .eq('organization_id', auth.organizationId)
       .eq('id', id)
+    if (error) return respostaFalhaAoGravar(error)
     return NextResponse.json({ ok: true })
   }
 
