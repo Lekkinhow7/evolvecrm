@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useId } from 'react';
+import React, { useMemo, useState, useId, useRef } from 'react';
 import { Plus, GripVertical, Trash2, ChevronDown, Settings, Copy, Bot } from 'lucide-react';
 import { Board, BoardStage, ContactStage } from '@/types';
 import { BOARD_TEMPLATES, BoardTemplateType } from '@/lib/templates/board-templates';
@@ -8,6 +8,7 @@ import { useLifecycleStages } from '@/lib/query/hooks/useLifecycleStagesQuery';
 import { useActiveProducts } from '@/lib/query/hooks/useProductsQuery';
 import { useToast } from '@/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/design-system';
 import { MODAL_FOOTER_CLASS } from '@/components/ui/modalStyles';
 import { slugify } from '@/lib/utils/slugify';
 
@@ -22,7 +23,17 @@ interface CreateBoardModalProps {
    * This removes the "close → gear → pick another board" friction.
    */
   onSwitchEditingBoard?: (board: Board) => void;
+  /** Ao editar, abre já com uma etapa nova no fim e o foco no nome dela. */
+  focusNewStage?: boolean;
 }
+
+type StageRole = NonNullable<BoardStage['role']>;
+
+const STAGE_ROLE_OPTIONS: Array<{ value: '' | StageRole; label: string }> = [
+  { value: '', label: 'Nenhum' },
+  { value: 'reuniao_agendada', label: 'Reunião agendada' },
+  { value: 'analise_documentos', label: 'Análise de documentos' },
+];
 
 const STAGE_COLORS = [
   'bg-blue-500',
@@ -114,8 +125,12 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
   editingBoard,
   availableBoards,
   onSwitchEditingBoard,
+  focusNewStage = false,
 }) => {
   const headingId = useId();
+  const stageNameRefs = useRef(new Map<string, HTMLInputElement>());
+  const focusAppliedRef = useRef(false);
+  const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
 
   React.useEffect(() => {
   }, [isOpen]);
@@ -156,7 +171,18 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
         setLostStayInStage(editingBoard.lostStayInStage || false);
         setDefaultProductId(editingBoard.defaultProductId || '');
         setSelectedTemplate(editingBoard.template || '');
-        setStages(editingBoard.stages);
+        if (focusNewStage && !focusAppliedRef.current) {
+          focusAppliedRef.current = true;
+          const fresh: BoardStage = {
+            id: crypto.randomUUID(),
+            label: `Etapa ${editingBoard.stages.length + 1}`,
+            color: STAGE_COLORS[editingBoard.stages.length % STAGE_COLORS.length],
+          };
+          setStages([...editingBoard.stages, fresh]);
+          setPendingFocusId(fresh.id);
+        } else {
+          setStages(editingBoard.stages);
+        }
       } else {
         // Restore draft (so we can close modal immediately on save and re-open on error without losing inputs)
         try {
@@ -202,8 +228,21 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
           { id: crypto.randomUUID(), label: 'Concluído', color: 'bg-green-500' },
         ]);
       }
+    } else {
+      focusAppliedRef.current = false;
     }
   }, [isOpen, editingBoard]);
+
+  // Foco no nome da etapa recém-criada (vinda de "+ Nova etapa" no quadro).
+  React.useEffect(() => {
+    if (!pendingFocusId) return;
+    const input = stageNameRefs.current.get(pendingFocusId);
+    if (input) {
+      input.focus();
+      input.select();
+      setPendingFocusId(null);
+    }
+  }, [pendingFocusId, stages]);
 
   // Filter out current board to prevent self-reference
   // Performance: avoid filtering on every render.
@@ -229,6 +268,15 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
 
   const handleUpdateStage = (id: string, updates: Partial<BoardStage>) => {
     setStages(stages.map(s => s.id === id ? { ...s, ...updates } : s));
+  };
+
+  /** Um papel por funil: dar o papel a uma etapa tira da que já o tinha. */
+  const handleSetStageRole = (id: string, role: StageRole | undefined) => {
+    setStages(prev => prev.map(s => {
+      if (s.id === id) return { ...s, role };
+      if (role && s.role === role) return { ...s, role: undefined };
+      return s;
+    }));
   };
 
   /**
@@ -320,13 +368,13 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
       // ignore
     }
 
-    addToast('Criando board...', 'info');
+    addToast(editingBoard ? 'Salvando funil...' : 'Criando funil...', 'info');
     onClose(); // close immediately for UX
 
     try {
       onSave(payload);
     } catch (e) {
-      addToast((e as Error).message || 'Erro ao criar board', 'error');
+      addToast((e as Error).message || 'Erro ao salvar o funil', 'error');
       onClose(); // ensure closed state is consistent
     }
   };
@@ -350,7 +398,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title={editingBoard ? 'Editar Board' : 'Criar Novo Board'}
+        title={editingBoard ? 'Configurar funil' : 'Novo funil'}
         size="lg"
         labelledById={headingId}
         className="max-w-xl"
@@ -370,7 +418,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
               {editingBoard && onSwitchEditingBoard && availableBoards.length > 1 && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Editando board
+                    Editando funil
                   </label>
                   <div className="relative">
                     <select
@@ -380,7 +428,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                         if (next) onSwitchEditingBoard(next);
                       }}
                       className="w-full appearance-none px-4 py-2.5 pr-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:[color-scheme:dark]"
-                      aria-label="Selecionar board para editar"
+                      aria-label="Selecionar funil para editar"
                     >
                       {availableBoards.map(b => (
                         <option key={b.id} value={b.id}>
@@ -395,7 +443,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                     />
                   </div>
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                    Dica: troque aqui para editar outro board sem fechar este modal.
+                    Dica: troque aqui para editar outro funil sem fechar esta janela.
                   </p>
                 </div>
               )}
@@ -403,7 +451,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
               {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Nome do Board *
+                  Nome do funil *
                 </label>
                 <input
                   type="text"
@@ -438,7 +486,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                     type="button"
                     onClick={handleCopyKey}
                     className="shrink-0 px-3 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200"
-                    aria-label="Copiar chave do board"
+                    aria-label="Copiar chave do funil"
                     title="Copiar chave"
                   >
                     <Copy size={16} />
@@ -458,7 +506,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Breve descrição do propósito deste board"
+                  placeholder="Breve descrição do propósito deste funil"
                   className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
@@ -474,7 +522,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                     onChange={(e) => handleTemplateSelect(e.target.value as BoardTemplateType | '')}
                     className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:[color-scheme:dark]"
                   >
-                    <option value="">Board em branco</option>
+                    <option value="">Funil em branco</option>
                     <option value="PRE_SALES">🎯 Pré-venda (Lead → MQL)</option>
                     <option value="SALES">💰 Pipeline de Vendas</option>
                     <option value="ONBOARDING">🚀 Onboarding de Clientes</option>
@@ -721,6 +769,10 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                           type="text"
                           value={stage.label}
                           onChange={(e) => handleUpdateStage(stage.id, { label: e.target.value })}
+                          ref={(el) => {
+                            if (el) stageNameRefs.current.set(stage.id, el);
+                            else stageNameRefs.current.delete(stage.id);
+                          }}
                           className="flex-1 px-3 py-2 text-base font-medium rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           placeholder="Nome da etapa"
                         />
@@ -734,6 +786,26 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                         >
                           <Trash2 size={18} />
                         </button>
+                      </div>
+
+                      {/* Papel da etapa (usado pelas portas da agenda) */}
+                      <div className="mb-3 pl-9">
+                        <label
+                          htmlFor={`stage-role-${stage.id}`}
+                          className="mb-2 block text-xs font-medium text-[var(--text-secondary)]"
+                        >
+                          Papel da etapa
+                        </label>
+                        <select
+                          id={`stage-role-${stage.id}`}
+                          value={stage.role ?? ''}
+                          onChange={(e) => handleSetStageRole(stage.id, (e.target.value || undefined) as StageRole | undefined)}
+                          className="w-full cursor-pointer rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] dark:[color-scheme:dark]"
+                        >
+                          {STAGE_ROLE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </div>
 
                       {/* Lifecycle Automation */}
@@ -768,19 +840,12 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
 
           {/* Footer */}
           <div className={`${MODAL_FOOTER_CLASS} flex justify-end gap-3`}>
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors focus-visible-ring"
-              >
+              <Button variant="ghost" onClick={onClose}>
                 Cancelar
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!name.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors focus-visible-ring"
-              >
-                {editingBoard ? 'Salvar Alterações' : 'Criar Board'}
-              </button>
+              </Button>
+              <Button onClick={handleSave} disabled={!name.trim()}>
+                {editingBoard ? 'Salvar alterações' : 'Criar funil'}
+              </Button>
           </div>
         </div>
       </Modal>

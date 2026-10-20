@@ -246,6 +246,8 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
   const [isExportModalOpen, setIsExportModalOpen] = React.useState(false);
+  // "+ Nova etapa" no quadro abre a configuração do funil já com uma etapa nova.
+  const [focusNewStage, setFocusNewStage] = React.useState(false);
 
   const handleUpdateStage = (updatedStage: BoardStage) => {
     if (!activeBoard) return;
@@ -345,6 +347,10 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                 handleQuickAddActivity={handleQuickAddActivity}
                 setLastMouseDownDealId={setLastMouseDownDealId}
                 onMoveDealToStage={handleMoveDealToStage}
+                onAddStage={() => {
+                  setFocusNewStage(true);
+                  handleEditBoard(activeBoard);
+                }}
               />
             ) : (
               <KanbanList
@@ -380,11 +386,13 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         onClose={() => {
           setIsCreateBoardModalOpen(false);
           setEditingBoard(null);
+          setFocusNewStage(false);
         }}
         onSave={editingBoard ? handleUpdateBoard : handleCreateBoard}
         editingBoard={editingBoard || undefined}
         availableBoards={boards}
         onSwitchEditingBoard={handleEditBoard}
+        focusNewStage={focusNewStage}
       />
 
       <BoardCreationWizard

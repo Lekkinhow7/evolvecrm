@@ -62,32 +62,32 @@ export const BoardSelector: React.FC<BoardSelectorProps> = ({
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full left-0 mt-2 z-50 w-72 bg-white dark:bg-dark-card border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 z-50 mt-2 w-72 overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-card)] shadow-[var(--shadow-md)]">
             {/* Board List */}
             <div className="max-h-80 overflow-y-auto py-1">
               {boards.map(board => (
                 <div
                   key={board.id}
-                  className={`group flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer ${
+                  className={`group flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors ${
                     board.id === activeBoard.id
-                      ? 'bg-primary-50 dark:bg-primary-500/10'
-                      : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                      ? 'bg-[var(--surface-accent)]'
+                      : 'hover:bg-[var(--surface-hover)]'
                   }`}
                   onClick={() => { onSelectBoard(board.id); setIsOpen(false); }}
                 >
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                    board.id === activeBoard.id ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'
+                  <div className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                    board.id === activeBoard.id ? 'bg-[var(--brand-cyan)]' : 'bg-[var(--border-default)]'
                   }`} />
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${
+                    <p className={`truncate text-sm font-medium ${
                       board.id === activeBoard.id
-                        ? 'text-primary-600 dark:text-primary-400'
-                        : 'text-slate-700 dark:text-slate-200'
+                        ? 'text-[var(--text-accent)]'
+                        : 'text-[var(--text-primary)]'
                     }`}>
                       {board.name}
                     </p>
                     {board.description && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                      <p className="truncate text-xs text-[var(--text-tertiary)]">
                         {board.description}
                       </p>
                     )}
@@ -103,13 +103,14 @@ export const BoardSelector: React.FC<BoardSelectorProps> = ({
                           onEditBoard(board);
                           setIsOpen(false);
                         }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
-                        title="Editar board"
+                        className="rounded-[var(--radius-md)] p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+                        title="Configurar funil"
+                        aria-label={`Configurar funil ${board.name}`}
                       >
                         <Settings size={14} />
                       </button>
                     )}
-                    {/* Pode deletar se não for o único board */}
+                    {/* Pode excluir se não for o único funil */}
                     {onDeleteBoard && boards.length > 1 && (
                       <button
                         type="button"
@@ -118,8 +119,9 @@ export const BoardSelector: React.FC<BoardSelectorProps> = ({
                           onDeleteBoard(board.id);
                           setIsOpen(false);
                         }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                        title="Excluir board"
+                        className="rounded-[var(--radius-md)] p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--status-danger-fg)]"
+                        title="Excluir funil"
+                        aria-label={`Excluir funil ${board.name}`}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -129,15 +131,15 @@ export const BoardSelector: React.FC<BoardSelectorProps> = ({
               ))}
             </div>
 
-            {/* Create New Board */}
-            <div className="border-t border-slate-200 dark:border-white/10">
+            {/* Novo funil: sempre visível no fim da lista */}
+            <div className="border-t border-[var(--border-hairline)]">
               <button
                 type="button"
                 onClick={() => { onCreateBoard(); setIsOpen(false); }}
-                className="w-full flex items-center gap-2 px-4 py-3 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
+                className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-[var(--text-accent)] transition-colors hover:bg-[var(--surface-hover)]"
               >
                 <Plus size={16} />
-                Criar novo board
+                Novo funil
               </button>
             </div>
           </div>

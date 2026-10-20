@@ -32,6 +32,8 @@ interface KanbanBoardProps {
   onMoveDealToStage?: (dealId: string, newStageId: string) => void;
   /** Exibe skeleton cards enquanto os dados carregam */
   isLoading?: boolean;
+  /** Abre a configuração do funil já com uma etapa nova. Sem ela, a coluna "+ Nova etapa" não aparece. */
+  onAddStage?: () => void;
 }
 /**
  * Componente React `KanbanBoard`.
@@ -79,6 +81,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   setLastMouseDownDealId,
   onMoveDealToStage,
   isLoading = false,
+  onAddStage,
 }) => {
   const { data: lifecycleStages = [] } = useLifecycleStages();
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -254,7 +257,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         );
       })}
-      
+
+      {onAddStage ? (
+        <div role="listitem" className="flex h-full min-w-[12rem] shrink-0 flex-col">
+          <button
+            type="button"
+            onClick={onAddStage}
+            className="flex w-full items-start justify-center rounded-[var(--radius-xl)] border border-dashed border-[var(--border-dashed)] px-4 py-3.5 text-sm font-semibold text-[var(--text-secondary)] transition-colors hover:border-[var(--brand-cyan)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+          >
+            + Nova etapa
+          </button>
+        </div>
+      ) : null}
+
       {/* Keyboard-accessible modal for moving deals between stages */}
       {moveToStageModal && (
         <MoveToStageModal
