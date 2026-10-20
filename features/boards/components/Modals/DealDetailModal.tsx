@@ -59,6 +59,9 @@ import { ActivityRow } from '@/features/activities/components/ActivityRow';
 import { formatPriorityPtBr } from '@/lib/utils/priority';
 import { BriefingDrawer } from '@/features/deals/components/BriefingDrawer';
 import { AIExtractedFields } from '@/features/deals/components/AIExtractedFields';
+import { DealDocumentsTab } from './DealDocumentsTab';
+import { AnalysisActions } from './AnalysisActions';
+import { formatBRL } from '@/lib/utils/brFormat';
 
 interface DealDetailModalProps {
   dealId: string | null;
@@ -149,7 +152,7 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
   const [aiResult, setAiResult] = useState<{ suggestion: string; score: number } | null>(null);
   const [emailDraft, setEmailDraft] = useState<string | null>(null);
   const [newNote, setNewNote] = useState('');
-  const [activeTab, setActiveTab] = useState<'timeline' | 'products' | 'info'>('timeline');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'products' | 'info' | 'documentos'>('timeline');
   const noteTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [objection, setObjection] = useState('');
@@ -463,7 +466,7 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
 
                 {isEditingValue ? (
                   <div className="flex gap-2 items-center">
-                    <span className="text-lg font-mono font-bold text-slate-500">$</span>
+                    <span className="text-lg font-mono font-bold text-slate-500">R$</span>
                     <input
                       autoFocus
                       type="number"
@@ -478,16 +481,29 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                     </button>
                   </div>
                 ) : (
-                  <p
-                    onClick={() => {
-                      setEditValue(deal.value.toString());
-                      setIsEditingValue(true);
-                    }}
-                    className="text-lg text-primary-600 dark:text-primary-400 font-mono font-bold cursor-pointer hover:underline decoration-dashed underline-offset-4"
-                    title="Clique para editar valor"
-                  >
-                    ${deal.value.toLocaleString()}
-                  </p>
+                  deal.value > 0 ? (
+                    <p
+                      onClick={() => {
+                        setEditValue(deal.value.toString());
+                        setIsEditingValue(true);
+                      }}
+                      className="text-lg text-primary-600 dark:text-primary-400 font-mono font-bold cursor-pointer hover:underline decoration-dashed underline-offset-4"
+                      title="Clique para editar os honorários"
+                    >
+                      Honorários: {formatBRL(deal.value)}
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditValue('');
+                        setIsEditingValue(true);
+                      }}
+                      className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline decoration-dashed underline-offset-4"
+                    >
+                      Definir honorários
+                    </button>
+                  )
                 )}
               </div>
               <div className="flex gap-3 items-center">
@@ -876,10 +892,27 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                   >
                     IA Insights
                   </button>
+                  <button
+                    onClick={() => setActiveTab('documentos')}
+                    className={`text-sm font-bold h-14 border-b-2 transition-colors ${activeTab === 'documentos' ? 'border-primary-500 text-primary-600 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}
+                  >
+                    Documentos
+                  </button>
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 dark:bg-black/10">
+                {dealBoard?.stages.find(st => st.id === deal.status)?.role === 'analise_documentos' && (
+                  <AnalysisActions
+                    deal={deal}
+                    board={dealBoard}
+                    onNotFollow={() => {
+                      setLossReasonOrigin('button');
+                      setShowLossReasonModal(true);
+                    }}
+                  />
+                )}
+                {activeTab === 'documentos' && <DealDocumentsTab dealId={deal.id} />}
                 {activeTab === 'timeline' && (
                   <div className="space-y-6">
                     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm">

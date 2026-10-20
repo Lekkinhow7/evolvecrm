@@ -148,7 +148,7 @@ const DealCardComponent: React.FC<DealCardProps> = ({
       aria-label={getAriaLabel()}
       className={cardClasses}
     >
-      {(deal.isWon || deal.isLost || (isRotting && !isClosed) || highPriority || deal.tags.length > 0) && (
+      {(deal.isWon || deal.isLost || (isRotting && !isClosed) || highPriority || deal.tags.length > 0 || deal.documentsCount > 0 || deal.awaitingDocuments) && (
         <div className="mb-2 flex flex-wrap gap-1">
           {deal.isWon && <Badge tone="success">Ganho</Badge>}
           {deal.isLost && (
@@ -162,6 +162,10 @@ const DealCardComponent: React.FC<DealCardProps> = ({
             </Badge>
           )}
           {highPriority && <Badge tone="danger">Prioridade alta</Badge>}
+          {deal.documentsCount > 0 && (
+            <Badge tone="info">{deal.documentsCount === 1 ? '1 documento' : `${deal.documentsCount} documentos`}</Badge>
+          )}
+          {deal.awaitingDocuments && <Badge tone="warning">Aguardando documentos</Badge>}
           {deal.tags.slice(0, isClosed ? 1 : 2).map((tag, index) => (
             <Badge key={`${deal.id}-tag-${index}`} tone="neutral">{tag}</Badge>
           ))}

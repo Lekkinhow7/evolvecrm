@@ -1,6 +1,8 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+
+const dealState = vi.hoisted(() => ({ value: 1000 }));
 
 import { DealDetailModal } from './DealDetailModal';
 
@@ -43,7 +45,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
           data: [{
             id: 'deal-1',
             title: 'Pequeno Chapéu',
-            value: 1000,
+            value: dealState.value,
             status: 'stage-1',
             boardId: 'board-1',
             contactId: 'contact-1',
@@ -83,6 +85,10 @@ vi.mock('@/lib/query/hooks', () => ({
   useCreateActivity: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
   useUpdateActivity: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
   useDeleteActivity: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
+}));
+
+vi.mock('@/lib/query/hooks/useAgendaQuery', () => ({
+  usePedirDocumentos: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/lib/query/hooks/useProductsQuery', () => ({
@@ -209,6 +215,17 @@ describe('DealDetailModal', () => {
     rerender(<DealDetailModal dealId="deal-1" isOpen={false} onClose={() => {}} />);
     expect(document.body.textContent).not.toContain('Application error');
   });
+
+  it('mostra os honorários no topo e permite definir quando não há valor', () => {
+    dealState.value = 4500;
+    const { unmount } = render(<DealDetailModal dealId="deal-1" isOpen={true} onClose={() => {}} />);
+    expect(document.body.textContent).toContain('Honorários: R$ 4.500');
+    unmount();
+
+    dealState.value = 0;
+    render(<DealDetailModal dealId="deal-1" isOpen={true} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Definir honorários' }));
+    expect(document.querySelector('input[type="number"]')).not.toBeNull();
+    dealState.value = 1000;
+  });
 });
-
-

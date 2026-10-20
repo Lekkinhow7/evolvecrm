@@ -3,7 +3,8 @@
  * ações sobre reuniões (marcar, remarcar, cancelar, mudar situação).
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '../index';
+import { queryKeys, DEALS_VIEW_KEY } from '../index';
+import type { DealView } from '@/types';
 
 export interface FreeSlot {
   inicio: string;
@@ -86,6 +87,26 @@ export const useUpdateMeeting = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.activities.all });
+    },
+  });
+};
+
+/** Pede mais documentos ao cliente (n8n) e marca o negócio como "aguardando documentos". */
+export const usePedirDocumentos = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (dealId: string) => {
+      const res = await fetch('/api/agenda/pedir-documentos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deal_id: dealId }),
+      });
+      return lerResposta<{ ok: boolean }>(res);
+    },
+    onSuccess: (_data, dealId) => {
+      queryClient.setQueryData<DealView[]>(DEALS_VIEW_KEY, (old) =>
+        old?.map((d) => (d.id === dealId ? { ...d, awaitingDocuments: true } : d)),
+      );
     },
   });
 };
