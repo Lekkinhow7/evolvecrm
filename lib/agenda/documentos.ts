@@ -2,6 +2,8 @@
  * @fileoverview Registro de documentos que o cliente mandou pelo WhatsApp (n8n/IA)
  * no negócio da agenda da Alice. Idempotente por `external_ref` de cada arquivo.
  */
+import { lookup } from 'node:dns/promises'
+import { isIP } from 'node:net'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { advanceDealToRole } from '@/lib/agenda/stageRole'
 import { variantesE164 } from '@/lib/agenda/phone'
@@ -9,6 +11,7 @@ import { addBusinessDays, checkFile, MAX_FILE_BYTES } from '@/lib/agenda/documen
 
 const BUCKET = 'deal-files'
 const DOWNLOAD_TIMEOUT_MS = 30_000
+const MAX_REDIRECTS = 3
 
 export interface ArquivoEntrada {
   url: string
@@ -43,22 +46,138 @@ export class NegocioNaoEncontrado extends Error {
   }
 }
 
-/** Baixa o arquivo pelo link, com limite de 30 s. */
-export const baixarArquivoPadrao: BaixarArquivo = async (url) => {
-  const parsed = new URL(url)
-  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error('Link inválido')
+type Resolver = (host: string) => Promise<string[]>
+export interface DepsDownload {
+  fetchImpl?: typeof fetch
+  resolve?: Resolver
+}
+
+const resolverPadrao: Resolver = async (host) => {
+  const r = await lookup(host, { all: true })
+  return r.map((x) => x.address)
+}
+
+function ipv4Privado(ip: string): boolean {
+  const [a, b] = ip.split('.').map(Number)
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168)
+  )
+}
+
+/** Loopback, privado, link-local, CGNAT e não especificado (IPv4 e IPv6). */
+export function ipBloqueado(ip: string): boolean {
+  const v = isIP(ip)
+  if (v === 4) return ipv4Privado(ip)
+  if (v !== 6) return true
+  const l = ip.toLowerCase()
+  if (l === '::' || l === '::1') return true
+  const mapeado = l.match(/^(?:0:0:0:0:0:|::)ffff:(.+)$/)
+  if (mapeado) {
+    const resto = mapeado[1]
+    if (isIP(resto) === 4) return ipv4Privado(resto)
+    const h = resto.split(':').map((x) => parseInt(x, 16))
+    if (h.length === 2 && h.every((n) => !Number.isNaN(n))) {
+      return ipv4Privado(`${h[0] >> 8}.${h[0] & 255}.${h[1] >> 8}.${h[1] & 255}`)
+    }
+    return true
+  }
+  const primeiro = parseInt(l.split(':')[0] || '0', 16)
+  return (primeiro & 0xfe00) === 0xfc00 || (primeiro & 0xffc0) === 0xfe80
+}
+
+async function validarDestino(url: URL, resolve: Resolver): Promise<void> {
+  if (url.protocol !== 'https:') throw new Error('Link inválido')
+  const host = url.hostname.replace(/^\[|\]$/g, '')
+  if (isIP(host)) {
+    if (ipBloqueado(host)) throw new Error('Destino não permitido')
+    return
+  }
+  const ips = await resolve(host)
+  if (!ips.length || ips.some(ipBloqueado)) throw new Error('Destino não permitido')
+}
+
+/** Baixa o arquivo pelo link: só https, sem rede interna, limite de tempo e de tamanho. */
+export async function baixarArquivoSeguro(
+  link: string,
+  deps: DepsDownload = {},
+): Promise<{ bytes: ArrayBuffer; size: number }> {
+  const doFetch = deps.fetchImpl ?? fetch
+  const resolve = deps.resolve ?? resolverPadrao
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS)
   try {
-    const res = await fetch(url, { signal: controller.signal })
-    if (!res.ok) throw new Error(`Download falhou (${res.status})`)
-    const declarado = Number(res.headers.get('content-length') ?? 0)
-    if (declarado > MAX_FILE_BYTES) return { bytes: new ArrayBuffer(0), size: declarado }
-    const bytes = await res.arrayBuffer()
-    return { bytes, size: bytes.byteLength }
+    let url = new URL(link)
+    for (let salto = 0; ; salto++) {
+      await validarDestino(url, resolve)
+      const res = await doFetch(url.toString(), { signal: controller.signal, redirect: 'manual' })
+      if (res.status >= 300 && res.status < 400) {
+        const destino = res.headers.get('location')
+        await res.body?.cancel().catch(() => undefined)
+        if (!destino || salto >= MAX_REDIRECTS) throw new Error('Redirecionamentos demais')
+        url = new URL(destino, url)
+        continue
+      }
+      if (!res.ok) {
+        await res.body?.cancel().catch(() => undefined)
+        throw new Error(`Download falhou (${res.status})`)
+      }
+      const declarado = Number(res.headers.get('content-length') ?? 0)
+      if (declarado > MAX_FILE_BYTES) {
+        await res.body?.cancel().catch(() => undefined)
+        return { bytes: new ArrayBuffer(0), size: declarado }
+      }
+      if (!res.body) {
+        const bytes = await res.arrayBuffer()
+        return { bytes, size: bytes.byteLength }
+      }
+      const reader = res.body.getReader()
+      const partes: Uint8Array[] = []
+      let total = 0
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        total += value.byteLength
+        if (total > MAX_FILE_BYTES) {
+          await reader.cancel().catch(() => undefined)
+          return { bytes: new ArrayBuffer(0), size: total }
+        }
+        partes.push(value)
+      }
+      const out = new Uint8Array(total)
+      let pos = 0
+      for (const p of partes) {
+        out.set(p, pos)
+        pos += p.byteLength
+      }
+      return { bytes: out.buffer, size: total }
+    }
   } finally {
     clearTimeout(timer)
   }
+}
+
+export const baixarArquivoPadrao: BaixarArquivo = (link) => baixarArquivoSeguro(link)
+
+/** Parte do nome usada na chave do storage: ASCII, sem separadores, com extensão. */
+export function nomeParaChave(nome: string): string {
+  const limpo = nome
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\\/]+/g, '-')
+    .replace(/\.\./g, '')
+  const ext = limpo.match(/\.[A-Za-z0-9]{1,10}$/)?.[0] ?? ''
+  const base = (ext ? limpo.slice(0, -ext.length) : limpo)
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^[-.]+|[-.]+$/g, '')
+    .slice(0, 100)
+  return `${base || 'arquivo'}${ext}`
 }
 
 /** Dia do calendário de hoje em São Paulo, ao meio-dia local (evita virada de dia). */
@@ -160,6 +279,7 @@ export async function registrarDocumentos(
       const ja = await sb
         .from('deal_files')
         .select('id')
+        .eq('organization_id', organizationId)
         .eq('deal_id', negocio.id)
         .eq('external_ref', externalRef)
         .maybeSingle()
@@ -190,7 +310,7 @@ export async function registrarDocumentos(
       continue
     }
 
-    const caminho = `${organizationId}/${negocio.id}/${Date.now()}-${fileName}`
+    const caminho = `${organizationId}/${negocio.id}/${Date.now()}-${nomeParaChave(fileName)}`
     const envio = await sb.storage.from(BUCKET).upload(caminho, baixado.bytes, { contentType: mimeType })
     if (envio.error) {
       skipped.push({ fileName, reason: 'falha_ao_gravar' })
@@ -216,7 +336,7 @@ export async function registrarDocumentos(
   }
 
   const nota = entrada.note?.trim()
-  if (nota) {
+  if (nota && saved > 0) {
     const r = await sb.from('activities').insert({
       organization_id: organizationId,
       title: 'Mensagem do cliente',
@@ -230,13 +350,36 @@ export async function registrarDocumentos(
     if (r.error) warnings.push('falha_ao_gravar_nota')
   }
 
+  // Reenvio: tudo já recebido só refaz o pós-processamento se a tarefa não existe.
+  let executar = saved > 0
+  const tudoJaRecebido =
+    entrada.files.length > 0 &&
+    skipped.length === entrada.files.length &&
+    skipped.every((x) => x.reason === 'ja_recebido')
+  if (!executar && tudoJaRecebido) {
+    const aberta = await sb
+      .from('activities')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .eq('deal_id', negocio.id)
+      .eq('type', 'TASK')
+      .eq('completed', false)
+      .is('deleted_at', null)
+      .like('title', 'Analisar documentos de%')
+      .limit(1)
+      .maybeSingle()
+    if (aberta.error) throw aberta.error
+    executar = !aberta.data
+  }
+
   let taskId: string | null = null
-  if (saved > 0) {
-    await sb
+  if (executar) {
+    const espera = await sb
       .from('deals')
       .update({ awaiting_documents: false })
       .eq('organization_id', organizationId)
       .eq('id', negocio.id)
+    if (espera.error) warnings.push('falha_ao_atualizar_negocio')
 
     const tarefa = await sb
       .from('activities')

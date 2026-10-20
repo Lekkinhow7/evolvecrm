@@ -20,7 +20,7 @@ function fakeSb(handlers: Handlers) {
     from(table: string) {
       const h = handlers[table] ?? {}
       const b: any = {}
-      for (const m of ['select', 'eq', 'is', 'in', 'order', 'limit']) b[m] = () => b
+      for (const m of ['select', 'eq', 'is', 'in', 'order', 'limit', 'like']) b[m] = () => b
       b.insert = (row: any) => {
         inserts.push({ table, row })
         return b
@@ -105,6 +105,7 @@ describe('registrarDocumentos', () => {
     const { sb, uploads, inserts } = fakeSb({
       deals: { maybeSingle: [negocio] },
       deal_files: { maybeSingle: [{ data: { id: 'f-1' } }] },
+      activities: { maybeSingle: [{ data: { id: 't-0' } }] },
     })
     const r = await registrarDocumentos(sb, { organizationId: ORG, dealId: 'd-1', files: [pdf] }, fetchOk)
     expect(r.skipped).toEqual([{ fileName: 'rg.pdf', reason: 'ja_recebido' }])
@@ -176,5 +177,45 @@ describe('registrarDocumentos', () => {
     await expect(
       registrarDocumentos(sb, { organizationId: ORG, phone: '71993042122', files: [pdf] }, fetchOk),
     ).rejects.toBeInstanceOf(NegocioNaoEncontrado)
+  })
+
+  it('reenvio com tudo já recebido não cria nota e cria a tarefa que faltou', async () => {
+    const { sb, inserts, updates } = fakeSb({
+      deals: { maybeSingle: [negocio] },
+      deal_files: { maybeSingle: [{ data: { id: 'f-1' } }] },
+      activities: { maybeSingle: [{ data: null }], single: [{ data: { id: 't-9' } }] },
+    })
+    const r = await registrarDocumentos(sb, { organizationId: ORG, dealId: 'd-1', note: 'oi', files: [pdf] }, fetchOk)
+    expect(r.saved).toBe(0)
+    expect(r.taskId).toBe('t-9')
+    const atividades = inserts.filter((i) => i.table === 'activities').map((i) => i.row)
+    expect(atividades.map((a) => a.type)).toEqual(['TASK'])
+    expect(updates.find((u) => u.table === 'deals')!.row).toEqual({ awaiting_documents: false })
+    expect(advanceDealToRole).toHaveBeenCalledOnce()
+  })
+
+  it('erro ao zerar awaiting_documents vira aviso', async () => {
+    const { sb } = fakeSb({
+      deals: { maybeSingle: [negocio], insertError: { message: 'x' } },
+      deal_files: { maybeSingle: [{ data: null }] },
+      activities: { single: [{ data: { id: 't-1' } }] },
+    })
+    const r = await registrarDocumentos(sb, { organizationId: ORG, dealId: 'd-1', files: [pdf] }, fetchOk)
+    expect(r.warnings).toContain('falha_ao_atualizar_negocio')
+  })
+
+  it('sanitiza só a chave do storage e guarda o nome original', async () => {
+    const { sb, uploads, inserts } = fakeSb({
+      deals: { maybeSingle: [negocio] },
+      activities: { single: [{ data: { id: 't-1' } }] },
+    })
+    await registrarDocumentos(
+      sb,
+      { organizationId: ORG, dealId: 'd-1', files: [{ ...pdf, externalRef: undefined, fileName: 'Relatório/../CNH João.pdf' }] },
+      fetchOk,
+    )
+    expect(uploads[0].path.startsWith(`${ORG}/d-1/`)).toBe(true)
+    expect(uploads[0].path.endsWith('-Relatorio-CNH-Joao.pdf')).toBe(true)
+    expect(inserts.find((i) => i.table === 'deal_files')!.row.file_name).toBe('Relatório/../CNH João.pdf')
   })
 })
