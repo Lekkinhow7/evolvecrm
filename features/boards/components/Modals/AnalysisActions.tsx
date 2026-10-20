@@ -14,10 +14,11 @@ interface AnalysisActionsProps {
 /** Decisão da análise de documentos: seguir, pedir mais documentos ou não seguir. */
 export const AnalysisActions: React.FC<AnalysisActionsProps> = ({ deal, board, onNotFollow }) => {
   const { data: lifecycleStages = [] } = useLifecycleStages();
-  const { moveDeal } = useMoveDealSimple(board, lifecycleStages);
+  const { moveDeal, isMoving } = useMoveDealSimple(board, lifecycleStages);
   const pedirDocumentos = usePedirDocumentos();
   const [asked, setAsked] = useState(false);
   const [error, setError] = useState(false);
+  const [moveError, setMoveError] = useState(false);
 
   const currentStage = board?.stages.find((s) => s.id === deal.status);
   if (currentStage?.role !== 'analise_documentos') return null;
@@ -35,6 +36,16 @@ export const AnalysisActions: React.FC<AnalysisActionsProps> = ({ deal, board, o
     }
   };
 
+  const handleFollow = async () => {
+    if (!meetingStage || isMoving) return;
+    setMoveError(false);
+    try {
+      await moveDeal(deal, meetingStage.id);
+    } catch {
+      setMoveError(true);
+    }
+  };
+
   return (
     <div className="mb-4 rounded-[var(--radius-lg)] border border-[var(--border-hairline)] bg-[var(--surface-card)] p-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -42,8 +53,8 @@ export const AnalysisActions: React.FC<AnalysisActionsProps> = ({ deal, board, o
           <Button
             size="sm"
             variant="primary"
-            disabled={!meetingStage}
-            onClick={() => meetingStage && void moveDeal(deal, meetingStage.id)}
+            disabled={!meetingStage || isMoving}
+            onClick={() => void handleFollow()}
           >
             Seguir para reunião
           </Button>
@@ -56,6 +67,11 @@ export const AnalysisActions: React.FC<AnalysisActionsProps> = ({ deal, board, o
         </Button>
         {awaiting && <Badge tone="warning">Aguardando documentos</Badge>}
       </div>
+      {moveError && (
+        <p role="alert" className="mt-2 text-xs text-[var(--text-secondary)]">
+          Não foi possível mover o negócio. Tente de novo.
+        </p>
+      )}
       {error && (
         <p role="alert" className="mt-2 text-xs text-[var(--text-secondary)]">
           Não foi possível pedir agora. Tente de novo.

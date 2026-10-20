@@ -35,5 +35,7 @@ describe('DealDocumentsTab', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ver rg.pdf' }));
     fireEvent.click(screen.getByRole('button', { name: 'Baixar rg.pdf' }));
     expect(downloadFile).toHaveBeenCalledTimes(2);
+    expect(downloadFile).toHaveBeenNthCalledWith(1, files[0]);
+    expect(downloadFile).toHaveBeenNthCalledWith(2, files[0]);
   });
 });

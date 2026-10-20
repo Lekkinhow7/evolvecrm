@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 const dealState = vi.hoisted(() => ({ value: 1000 }));
@@ -202,6 +202,10 @@ vi.mock('@/context/CRMContext', () => ({
 }));
 
 describe('DealDetailModal', () => {
+  afterEach(() => {
+    dealState.value = 1000;
+  });
+
   it('does not crash when toggling open/close (hook order regression)', () => {
     const { rerender } = render(
       <DealDetailModal dealId="deal-1" isOpen={false} onClose={() => {}} />
@@ -226,6 +230,5 @@ describe('DealDetailModal', () => {
     render(<DealDetailModal dealId="deal-1" isOpen={true} onClose={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Definir honorários' }));
     expect(document.querySelector('input[type="number"]')).not.toBeNull();
-    dealState.value = 1000;
   });
 });

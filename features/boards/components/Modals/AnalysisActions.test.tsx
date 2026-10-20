@@ -6,7 +6,7 @@ const moveDeal = vi.fn();
 const mutateAsync = vi.fn();
 
 vi.mock('@/lib/query/hooks', () => ({
-  useMoveDealSimple: () => ({ moveDeal }),
+  useMoveDealSimple: () => ({ moveDeal, isMoving: false }),
   useLifecycleStages: () => ({ data: [] }),
 }));
 vi.mock('@/lib/query/hooks/useAgendaQuery', () => ({
@@ -40,6 +40,13 @@ describe('AnalysisActions', () => {
     render(<AnalysisActions deal={deal} board={board} />);
     fireEvent.click(screen.getByRole('button', { name: 'Seguir para reunião' }));
     expect(moveDeal).toHaveBeenCalledWith(deal, 's2');
+  });
+
+  it('mostra mensagem quando mover o negócio falha', async () => {
+    moveDeal.mockRejectedValue(new Error('x'));
+    render(<AnalysisActions deal={deal} board={board} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Seguir para reunião' }));
+    await waitFor(() => expect(screen.getByText('Não foi possível mover o negócio. Tente de novo.')).toBeTruthy());
   });
 
   it('sem etapa de reunião, o botão fica desabilitado com dica', () => {

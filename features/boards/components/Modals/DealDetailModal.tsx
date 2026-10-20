@@ -487,7 +487,7 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                         setEditValue(deal.value.toString());
                         setIsEditingValue(true);
                       }}
-                      className="text-lg text-primary-600 dark:text-primary-400 font-mono font-bold cursor-pointer hover:underline decoration-dashed underline-offset-4"
+                      className="text-lg text-[var(--brand-cyan)] font-mono font-bold cursor-pointer hover:underline decoration-dashed underline-offset-4"
                       title="Clique para editar os honorários"
                     >
                       Honorários: {formatBRL(deal.value)}
@@ -499,7 +499,7 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                         setEditValue('');
                         setIsEditingValue(true);
                       }}
-                      className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline decoration-dashed underline-offset-4"
+                      className="text-sm font-semibold text-[var(--brand-cyan)] hover:underline decoration-dashed underline-offset-4"
                     >
                       Definir honorários
                     </button>
