@@ -3,12 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 const downloadFile = vi.fn();
+const viewFile = vi.fn();
 let files: Array<Record<string, unknown>> = [];
 
 vi.mock('@/features/inbox/hooks/useDealFiles', () => ({
   useDealFiles: () => ({
     files,
     isLoading: false,
+    viewFile,
     downloadFile,
     formatFileSize: (b: number | null) => (b ? `${Math.round(b / 1024)} KB` : '-'),
   }),
@@ -19,6 +21,7 @@ import { DealDocumentsTab } from './DealDocumentsTab';
 describe('DealDocumentsTab', () => {
   beforeEach(() => {
     downloadFile.mockReset();
+    viewFile.mockReset();
     files = [];
   });
 
@@ -34,8 +37,9 @@ describe('DealDocumentsTab', () => {
     expect(screen.getByText('2 KB')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Ver rg.pdf' }));
     fireEvent.click(screen.getByRole('button', { name: 'Baixar rg.pdf' }));
-    expect(downloadFile).toHaveBeenCalledTimes(2);
-    expect(downloadFile).toHaveBeenNthCalledWith(1, files[0]);
-    expect(downloadFile).toHaveBeenNthCalledWith(2, files[0]);
+    expect(viewFile).toHaveBeenCalledTimes(1);
+    expect(viewFile).toHaveBeenCalledWith(files[0]);
+    expect(downloadFile).toHaveBeenCalledTimes(1);
+    expect(downloadFile).toHaveBeenCalledWith(files[0]);
   });
 });

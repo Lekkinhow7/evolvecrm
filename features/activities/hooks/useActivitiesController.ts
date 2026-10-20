@@ -14,6 +14,7 @@ import { useDeals } from '@/lib/query/hooks/useDealsQuery';
 import { useContacts, useCompanies } from '@/lib/query/hooks/useContactsQuery';
 import { useRealtimeSync } from '@/lib/realtime/useRealtimeSync';
 import { toLocalDateInput } from '@/lib/utils/localDate';
+import { isRecordActivity } from '@/components/navigation/sidebarStats';
 
 /** Tipos aceitos no `?tipo=` da URL (os mesmos do filtro de tipo da tela). */
 const URL_TYPES: Activity['type'][] = ['CALL', 'MEETING', 'EMAIL', 'TASK'];
@@ -105,7 +106,8 @@ export const useActivitiesController = (options?: { initialView?: 'list' | 'cale
       .map((activity) => ({ activity, ts: Date.parse(activity.date) }))
       .filter(({ activity, ts }) => {
         const matchesSearch = (activity.title || '').toLowerCase().includes(q);
-        const matchesType = filterType === 'ALL' || activity.type === filterType;
+        // 'Todos' mostra o que é para fazer; notas e registros automáticos só aparecem filtrando pelo tipo.
+        const matchesType = filterType === 'ALL' ? !isRecordActivity(activity) : activity.type === filterType;
         const isPending = !activity.completed;
 
         const matchesDateFilter =

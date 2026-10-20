@@ -52,22 +52,32 @@ export function useDealFiles(dealId: string | undefined) {
     });
 
     // Download file
-    const downloadFile = async (file: DealFile) => {
-        const { url, error } = await dealFilesService.getDownloadUrl(file.file_path);
+    // Ver: abre o arquivo numa aba nova. Baixar: salva no computador.
+    const openFileUrl = async (file: DealFile, mode: 'view' | 'download') => {
+        const { url, error } = await dealFilesService.getDownloadUrl(
+            file.file_path,
+            mode === 'download' ? file.file_name : undefined,
+        );
         if (error || !url) {
             console.error('Download error:', error);
             return;
         }
 
-        // Open in new tab or trigger download
         const a = document.createElement('a');
         a.href = url;
-        a.download = file.file_name;
-        a.target = '_blank';
+        if (mode === 'view') {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+        } else {
+            a.download = file.file_name;
+        }
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
     };
+
+    const viewFile = (file: DealFile) => openFileUrl(file, 'view');
+    const downloadFile = (file: DealFile) => openFileUrl(file, 'download');
 
     return {
         files: filesQuery.data || [] as DealFile[],
@@ -75,6 +85,7 @@ export function useDealFiles(dealId: string | undefined) {
         error: filesQuery.error,
         uploadFile,
         deleteFile,
+        viewFile,
         downloadFile,
         formatFileSize: dealFilesService.formatFileSize,
     };

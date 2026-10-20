@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Phone, Users, Mail, CheckSquare } from 'lucide-react';
 import { Activity, Deal } from '@/types';
+import { officeDateParts } from '@/lib/utils/brTime';
 
 interface ActivitiesCalendarProps {
     activities: Activity[];
@@ -86,10 +87,10 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
     };
 
     const isToday = (date: Date) => {
-        const today = new Date();
-        return date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear();
+        const today = officeDateParts(new Date());
+        return date.getDate() === today.day &&
+            date.getMonth() === today.month &&
+            date.getFullYear() === today.year;
     };
 
     const isOverdue = (activity: Activity) => {
@@ -101,8 +102,9 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
     const activitiesByDayHour = useMemo(() => {
         const map = new Map<string, Activity[]>();
         for (const a of activities) {
-            const d = new Date(a.date);
-            const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}|${d.getHours()}`;
+            // Dia e hora no horário do escritório (Brasília), não no fuso do computador.
+            const p = officeDateParts(a.date);
+            const key = `${p.year}-${p.month}-${p.day}|${p.hour}`;
             const list = map.get(key);
             if (list) list.push(a);
             else map.set(key, [a]);

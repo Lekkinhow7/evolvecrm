@@ -524,6 +524,9 @@ async function handleMessagesUpsert(
   const { contentType, content } = extractMessageContent(data);
   const messageText = extractMessageText(data); // for last_message_preview only
   const pushName = data.pushName;
+  // Em mensagem enviada pela equipe (fromMe), o pushName é o nome do WhatsApp do
+  // escritório, não do cliente. Só serve para nomear o contato quando vem dele.
+  const contactPushName = isFromMe ? undefined : pushName;
   const timestamp = data.messageTimestamp
     ? new Date(data.messageTimestamp * 1000)
     : new Date();
@@ -531,7 +534,7 @@ async function handleMessagesUpsert(
   // Find existing conversation
   const { data: existingConv, error: convFindErr } = await supabase
     .from("messaging_conversations")
-    .select("id, contact_id")
+    .select("id, contact_id, external_contact_name")
     .eq("channel_id", channel.id)
     .eq("external_contact_id", phone)
     .maybeSingle();
@@ -544,6 +547,18 @@ async function handleMessagesUpsert(
   if (existingConv) {
     conversationId = existingConv.id;
     contactId = existingConv.contact_id;
+
+    // Conversa aberta pela equipe ficou só com o telefone: quando o cliente
+    // responde, o nome dele preenche conversa, contato e negócio.
+    if (contactPushName && (!existingConv.external_contact_name || existingConv.external_contact_name === phone)) {
+      await fillContactName(supabase, {
+        conversationId,
+        contactId,
+        organizationId: channel.organization_id,
+        phone,
+        name: contactPushName,
+      });
+    }
   } else {
     // Find or create contact
     const { data: existingContact, error: contactLookupErr } = await supabase
@@ -564,7 +579,7 @@ async function handleMessagesUpsert(
     if (existingContact) {
       contactId = existingContact.id;
     } else {
-      const contactName = pushName || phone;
+      const contactName = contactPushName || phone;
 
       const { data: newContact, error: contactCreateErr } = await supabase
         .from("contacts")
@@ -593,7 +608,7 @@ async function handleMessagesUpsert(
         channel_id: channel.id,
         business_unit_id: channel.business_unit_id,
         external_contact_id: phone,
-        external_contact_name: pushName || phone,
+        external_contact_name: contactPushName || phone,
         contact_id: contactId,
         status: "open",
         priority: "normal",
@@ -614,7 +629,7 @@ async function handleMessagesUpsert(
           boardId: routingRule.boardId,
           stageId: routingRule.stageId,
           conversationId,
-          contactName: pushName || phone,
+          contactName: contactPushName || phone,
         });
       }
     }
@@ -841,6 +856,42 @@ async function getLeadRoutingRule(
   if (!data || !data.enabled || !data.board_id) return null;
 
   return { boardId: data.board_id, stageId: data.stage_id };
+}
+
+/**
+ * Troca o telefone pelo nome do cliente onde o CRM ainda guarda só o número
+ * (conversa, contato e título do negócio criado pelo WhatsApp). Nome editado
+ * pela equipe não é sobrescrito.
+ */
+async function fillContactName(
+  supabase: ReturnType<typeof createClient>,
+  params: { conversationId: string; contactId: string | null; organizationId: string; phone: string; name: string },
+) {
+  const { conversationId, contactId, organizationId, phone, name } = params;
+
+  const { error: convErr } = await supabase
+    .from("messaging_conversations")
+    .update({ external_contact_name: name })
+    .eq("id", conversationId);
+  if (convErr) console.error("[Evolution] Failed to fill conversation name:", convErr);
+
+  if (!contactId) return;
+
+  const { error: contactErr } = await supabase
+    .from("contacts")
+    .update({ name })
+    .eq("id", contactId)
+    .eq("organization_id", organizationId)
+    .eq("name", phone);
+  if (contactErr) console.error("[Evolution] Failed to fill contact name:", contactErr);
+
+  const { error: dealErr } = await supabase
+    .from("deals")
+    .update({ title: `${name} - WhatsApp` })
+    .eq("contact_id", contactId)
+    .eq("organization_id", organizationId)
+    .eq("title", `${phone} - WhatsApp`);
+  if (dealErr) console.error("[Evolution] Failed to fill deal title:", dealErr);
 }
 
 async function autoCreateDeal(

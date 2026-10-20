@@ -8,7 +8,7 @@ interface DealDocumentsTabProps {
 
 /** Documentos que o cliente enviou pelo WhatsApp para este negócio. */
 export const DealDocumentsTab: React.FC<DealDocumentsTabProps> = ({ dealId }) => {
-  const { files, isLoading, downloadFile, formatFileSize } = useDealFiles(dealId);
+  const { files, isLoading, viewFile, downloadFile, formatFileSize } = useDealFiles(dealId);
 
   if (isLoading) {
     return <p className="text-sm text-[var(--text-secondary)]">Carregando documentos...</p>;
@@ -27,7 +27,7 @@ export const DealDocumentsTab: React.FC<DealDocumentsTabProps> = ({ dealId }) =>
             <p className="text-xs text-[var(--text-secondary)]">{formatFileSize(file.file_size)}</p>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button size="sm" variant="secondary" icon="eye" onClick={() => void downloadFile(file)} aria-label={`Ver ${file.file_name}`}>
+            <Button size="sm" variant="secondary" icon="eye" onClick={() => void viewFile(file)} aria-label={`Ver ${file.file_name}`}>
               Ver
             </Button>
             <Button size="sm" variant="outline" icon="download" onClick={() => void downloadFile(file)} aria-label={`Baixar ${file.file_name}`}>

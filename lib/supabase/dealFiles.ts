@@ -76,13 +76,14 @@ export const dealFilesService = {
     /**
      * Get a signed download URL for a file
      */
-    async getDownloadUrl(filePath: string) {
+    async getDownloadUrl(filePath: string, downloadName?: string) {
         if (!supabase) {
             return { url: null, error: new Error('Supabase não configurado') };
         }
+        // Com downloadName, o Storage responde como anexo (o navegador baixa em vez de abrir).
         const { data, error } = await supabase.storage
             .from(BUCKET_NAME)
-            .createSignedUrl(filePath, 3600); // 1 hour expiry
+            .createSignedUrl(filePath, 3600, downloadName ? { download: downloadName } : undefined); // 1 hour expiry
 
         return { url: data?.signedUrl || null, error };
     },

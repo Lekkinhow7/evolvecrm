@@ -5,6 +5,11 @@ const APPOINTMENT_TYPES: Activity['type'][] = ['MEETING', 'CALL'];
 /** Notas e mudanças de status são registro, não algo a fazer. */
 const NOT_TODO_TYPES: Activity['type'][] = ['NOTE', 'STATUS_CHANGE'];
 
+/** Anotação ou registro automático (mudança de etapa), não um item a fazer. */
+export function isRecordActivity(a: Pick<Activity, 'type'>): boolean {
+  return NOT_TODO_TYPES.includes(a.type);
+}
+
 export interface ActivityStats {
   /** Reuniões e ligações pendentes marcadas para hoje */
   todayAppointments: number;

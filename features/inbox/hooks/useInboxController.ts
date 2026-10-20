@@ -25,6 +25,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useLastMessageByContact } from '@/lib/query/hooks/useMessagingConversationsQuery';
 import { formatBRL } from '@/lib/utils/brFormat';
 import { daysSince, describeStalledDeal, isDealStalled, lastMovementTs } from './stalledDeals';
+import { isRecordActivity } from '@/components/navigation/sidebarStats';
 
 const EMPTY_LAST_MESSAGES = new Map<string, number>();
 
@@ -164,7 +165,7 @@ export const useInboxController = () => {
   );
 
   const todayTasks = useMemo(
-    () => todayActivities.filter(a => a.type !== 'CALL' && a.type !== 'MEETING'),
+    () => todayActivities.filter(a => a.type !== 'CALL' && a.type !== 'MEETING' && !isRecordActivity(a)),
     [todayActivities]
   );
 
