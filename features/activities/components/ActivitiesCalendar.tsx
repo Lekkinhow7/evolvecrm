@@ -146,11 +146,12 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
             </div>
 
             {/* Calendar Grid */}
-            <div className="overflow-auto max-h-[650px]">
-                <div className="min-w-[900px]">
+            {/* Sem rolagem interna: a agenda cresce e quem rola é a página. Só rola de lado em tela estreita. */}
+            <div className="overflow-x-auto">
+                <div className="min-w-[760px]">
                     {/* Day Headers */}
-                    <div className="grid grid-cols-8 border-b border-slate-200 dark:border-white/10 sticky top-0 bg-white dark:bg-dark-card z-10 shadow-sm">
-                        <div className="p-3 text-xs font-bold text-slate-500 uppercase bg-slate-50 dark:bg-white/5"></div>
+                    <div className="grid grid-cols-[56px_repeat(7,minmax(0,1fr))] border-b border-slate-200 dark:border-white/10 bg-white dark:bg-dark-card shadow-sm">
+                        <div className="bg-slate-50 dark:bg-white/5"></div>
                         {weekDays.map((date, i) => (
                             <div
                                 key={i}
@@ -174,8 +175,8 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
 
                     {/* Time Slots */}
                     {HOURS.map(hour => (
-                        <div key={hour} className="grid grid-cols-8 border-b border-slate-200 dark:border-white/5">
-                            <div className="p-3 text-sm font-bold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-white/5 text-right pr-4">
+                        <div key={hour} className="grid grid-cols-[56px_repeat(7,minmax(0,1fr))] border-b border-slate-200 dark:border-white/5">
+                            <div className="px-2 pt-2 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/5 text-right tabular-nums">
                                 {hour}:00
                             </div>
                             {weekDays.map((date, i) => {
