@@ -14,23 +14,23 @@ import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // ============ BASE STYLES ============
 
+// Mesmo visual do TextField do design system (caixa afundada, borda fina, foco ciano).
 const baseInputStyles = cn(
-  'w-full bg-slate-50 dark:bg-black/20',
-  'border border-slate-200 dark:border-slate-700',
-  'rounded-lg px-3 py-2 text-sm',
-  'text-slate-900 dark:text-white',
-  'outline-none focus:ring-2 focus:ring-primary-500',
-  'transition-all duration-200',
-  'placeholder:text-slate-400'
+  'w-full min-h-11 bg-[var(--surface-sunken)]',
+  'border border-[var(--border-hairline)]',
+  'rounded-[var(--radius-lg)] px-4 py-2.5 text-sm',
+  'text-[var(--text-primary)]',
+  'outline-none focus:bg-[var(--surface-card)] focus:border-[var(--cyan-400)] focus:shadow-[var(--focus-ring)]',
+  'transition-colors duration-150',
+  'placeholder:text-[var(--text-tertiary)]'
 );
 
-const errorInputStyles =
-  'border-red-500 dark:border-red-400 focus:ring-red-500 bg-red-50/50 dark:bg-red-900/10';
-const successInputStyles = 'border-green-500 dark:border-green-400 focus:ring-green-500';
+const errorInputStyles = 'border-[var(--status-danger-solid)] focus:border-[var(--status-danger-solid)]';
+const successInputStyles = 'border-[var(--status-success-solid)]';
 
-const labelStyles = 'block text-xs font-bold text-slate-500 uppercase mb-1';
-const errorMessageStyles = 'text-xs text-red-500 mt-1 flex items-center gap-1';
-const hintStyles = 'text-[10px] text-slate-400 mt-1';
+const labelStyles = 'block text-[length:var(--fs-caption)] text-[var(--text-secondary)] mb-1.5';
+const errorMessageStyles = 'text-xs text-[var(--status-danger-fg)] mt-1 flex items-center gap-1';
+const hintStyles = 'text-[length:var(--fs-micro)] text-[var(--text-tertiary)] mt-1';
 
 // ============ VALIDATION STATE ============
 
@@ -477,10 +477,11 @@ interface SubmitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
   variant?: 'primary' | 'secondary' | 'danger';
 }
 
+// Classes do Button do design system (at-btn).
 const buttonVariants = {
-  primary: 'bg-primary-600 hover:bg-primary-500 shadow-primary-600/20',
-  secondary: 'bg-slate-600 hover:bg-slate-500 shadow-slate-600/20',
-  danger: 'bg-red-600 hover:bg-red-500 shadow-red-600/20',
+  primary: 'at-btn--primary',
+  secondary: 'at-btn--secondary',
+  danger: 'bg-[var(--status-danger-solid)] text-white hover:opacity-90',
 };
 
 /**
@@ -519,10 +520,7 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
     disabled={disabled || isLoading}
     aria-busy={isLoading}
     className={cn(
-      'w-full text-white font-bold py-2.5 rounded-lg',
-      'shadow-lg transition-all duration-200',
-      'disabled:opacity-50 disabled:cursor-not-allowed',
-      'focus:outline-none focus:ring-2 focus:ring-offset-2',
+      'at-btn at-btn--md at-btn--block',
       buttonVariants[variant],
       className
     )}

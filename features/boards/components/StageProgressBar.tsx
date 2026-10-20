@@ -49,9 +49,9 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({
         // - Still clickable to change stage
         return (
             <div className={`w-full ${className ?? ''}`}>
-                <div className="overflow-x-auto">
-                    <div className="min-w-max py-1">
-                        <div className="flex items-center gap-2">
+                <div>
+                    <div className="py-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             {stages.map((stage, index) => {
                                 const isCurrent = currentStatus === stage.id;
                                 const isPast = index < currentIndex;
@@ -105,7 +105,7 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({
                                         {index < stages.length - 1 && (
                                             <span
                                                 aria-hidden="true"
-                                                className={`h-px w-7 ${connectorClass}`}
+                                                className={`h-px w-5 ${connectorClass}`}
                                             />
                                         )}
                                     </React.Fragment>

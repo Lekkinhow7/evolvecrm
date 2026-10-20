@@ -9,7 +9,7 @@ import { useActiveProducts } from '@/lib/query/hooks/useProductsQuery';
 import { useToast } from '@/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/design-system';
-import { MODAL_FOOTER_CLASS } from '@/components/ui/modalStyles';
+import { MODAL_FOOTER_CLASS, FIELD_LABEL_CLASS, FIELD_INPUT_CLASS, FIELD_HINT_CLASS } from '@/components/ui/modalStyles';
 import { slugify } from '@/lib/utils/slugify';
 
 interface CreateBoardModalProps {
@@ -34,6 +34,9 @@ const STAGE_ROLE_OPTIONS: Array<{ value: '' | StageRole; label: string }> = [
   { value: 'reuniao_agendada', label: 'Reunião agendada' },
   { value: 'analise_documentos', label: 'Análise de documentos' },
 ];
+
+const STAGE_SELECT_CLASS =
+  'w-full min-h-10 cursor-pointer rounded-[var(--radius-md)] border border-[var(--border-hairline)] bg-[var(--surface-card)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--cyan-400)] focus:shadow-[var(--focus-ring)] dark:[color-scheme:dark]';
 
 const STAGE_COLORS = [
   'bg-blue-500',
@@ -417,7 +420,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
               {/* Switch board (edit mode only) */}
               {editingBoard && onSwitchEditingBoard && availableBoards.length > 1 && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className={FIELD_LABEL_CLASS}>
                     Editando funil
                   </label>
                   <div className="relative">
@@ -427,7 +430,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                         const next = availableBoards.find(b => b.id === e.target.value);
                         if (next) onSwitchEditingBoard(next);
                       }}
-                      className="w-full appearance-none px-4 py-2.5 pr-10 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:[color-scheme:dark]"
+                      className={`${FIELD_INPUT_CLASS} appearance-none pr-10`}
                       aria-label="Selecionar funil para editar"
                     >
                       {availableBoards.map(b => (
@@ -438,19 +441,19 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                     </select>
                     <ChevronDown
                       size={18}
-                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]"
                       aria-hidden="true"
                     />
                   </div>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                    Dica: troque aqui para editar outro funil sem fechar esta janela.
+                  <p className={FIELD_HINT_CLASS}>
+                    Troque aqui para editar outro funil.
                   </p>
                 </div>
               )}
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className={FIELD_LABEL_CLASS}>
                   Nome do funil *
                 </label>
                 <input
@@ -461,215 +464,61 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                     setName(next);
                     if (!keyTouched) setBoardKey(slugify(next));
                   }}
-                  placeholder="Ex: Pipeline de Vendas, Onboarding, etc"
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Ex.: Atendimento"
+                  className={FIELD_INPUT_CLASS}
                 />
-              </div>
-
-              {/* Board key (slug) */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Chave (slug) — para integrações
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={boardKey}
-                    onChange={(e) => {
-                      setKeyTouched(true);
-                      setBoardKey(e.target.value);
-                    }}
-                    placeholder="ex: vendas-b2b"
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCopyKey}
-                    className="shrink-0 px-3 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200"
-                    aria-label="Copiar chave do funil"
-                    title="Copiar chave"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  Dica: é mais fácil usar isso no n8n/Make do que um UUID.
-                </p>
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className={FIELD_LABEL_CLASS}>
                   Descrição
                 </label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Breve descrição do propósito deste funil"
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Para que serve este funil"
+                  className={FIELD_INPUT_CLASS}
                 />
               </div>
 
               {/* Template Selection (only for new boards) */}
               {!editingBoard && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    📋 Usar Template
+                  <label className={FIELD_LABEL_CLASS}>
+                    Começar de um modelo
                   </label>
                   <select
                     value={selectedTemplate}
                     onChange={(e) => handleTemplateSelect(e.target.value as BoardTemplateType | '')}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:[color-scheme:dark]"
+                    className={FIELD_INPUT_CLASS}
                   >
                     <option value="">Funil em branco</option>
-                    <option value="PRE_SALES">🎯 Pré-venda (Lead → MQL)</option>
-                    <option value="SALES">💰 Pipeline de Vendas</option>
-                    <option value="ONBOARDING">🚀 Onboarding de Clientes</option>
-                    <option value="CS">❤️ CS & Upsell</option>
+                    <option value="PRE_SALES">Pré-atendimento</option>
+                    <option value="SALES">Vendas</option>
+                    <option value="ONBOARDING">Início do atendimento</option>
+                    <option value="CS">Clientes ativos</option>
                   </select>
                   {selectedTemplate && (
-                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                      ✨ Template aplicado! Você pode editar os campos abaixo.
+                    <p className={FIELD_HINT_CLASS}>
+                      Modelo aplicado. Você pode ajustar tudo abaixo.
                     </p>
                   )}
                 </div>
               )}
 
-              {/* Linked Lifecycle Stage */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  🎯 Gerencia Contatos no Estágio
-                </label>
-                <select
-                  value={linkedLifecycleStage}
-                  onChange={(e) => setLinkedLifecycleStage(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:[color-scheme:dark]"
-                >
-                  <option value="">Nenhum (board genérico)</option>
-                  {lifecycleStages.map(stage => (
-                    <option key={stage.id} value={stage.id}>{stage.name}</option>
-                  ))}
-                </select>
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  Novos negócios de contatos neste estágio aparecerão automaticamente aqui.
-                </p>
-              </div>
-
-              {/* Default Product */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  🧾 Produto padrão (opcional)
-                </label>
-                <select
-                  value={defaultProductId}
-                  onChange={(e) => setDefaultProductId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:[color-scheme:dark]"
-                >
-                  <option value="">Nenhum</option>
-                  {products
-                    .filter(p => p.active !== false)
-                    .map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} — R$ {Number(p.price ?? 0).toLocaleString('pt-BR')}
-                      </option>
-                    ))}
-                </select>
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  Sugere (ou pré-seleciona) um produto ao adicionar itens em deals desse board.
-                </p>
-              </div>
-
-              {/* Next Board Automation */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Ao Ganhar, enviar para...
-                </label>
-                <select
-                  value={nextBoardId}
-                  onChange={(e) => setNextBoardId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:[color-scheme:dark]"
-                >
-                  <option value="">Nenhum (Finalizar aqui)</option>
-                  {validNextBoards.map(board => (
-                    <option key={board.id} value={board.id}>
-                      {board.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Cria automaticamente um card no próximo board quando o negócio é ganho.
-                </p>
-              </div>
-
-              {/* Explicit Won/Lost Stages */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    🏆 Estágio Ganho (Won)
-                  </label>
-                  <select
-                    value={wonStayInStage ? 'archive' : wonStageId}
-                    onChange={(e) => {
-                      if (e.target.value === 'archive') {
-                        setWonStayInStage(true);
-                        setWonStageId('');
-                      } else {
-                        setWonStayInStage(false);
-                        setWonStageId(e.target.value);
-                      }
-                    }}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:[color-scheme:dark]"
-                  >
-                    <option value="">Automático (pelo ciclo)</option>
-                    <option value="archive">Arquivar (Manter na etapa)</option>
-                    {stages.map(stage => (
-                      <option key={stage.id} value={stage.id}>{stage.label}</option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    O botão "Ganho" moverá o card para cá.
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    ❌ Estágio Perdido (Lost)
-                  </label>
-                  <select
-                    value={lostStayInStage ? 'archive' : lostStageId}
-                    onChange={(e) => {
-                      if (e.target.value === 'archive') {
-                        setLostStayInStage(true);
-                        setLostStageId('');
-                      } else {
-                        setLostStayInStage(false);
-                        setLostStageId(e.target.value);
-                      }
-                    }}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:[color-scheme:dark]"
-                  >
-                    <option value="">Automático</option>
-                    <option value="archive">Arquivar (Manter na etapa)</option>
-                    {stages.map(stage => (
-                      <option key={stage.id} value={stage.id}>{stage.label}</option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    O botão "Perdido" moverá o card para cá.
-                  </p>
-                </div>
-              </div>
-
+              <div className="pt-5 border-t border-[var(--border-hairline)]">
               {/* Stages */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Etapas do Kanban
-                  </label>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+                    Etapas
+                  </h3>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleAddStage}
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[var(--text-accent)] hover:bg-[var(--surface-accent)] rounded-[var(--radius-pill)] transition-colors"
                     >
                       <Plus size={14} />
                       Adicionar etapa
@@ -677,18 +526,18 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                     {editingBoard && (
                       <button
                         onClick={() => setIsAIConfigModalOpen(true)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] rounded-[var(--radius-pill)] transition-colors"
                       >
                         <Bot size={14} />
-                        Configurar AI
+                        Assistente
                       </button>
                     )}
                     <button
                       onClick={() => setIsLifecycleModalOpen(true)}
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] rounded-[var(--radius-pill)] transition-colors"
                     >
                       <Settings size={14} />
-                      Gerenciar Estágios
+                      Estágios do contato
                     </button>
                   </div>
                 </div>
@@ -698,12 +547,12 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                     <div
                       key={stage.id}
                       data-stage-card="true"
-                      className={`p-4 bg-slate-50 dark:bg-white/5 rounded-xl border transition-colors ${
+                      className={`p-4 bg-[var(--surface-sunken)] rounded-[var(--radius-lg)] border transition-colors ${
                         dragOverStageId === stage.id
-                          ? 'border-primary-500/60 ring-2 ring-primary-500/20'
+                          ? 'border-[var(--cyan-400)] shadow-[var(--focus-ring)]'
                           : draggingStageId === stage.id
-                            ? 'border-primary-500/40 ring-2 ring-primary-500/10 opacity-70 shadow-lg'
-                            : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                            ? 'border-[var(--border-accent)] opacity-70 shadow-[var(--shadow-lg)]'
+                            : 'border-[var(--border-hairline)] hover:border-[var(--border-default)]'
                       }`}
                       onDragOver={(e) => {
                         // Required to allow dropping.
@@ -773,7 +622,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                             if (el) stageNameRefs.current.set(stage.id, el);
                             else stageNameRefs.current.delete(stage.id);
                           }}
-                          className="flex-1 px-3 py-2 text-base font-medium rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          className="flex-1 min-h-10 px-3 py-2 text-sm font-medium rounded-[var(--radius-md)] border border-[var(--border-hairline)] bg-[var(--surface-card)] text-[var(--text-primary)] outline-none focus:border-[var(--cyan-400)] focus:shadow-[var(--focus-ring)]"
                           placeholder="Nome da etapa"
                         />
 
@@ -781,18 +630,19 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                         <button
                           onClick={() => handleRemoveStage(stage.id)}
                           disabled={stages.length <= 2}
-                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0 transition-colors"
+                          className="p-2 text-[var(--text-tertiary)] hover:text-[var(--status-danger-fg)] hover:bg-[var(--status-danger-bg)] rounded-[var(--radius-pill)] disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0 transition-colors"
                           title="Remover etapa"
                         >
                           <Trash2 size={18} />
                         </button>
                       </div>
 
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-9">
                       {/* Papel da etapa (usado pelas portas da agenda) */}
-                      <div className="mb-3 pl-9">
+                      <div>
                         <label
                           htmlFor={`stage-role-${stage.id}`}
-                          className="mb-2 block text-xs font-medium text-[var(--text-secondary)]"
+                          className="mb-1.5 block text-xs text-[var(--text-secondary)]"
                         >
                           Papel da etapa
                         </label>
@@ -800,7 +650,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                           id={`stage-role-${stage.id}`}
                           value={stage.role ?? ''}
                           onChange={(e) => handleSetStageRole(stage.id, (e.target.value || undefined) as StageRole | undefined)}
-                          className="w-full cursor-pointer rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-card)] px-3 py-2 text-sm text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] dark:[color-scheme:dark]"
+                          className={STAGE_SELECT_CLASS}
                         >
                           {STAGE_ROLE_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -809,33 +659,197 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                       </div>
 
                       {/* Lifecycle Automation */}
-                      <div className="pl-9">
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                          Promove contato para:
+                      <div>
+                        <label className="mb-1.5 block text-xs text-[var(--text-secondary)]">
+                          Muda o contato para
                         </label>
                         <div className="relative">
                           <select
                             value={stage.linkedLifecycleStage || ''}
                             onChange={(e) => handleUpdateStage(stage.id, { linkedLifecycleStage: e.target.value || undefined })}
-                            className={`w-full pl-3 pr-10 py-2 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none cursor-pointer dark:[color-scheme:dark]
-                            ${stage.linkedLifecycleStage ? 'font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700' : ''}
-                          `}
+                            className={STAGE_SELECT_CLASS}
                           >
                             <option value="">Sem automação</option>
                             {lifecycleStages.map(ls => (
                               <option key={ls.id} value={ls.id}>{ls.name}</option>
                             ))}
                           </select>
-                          <ChevronDown
-                            size={16}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                          />
                         </div>
+                      </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+              </div>
+
+              <div className="pt-5 border-t border-[var(--border-hairline)] space-y-4">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">Quando o caso fechar</h3>
+              {/* Explicit Won/Lost Stages */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={FIELD_LABEL_CLASS}>
+                    Etapa de quem contratou
+                  </label>
+                  <select
+                    value={wonStayInStage ? 'archive' : wonStageId}
+                    onChange={(e) => {
+                      if (e.target.value === 'archive') {
+                        setWonStayInStage(true);
+                        setWonStageId('');
+                      } else {
+                        setWonStayInStage(false);
+                        setWonStageId(e.target.value);
+                      }
+                    }}
+                    className={FIELD_INPUT_CLASS}
+                  >
+                    <option value="">Automático</option>
+                    <option value="archive">Arquivar (fica na etapa atual)</option>
+                    {stages.map(stage => (
+                      <option key={stage.id} value={stage.id}>{stage.label}</option>
+                    ))}
+                  </select>
+                  <p className={FIELD_HINT_CLASS}>
+                    O botão "Contratou" leva o card para cá.
+                  </p>
+                </div>
+                <div>
+                  <label className={FIELD_LABEL_CLASS}>
+                    Etapa de quem não contratou
+                  </label>
+                  <select
+                    value={lostStayInStage ? 'archive' : lostStageId}
+                    onChange={(e) => {
+                      if (e.target.value === 'archive') {
+                        setLostStayInStage(true);
+                        setLostStageId('');
+                      } else {
+                        setLostStayInStage(false);
+                        setLostStageId(e.target.value);
+                      }
+                    }}
+                    className={FIELD_INPUT_CLASS}
+                  >
+                    <option value="">Automático</option>
+                    <option value="archive">Arquivar (fica na etapa atual)</option>
+                    {stages.map(stage => (
+                      <option key={stage.id} value={stage.id}>{stage.label}</option>
+                    ))}
+                  </select>
+                  <p className={FIELD_HINT_CLASS}>
+                    O botão "Não contratou" leva o card para cá.
+                  </p>
+                </div>
+              </div>
+
+              {/* Next Board Automation */}
+              <div>
+                <label className={FIELD_LABEL_CLASS}>
+                  Quando contratar, abrir negócio no funil
+                </label>
+                <select
+                  value={nextBoardId}
+                  onChange={(e) => setNextBoardId(e.target.value)}
+                  className={FIELD_INPUT_CLASS}
+                >
+                  <option value="">Nenhum (termina aqui)</option>
+                  {validNextBoards.map(board => (
+                    <option key={board.id} value={board.id}>
+                      {board.name}
+                    </option>
+                  ))}
+                </select>
+                <p className={FIELD_HINT_CLASS}>
+                  Cria um card no outro funil quando o cliente contrata.
+                </p>
+              </div>
+
+              </div>
+
+              <details className="group pt-5 border-t border-[var(--border-hairline)]">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
+                  Avançado
+                  <ChevronDown size={16} className="text-[var(--text-tertiary)] transition-transform group-open:rotate-180" aria-hidden="true" />
+                </summary>
+                <div className="mt-4 space-y-4">
+              {/* Board key (slug) */}
+              <div>
+                <label className={FIELD_LABEL_CLASS}>
+                  Chave para integrações
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={boardKey}
+                    onChange={(e) => {
+                      setKeyTouched(true);
+                      setBoardKey(e.target.value);
+                    }}
+                    placeholder="ex.: atendimento"
+                    className={`${FIELD_INPUT_CLASS} font-mono`}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCopyKey}
+                    className="shrink-0 px-3 rounded-[var(--radius-lg)] border border-[var(--border-hairline)] bg-[var(--surface-card)] hover:bg-[var(--surface-sunken)] text-[var(--text-secondary)]"
+                    aria-label="Copiar chave do funil"
+                    title="Copiar chave"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+                <p className={FIELD_HINT_CLASS}>
+                  Usada pelo n8n e pelo site para saber em qual funil criar o negócio.
+                </p>
+              </div>
+
+              {/* Linked Lifecycle Stage */}
+              <div>
+                <label className={FIELD_LABEL_CLASS}>
+                  Puxar contatos do estágio
+                </label>
+                <select
+                  value={linkedLifecycleStage}
+                  onChange={(e) => setLinkedLifecycleStage(e.target.value)}
+                  className={FIELD_INPUT_CLASS}
+                >
+                  <option value="">Nenhum</option>
+                  {lifecycleStages.map(stage => (
+                    <option key={stage.id} value={stage.id}>{stage.name}</option>
+                  ))}
+                </select>
+                <p className={FIELD_HINT_CLASS}>
+                  Contatos que entrarem nesse estágio ganham um negócio neste funil.
+                </p>
+              </div>
+
+              {/* Default Product */}
+              <div>
+                <label className={FIELD_LABEL_CLASS}>
+                  Serviço padrão
+                </label>
+                <select
+                  value={defaultProductId}
+                  onChange={(e) => setDefaultProductId(e.target.value)}
+                  className={FIELD_INPUT_CLASS}
+                >
+                  <option value="">Nenhum</option>
+                  {products
+                    .filter(p => p.active !== false)
+                    .map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} — R$ {Number(p.price ?? 0).toLocaleString('pt-BR')}
+                      </option>
+                    ))}
+                </select>
+                <p className={FIELD_HINT_CLASS}>
+                  Já vem selecionado ao adicionar serviços num negócio deste funil.
+                </p>
+              </div>
+
+                </div>
+              </details>
           </div>
 
           {/* Footer */}

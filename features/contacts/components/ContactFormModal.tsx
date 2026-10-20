@@ -5,6 +5,18 @@ import { DebugFillButton } from '@/components/debug/DebugFillButton';
 import { fakeContact } from '@/lib/debug';
 import { FocusTrap, useFocusReturn } from '@/lib/a11y';
 
+import { Button } from '@/design-system';
+import {
+  FIELD_HINT_CLASS,
+  FIELD_INPUT_CLASS,
+  FIELD_LABEL_CLASS,
+  MODAL_BODY_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_HEADER_CLASS,
+  MODAL_OVERLAY_CLASS,
+  MODAL_PANEL_BASE_CLASS,
+  MODAL_TITLE_CLASS,
+} from '@/components/ui/modalStyles';
 interface ContactFormData {
   name: string;
   email: string;
@@ -74,7 +86,7 @@ export const ContactFormModal: React.FC<ContactFormModalProps> = ({
   return (
     <FocusTrap active={isOpen} onEscape={onClose}>
       <div 
-        className="fixed inset-0 md:left-[var(--app-sidebar-width,0px)] z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+        className={MODAL_OVERLAY_CLASS}
         role="dialog"
         aria-modal="true"
         aria-labelledby={headingId}
@@ -83,11 +95,11 @@ export const ContactFormModal: React.FC<ContactFormModalProps> = ({
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        <div className="bg-white dark:bg-dark-card border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
-          <div className="p-5 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
+        <div className={`${MODAL_PANEL_BASE_CLASS} max-w-md animate-in zoom-in-95 duration-200`}>
+          <div className={MODAL_HEADER_CLASS}>
             <div className="flex items-center gap-2">
-              <h2 id={headingId} className="text-lg font-bold text-slate-900 dark:text-white font-display">
-                {editingContact ? 'Editar Contato' : 'Novo Contato'}
+              <h2 id={headingId} className={MODAL_TITLE_CLASS}>
+                {editingContact ? 'Editar contato' : 'Novo contato'}
               </h2>
               <DebugFillButton onClick={fillWithFakeData} />
               {createFakeContactsBatch && (
@@ -111,94 +123,88 @@ export const ContactFormModal: React.FC<ContactFormModalProps> = ({
             <button
               onClick={onClose}
               aria-label="Fechar modal"
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-white focus-visible-ring rounded"
+              className={MODAL_CLOSE_BUTTON_CLASS}
             >
               <X size={20} aria-hidden="true" />
             </button>
           </div>
-        <form onSubmit={onSubmit} className="p-5 space-y-4">
+        <form onSubmit={onSubmit} className={`${MODAL_BODY_CLASS} space-y-4`}>
           <div>
-            <label htmlFor="contact-name" className="block text-xs font-bold text-slate-500 uppercase mb-1">
-              Nome Completo <span aria-hidden="true">*</span>
+            <label htmlFor="contact-name" className={FIELD_LABEL_CLASS}>
+              Nome <span aria-hidden="true">*</span>
             </label>
             <input
               id="contact-name"
               required
               aria-required="true"
               type="text"
-              className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="Ex: Ana Souza"
+              className={FIELD_INPUT_CLASS}
+              placeholder="Ex.: Maria da Silva"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
           <div>
-            <label htmlFor="contact-email" className="block text-xs font-bold text-slate-500 uppercase mb-1">
-              Email <span aria-hidden="true">*</span>
+            <label htmlFor="contact-email" className={FIELD_LABEL_CLASS}>
+              E-mail
             </label>
             <input
               id="contact-email"
-              required
-              aria-required="true"
               type="email"
-              className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="ana@empresa.com"
+              className={FIELD_INPUT_CLASS}
+              placeholder="maria@email.com"
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="contact-phone" className="block text-xs font-bold text-slate-500 uppercase mb-1">
+              <label htmlFor="contact-phone" className={FIELD_LABEL_CLASS}>
                 Telefone
               </label>
               <input
                 id="contact-phone"
                 type="text"
-                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="+5511999999999"
+                className={FIELD_INPUT_CLASS}
+                placeholder="(71) 99999-9999"
                 value={formData.phone}
                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
               />
             </div>
             <div>
-              <label htmlFor="contact-role" className="block text-xs font-bold text-slate-500 uppercase mb-1">Cargo</label>
+              <label htmlFor="contact-role" className={FIELD_LABEL_CLASS}>Profissão</label>
               <input
                 id="contact-role"
                 type="text"
-                className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Gerente"
+                className={FIELD_INPUT_CLASS}
+                placeholder="Ex.: Professora"
                 value={formData.role}
                 onChange={e => setFormData({ ...formData, role: e.target.value })}
               />
             </div>
           </div>
           <div>
-            <label htmlFor="contact-company" className="block text-xs font-bold text-slate-500 uppercase mb-1">
+            <label htmlFor="contact-company" className={FIELD_LABEL_CLASS}>
               Empresa
             </label>
             <input
               id="contact-company"
               type="text"
-              className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="Nome da Empresa"
+              className={FIELD_INPUT_CLASS}
+              placeholder="Opcional"
               value={formData.companyName}
               onChange={e => setFormData({ ...formData, companyName: e.target.value })}
             />
-            <p className="text-[10px] text-slate-400 mt-1">
+            <p className={FIELD_HINT_CLASS}>
               {editingContact
                 ? 'Edite para alterar a empresa. Deixe em branco para desvincular.'
                 : 'Se a empresa já existir, o contato será vinculado a ela.'}
             </p>
           </div>
 
-            <button
-            type="submit"
-              disabled={isSubmitting}
-            className="w-full bg-primary-600 hover:bg-primary-500 text-white font-bold py-2.5 rounded-lg mt-2 shadow-lg shadow-primary-600/20 transition-all"
-          >
-            {isSubmitting ? 'Criando...' : (editingContact ? 'Salvar Alterações' : 'Criar Contato')}
-          </button>
+          <Button type="submit" block disabled={isSubmitting} className="mt-2">
+            {isSubmitting ? 'Salvando...' : (editingContact ? 'Salvar alterações' : 'Criar contato')}
+          </Button>
         </form>
         </div>
       </div>

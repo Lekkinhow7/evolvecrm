@@ -63,6 +63,7 @@ import { DealDocumentsTab } from './DealDocumentsTab';
 import { AnalysisActions } from './AnalysisActions';
 import { formatBRL } from '@/lib/utils/brFormat';
 
+import { FIELD_INPUT_CLASS, FIELD_LABEL_CLASS } from '@/components/ui/modalStyles';
 interface DealDetailModalProps {
   dealId: string | null;
   isOpen: boolean;
@@ -426,20 +427,20 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
     <div
       className={
         isMobile
-          ? 'bg-white dark:bg-dark-card border border-slate-200 dark:border-white/10 w-full h-[100dvh] flex flex-col overflow-hidden pb-[var(--app-safe-area-bottom,0px)]'
-          : 'bg-white dark:bg-dark-card border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200'
+          ? 'bg-[var(--surface-card)] border border-[var(--border-hairline)] w-full h-[100dvh] flex flex-col overflow-hidden pb-[var(--app-safe-area-bottom,0px)]'
+          : 'bg-[var(--surface-card)] border border-[var(--border-hairline)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200'
       }
     >
           {/* HEADER (Stage Bar + Won/Lost) */}
-          <div className="bg-slate-50 dark:bg-black/20 border-b border-slate-200 dark:border-white/10 p-6 shrink-0">
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex-1 mr-8">
+          <div className="bg-[var(--surface-sunken)] border-b border-[var(--border-hairline)] px-6 pt-6 pb-4 shrink-0">
+            <div className="flex flex-wrap justify-between items-start gap-4 mb-5">
+              <div className="flex-1 min-w-[16rem]">
                 {isEditingTitle ? (
                   <div className="flex gap-2 mb-1">
                     <input
                       autoFocus
                       type="text"
-                      className="text-2xl font-bold text-slate-900 dark:text-white bg-white dark:bg-black/20 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 w-full outline-none focus:ring-2 focus:ring-primary-500"
+                      className="text-2xl font-semibold text-[var(--text-primary)] bg-[var(--surface-card)] border border-[var(--border-hairline)] rounded-[var(--radius-md)] px-2 py-1 w-full outline-none focus:border-[var(--cyan-400)] focus:shadow-[var(--focus-ring)]"
                       value={editTitle}
                       onChange={e => setEditTitle(e.target.value)}
                       onBlur={saveTitle}
@@ -456,7 +457,7 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                       setEditTitle(deal.title);
                       setIsEditingTitle(true);
                     }}
-                    className="text-2xl font-bold text-slate-900 dark:text-white font-display leading-tight cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 flex items-center gap-2 group transition-colors"
+                    className="text-2xl font-semibold text-[var(--text-primary)] leading-tight cursor-pointer hover:text-[var(--text-accent)] flex items-center gap-2 group transition-colors"
                     title="Clique para editar"
                   >
                     {deal.title}
@@ -466,11 +467,11 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
 
                 {isEditingValue ? (
                   <div className="flex gap-2 items-center">
-                    <span className="text-lg font-mono font-bold text-slate-500">R$</span>
+                    <span className="text-lg font-semibold text-[var(--text-secondary)]">R$</span>
                     <input
                       autoFocus
                       type="number"
-                      className="text-lg font-mono font-bold text-primary-600 dark:text-primary-400 bg-white dark:bg-black/20 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 w-32 outline-none focus:ring-2 focus:ring-primary-500"
+                      className="text-lg font-semibold text-[var(--text-accent)] bg-[var(--surface-card)] border border-[var(--border-hairline)] rounded-[var(--radius-md)] px-2 py-1 w-32 outline-none focus:border-[var(--cyan-400)] focus:shadow-[var(--focus-ring)]"
                       value={editValue}
                       onChange={e => setEditValue(e.target.value)}
                       onBlur={saveValue}
@@ -487,7 +488,7 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                         setEditValue(deal.value.toString());
                         setIsEditingValue(true);
                       }}
-                      className="text-lg text-[var(--brand-cyan)] font-mono font-bold cursor-pointer hover:underline decoration-dashed underline-offset-4"
+                      className="mt-1 text-base text-[var(--text-accent)] font-semibold cursor-pointer hover:underline decoration-dashed underline-offset-4"
                       title="Clique para editar os honorários"
                     >
                       Honorários: {formatBRL(deal.value)}
@@ -499,19 +500,19 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                         setEditValue('');
                         setIsEditingValue(true);
                       }}
-                      className="text-sm font-semibold text-[var(--brand-cyan)] hover:underline decoration-dashed underline-offset-4"
+                      className="mt-1 text-sm font-semibold text-[var(--text-accent)] hover:underline decoration-dashed underline-offset-4"
                     >
                       Definir honorários
                     </button>
                   )
                 )}
               </div>
-              <div className="flex gap-3 items-center">
+              <div className="flex gap-2 items-center">
                 {/* Se fechado: mostra badge + botão Reabrir */}
                 {(deal.isWon || deal.isLost) ? (
                   <>
-                    <span className={`text-xs font-bold px-3 py-1.5 rounded-lg ${deal.isWon ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                      {deal.isWon ? '✓ GANHO' : '✗ PERDIDO'}
+                    <span className={`text-xs font-semibold px-3 py-1.5 rounded-[var(--radius-pill)] ${deal.isWon ? 'bg-[var(--status-success-bg)] text-[var(--status-success-fg)]' : 'bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)]'}`}>
+                      {deal.isWon ? 'Contratou' : 'Não contratou'}
                     </span>
                     <button
                       onClick={() => {
@@ -526,9 +527,9 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                           updateDeal(deal.id, { isWon: false, isLost: false, closedAt: undefined });
                         }
                       }}
-                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-sm flex items-center gap-2 transition-all"
+                      className="at-btn at-btn--secondary at-btn--sm"
                     >
-                      ↩ Reabrir
+                      Reabrir
                     </button>
                   </>
                 ) : (
@@ -568,9 +569,9 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                         }
                         onClose();
                       }}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm shadow-sm flex items-center gap-2"
+                      className="at-btn at-btn--primary at-btn--sm"
                     >
-                      <ThumbsUp size={16} /> GANHO
+                      <ThumbsUp size={14} aria-hidden="true" /> Contratou
                     </button>
                     <button
                       onClick={() => {
@@ -590,15 +591,15 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                         setLossReasonOrigin('button');
                         setShowLossReasonModal(true);
                       }}
-                      className="px-4 py-2 bg-transparent border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg font-bold text-sm shadow-sm flex items-center gap-2"
+                      className="at-btn at-btn--secondary at-btn--sm"
                     >
-                      <ThumbsDown size={16} /> PERDIDO
+                      <ThumbsDown size={14} aria-hidden="true" /> Não contratou
                     </button>
                   </>
                 )}
                 <button
                   onClick={() => setShowBriefingDrawer(true)}
-                  className="ml-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-500/30 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                  className="at-btn at-btn--ghost at-btn--sm"
                   title="Preparar para a conversa com este lead"
                   aria-label="Preparar conversa com este lead"
                 >
@@ -607,18 +608,18 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                 </button>
                 <button
                   onClick={() => setDeleteId(deal.id)}
-                  className="ml-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                  title="Excluir Negócio"
+                  className="p-2 rounded-[var(--radius-pill)] text-[var(--text-tertiary)] hover:text-[var(--status-danger-fg)] hover:bg-[var(--status-danger-bg)] transition-colors"
+                  title="Excluir negócio"
                   aria-label="Excluir negócio"
                 >
-                  <Trash2 size={24} aria-hidden="true" />
+                  <Trash2 size={18} aria-hidden="true" />
                 </button>
                 <button
                   onClick={onClose}
-                  className="ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                  className="p-2 rounded-[var(--radius-pill)] text-[var(--text-secondary)] hover:bg-[var(--surface-card)] transition-colors"
                   aria-label="Fechar modal"
                 >
-                  <X size={24} aria-hidden="true" />
+                  <X size={20} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -649,31 +650,33 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
               />
             ) : (
               <div className="mt-4 rounded-lg border border-slate-200/60 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-                Board não encontrado para este negócio. Algumas ações (mover estágio) podem ficar indisponíveis.
+                Funil não encontrado para este negócio. Mover de etapa pode não funcionar.
               </div>
             )}
           </div>
 
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
             {/* Left Sidebar (Static Info + Custom Fields) */}
-            <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/5 p-4 sm:p-6 overflow-y-auto bg-white dark:bg-dark-card max-h-[38vh] md:max-h-none">
+            <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-[var(--border-hairline)] p-4 sm:p-6 overflow-y-auto bg-[var(--surface-card)] max-h-[38vh] md:max-h-none">
               <div className="space-y-6">
+                {deal.companyName && deal.companyName !== 'Sem empresa' && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-[var(--text-secondary)] mb-2 flex items-center gap-2">
+                      <Building2 size={14} /> Empresa
+                    </h3>
+                    <p className="text-[var(--text-primary)] font-medium">{deal.companyName}</p>
+                  </div>
+                )}
                 <div>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
-                    <Building2 size={14} /> Empresa (Conta)
-                  </h3>
-                  <p className="text-slate-900 dark:text-white font-medium">{deal.companyName}</p>
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
-                    <User size={14} /> Contato Principal
+                  <h3 className="text-xs font-semibold text-[var(--text-secondary)] mb-2 flex items-center gap-2">
+                    <User size={14} /> Contato
                   </h3>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">
+                    <div className="w-9 h-9 shrink-0 rounded-full bg-[var(--surface-accent)] text-[var(--text-accent)] flex items-center justify-center text-sm font-semibold">
                       {(deal.contactName || '?').charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-slate-900 dark:text-white font-medium text-sm flex items-center gap-2">
+                      <p className="text-[var(--text-primary)] font-medium text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
                         {deal.contactName || 'Sem contato'}
                         {contact?.stage &&
                           (() => {
@@ -687,14 +690,14 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
 
                             return (
                               <span
-                                className={`text-[10px] font-black px-2 py-0.5 rounded shadow-sm uppercase tracking-wider flex items-center gap-1 text-white ${colorClass}`}
+                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-[var(--radius-pill)] flex items-center gap-1 text-white ${colorClass}`}
                               >
                                 {stage.name}
                               </span>
                             );
                           })()}
                       </p>
-                      <p className="text-slate-500 text-xs">{deal.contactEmail}</p>
+                      {deal.contactEmail && <p className="text-[var(--text-tertiary)] text-xs truncate">{deal.contactEmail}</p>}
                     </div>
                     {/* Send Message Button */}
                     {contact?.phone && (
@@ -711,58 +714,54 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                           router.push(`/messaging?${params.toString()}`);
                           onClose();
                         }}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20 rounded-lg transition-colors"
+                        className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[var(--status-success-fg)] bg-[var(--status-success-bg)] hover:opacity-90 rounded-[var(--radius-pill)] transition-colors"
                         title="Enviar mensagem via WhatsApp"
                       >
                         <MessageSquare size={14} />
-                        <span className="hidden sm:inline">Mensagem</span>
+                        <span className="hidden sm:inline">WhatsApp</span>
                       </button>
                     )}
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-white/5">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase mb-2">Detalhes</h3>
+                <div className="pt-4 border-t border-[var(--border-hairline)]">
+                  <h3 className="text-xs font-semibold text-[var(--text-secondary)] mb-2">Detalhes</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Prioridade</span>
-                      <span className="text-slate-900 dark:text-white">
+                      <span className="text-[var(--text-secondary)]">Prioridade</span>
+                      <span className="text-[var(--text-primary)]">
                         {formatPriorityPtBr(deal.priority)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Criado em</span>
-                      <span className="text-slate-900 dark:text-white">
+                      <span className="text-[var(--text-secondary)]">Criado em</span>
+                      <span className="text-[var(--text-primary)]">
                         {PT_BR_DATE_FORMATTER.format(new Date(deal.createdAt))}
                       </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Probabilidade</span>
-                      <span className="text-slate-900 dark:text-white">{deal.probability}%</span>
                     </div>
                   </div>
                 </div>
 
                 {/* TAGS */}
-                <div className="pt-4 border-t border-slate-100 dark:border-white/5">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
-                    <TagIcon size={14} /> Tags
+                <div className="pt-4 border-t border-[var(--border-hairline)]">
+                  <h3 className="text-xs font-semibold text-[var(--text-secondary)] mb-3 flex items-center gap-2">
+                    <TagIcon size={14} /> Etiquetas
                   </h3>
 
                   <div className="flex flex-wrap gap-2">
                     {(deal.tags || []).length === 0 ? (
-                      <p className="text-xs text-slate-500 italic">Sem tags.</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">Nenhuma etiqueta.</p>
                     ) : (
                       (deal.tags || []).map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-[var(--radius-pill)] bg-[var(--surface-sunken)] text-[var(--text-secondary)] border border-[var(--border-hairline)]"
                         >
                           {tag}
                           <button
                             type="button"
                             onClick={() => removeDealTag(tag)}
-                            className="ml-0.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400"
+                            className="ml-0.5 text-[var(--text-tertiary)] hover:text-[var(--status-danger-fg)]"
                             aria-label={`Remover tag ${tag}`}
                             title="Remover tag"
                           >
@@ -774,9 +773,6 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                   </div>
 
                   <div className="mt-3">
-                    <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">
-                      Adicionar tag
-                    </label>
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -788,15 +784,15 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                             addDealTag(tagQuery);
                           }
                         }}
-                        placeholder="Ex: VIP, Urgente, Q4..."
-                        className="min-w-0 flex-1 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
+                        placeholder="Nova etiqueta (ex.: urgente)"
+                        className={`${FIELD_INPUT_CLASS} min-w-0 flex-1`}
                         aria-label="Adicionar tag"
                       />
                       <button
                         type="button"
                         onClick={() => addDealTag(tagQuery)}
                         disabled={!normalizeTag(tagQuery)}
-                        className="shrink-0 h-10 w-10 inline-flex items-center justify-center rounded-lg bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+                        className="at-btn at-btn--primary shrink-0 h-11 w-11 !px-0"
                         aria-label="Adicionar tag"
                         title="Adicionar tag"
                       >
@@ -805,13 +801,13 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                     </div>
 
                     {(normalizeTag(tagQuery) && tagSuggestions.length > 0) && (
-                      <div className="mt-2 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg overflow-hidden">
+                      <div className="mt-2 bg-[var(--surface-card)] border border-[var(--border-hairline)] rounded-[var(--radius-lg)] overflow-hidden">
                         {tagSuggestions.map((t) => (
                           <button
                             key={t}
                             type="button"
                             onClick={() => addDealTag(t)}
-                            className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                            className="w-full text-left px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--surface-sunken)] transition-colors"
                           >
                             {t}
                           </button>
@@ -822,7 +818,7 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                 </div>
 
                 {/* AI EXTRACTED FIELDS (Zero Config BANT) */}
-                <div className="pt-4 border-t border-slate-100 dark:border-white/5">
+                <div className="pt-4 border-t border-[var(--border-hairline)]">
                   <AIExtractedFields
                     data={deal.aiExtracted as import('@/lib/ai/extraction/schemas').AIExtractedData | undefined}
                     compact
@@ -831,21 +827,21 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
 
                 {/* DYNAMIC CUSTOM FIELDS INPUTS */}
                 {customFieldDefinitions.length > 0 && (
-                  <div className="pt-4 border-t border-slate-100 dark:border-white/5">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase mb-3">
-                      Campos Personalizados
+                  <div className="pt-4 border-t border-[var(--border-hairline)]">
+                    <h3 className="text-xs font-semibold text-[var(--text-secondary)] mb-3">
+                      Campos personalizados
                     </h3>
                     <div className="space-y-4">
                       {customFieldDefinitions.map(field => (
                         <div key={field.id}>
-                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                          <label className={FIELD_LABEL_CLASS}>
                             {field.label}
                           </label>
                           {field.type === 'select' ? (
                             <select
                               value={deal.customFields?.[field.key] || ''}
                               onChange={e => updateCustomField(field.key, e.target.value)}
-                              className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded px-2 py-1.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
+                              className={FIELD_INPUT_CLASS}
                             >
                               <option value="">Selecione...</option>
                               {field.options?.map(opt => (
@@ -859,7 +855,7 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                               type={field.type}
                               value={deal.customFields?.[field.key] || ''}
                               onChange={e => updateCustomField(field.key, e.target.value)}
-                              className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded px-2 py-1.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
+                              className={FIELD_INPUT_CLASS}
                             />
                           )}
                         </div>
@@ -871,37 +867,37 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
             </div>
 
             {/* Right Content (Tabs & Timeline) */}
-            <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-dark-card">
-              <div className="h-14 border-b border-slate-200 dark:border-white/5 flex items-center px-6 shrink-0">
+            <div className="flex-1 min-h-0 flex flex-col bg-[var(--surface-card)]">
+              <div className="h-14 border-b border-[var(--border-hairline)] flex items-center px-6 shrink-0 overflow-x-auto">
                 <div className="flex gap-6">
                   <button
                     onClick={() => setActiveTab('timeline')}
-                    className={`text-sm font-bold h-14 border-b-2 transition-colors ${activeTab === 'timeline' ? 'border-primary-500 text-primary-600 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}
+                    className={`text-sm h-14 shrink-0 border-b-2 transition-colors ${activeTab === 'timeline' ? 'border-[var(--cyan-500)] text-[var(--text-primary)] font-semibold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
                   >
-                    Timeline
+                    Histórico
                   </button>
                   <button
                     onClick={() => setActiveTab('products')}
-                    className={`text-sm font-bold h-14 border-b-2 transition-colors ${activeTab === 'products' ? 'border-primary-500 text-primary-600 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}
+                    className={`text-sm h-14 shrink-0 border-b-2 transition-colors ${activeTab === 'products' ? 'border-[var(--cyan-500)] text-[var(--text-primary)] font-semibold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
                   >
-                    Produtos
+                    Serviços
                   </button>
                   <button
                     onClick={() => setActiveTab('info')}
-                    className={`text-sm font-bold h-14 border-b-2 transition-colors ${activeTab === 'info' ? 'border-primary-500 text-primary-600 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}
+                    className={`text-sm h-14 shrink-0 border-b-2 transition-colors ${activeTab === 'info' ? 'border-[var(--cyan-500)] text-[var(--text-primary)] font-semibold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
                   >
-                    IA Insights
+                    Análise da IA
                   </button>
                   <button
                     onClick={() => setActiveTab('documentos')}
-                    className={`text-sm font-bold h-14 border-b-2 transition-colors ${activeTab === 'documentos' ? 'border-primary-500 text-primary-600 dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-white'}`}
+                    className={`text-sm h-14 shrink-0 border-b-2 transition-colors ${activeTab === 'documentos' ? 'border-[var(--cyan-500)] text-[var(--text-primary)] font-semibold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
                   >
                     Documentos
                   </button>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30 dark:bg-black/10">
+              <div className="flex-1 overflow-y-auto p-6 bg-[var(--surface-sunken)]">
                 {dealBoard?.stages.find(st => st.id === deal.status)?.role === 'analise_documentos' && (
                   <AnalysisActions
                     deal={deal}
@@ -915,30 +911,30 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                 {activeTab === 'documentos' && <DealDocumentsTab dealId={deal.id} />}
                 {activeTab === 'timeline' && (
                   <div className="space-y-6">
-                    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm">
+                    <div className="bg-[var(--surface-card)] border border-[var(--border-hairline)] rounded-[var(--radius-lg)] p-4 shadow-[var(--shadow-xs)] focus-within:border-[var(--cyan-400)] focus-within:shadow-[var(--focus-ring)] transition-colors">
                       <textarea
                         ref={noteTextareaRef}
-                        className="w-full bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none resize-none min-h-[80px]"
-                        placeholder="Escreva uma nota..."
+                        className="w-full bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none resize-none min-h-[72px]"
+                        placeholder="Anotar algo sobre o caso..."
                         value={newNote}
                         onChange={e => setNewNote(e.target.value)}
                       ></textarea>
-                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100 dark:border-white/5">
+                      <div className="flex justify-end items-center mt-2">
                         <div />
                         <button
                           onClick={handleAddNote}
                           disabled={!newNote.trim()}
-                          className="bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all"
+                          className="at-btn at-btn--primary at-btn--sm"
                         >
-                          <Check size={14} /> Enviar
+                          <Check size={14} aria-hidden="true" /> Salvar nota
                         </button>
                       </div>
                     </div>
 
-                    <div className="space-y-3 pl-4 border-l border-slate-200 dark:border-slate-800">
+                    <div className="space-y-3 pl-4 border-l border-[var(--border-hairline)]">
                       {dealActivities.length === 0 && (
-                        <p className="text-sm text-slate-500 italic pl-4">
-                          Nenhuma atividade registrada.
+                        <p className="text-sm text-[var(--text-tertiary)] pl-4">
+                          Nada registrado ainda.
                         </p>
                       )}
                       {dealActivities.map(activity => (
@@ -1011,31 +1007,31 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                         <div className="mt-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-white/5 p-3">
                           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
                             <div className="sm:col-span-6">
-                              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Nome do item</label>
+                              <label className={FIELD_LABEL_CLASS}>Nome do item</label>
                               <input
                                 value={customItemName}
                                 onChange={e => setCustomItemName(e.target.value)}
                                 placeholder="Ex.: Pacote personalizado, Procedimento X…"
-                                className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
+                                className={FIELD_INPUT_CLASS}
                               />
                             </div>
                             <div className="sm:col-span-3">
-                              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Preço</label>
+                              <label className={FIELD_LABEL_CLASS}>Preço</label>
                               <input
                                 value={customItemPrice}
                                 onChange={e => setCustomItemPrice(e.target.value)}
                                 inputMode="decimal"
-                                className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
+                                className={FIELD_INPUT_CLASS}
                               />
                             </div>
                             <div className="sm:col-span-2">
-                              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Qtd</label>
+                              <label className={FIELD_LABEL_CLASS}>Qtd</label>
                               <input
                                 type="number"
                                 min={1}
                                 value={customItemQuantity}
                                 onChange={e => setCustomItemQuantity(parseInt(e.target.value))}
-                                className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
+                                className={FIELD_INPUT_CLASS}
                               />
                             </div>
                             <div className="sm:col-span-1">
@@ -1101,12 +1097,12 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                           <tr>
                             <td
                               colSpan={3}
-                              className="px-4 py-3 text-right font-bold text-slate-700 dark:text-slate-300 uppercase text-xs tracking-wider"
+                              className="px-4 py-3 text-right font-semibold text-[var(--text-secondary)] text-xs"
                             >
-                              Total do Pedido
+                              Total
                             </td>
                             <td className="px-4 py-3 text-right font-bold text-primary-600 dark:text-primary-400 text-lg">
-                              ${deal.value.toLocaleString()}
+                              {formatBRL(deal.value)}
                             </td>
                             <td></td>
                           </tr>
@@ -1125,10 +1121,10 @@ export const DealDetailModal: React.FC<DealDetailModalProps> = ({ dealId, isOpen
                         </div>
                         <div>
                           <h3 className="font-bold text-slate-900 dark:text-white font-display text-lg">
-                            Insights Gemini
+                            Análise da IA
                           </h3>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Inteligência Artificial aplicada ao negócio
+                            O que a IA percebeu neste caso
                           </p>
                         </div>
                       </div>

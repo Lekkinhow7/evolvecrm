@@ -5,6 +5,7 @@ import { Search, User, Plus, Building2 } from 'lucide-react';
 import { useContacts, useCompanies } from '@/lib/query/hooks';
 import type { Contact, Company } from '@/types';
 
+import { FIELD_INPUT_CLASS } from '@/components/ui/modalStyles';
 interface ContactSearchComboboxProps {
   onSelectContact: (contact: Contact | null) => void;
   onSelectCompany: (company: Company | null) => void;
@@ -151,7 +152,7 @@ export const ContactSearchCombobox: React.FC<ContactSearchComboboxProps> = ({
           onFocus={() => searchTerm && setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+          className={`${FIELD_INPUT_CLASS} pl-10`}
         />
       </div>
 
@@ -159,7 +160,7 @@ export const ContactSearchCombobox: React.FC<ContactSearchComboboxProps> = ({
       {isOpen && searchTerm.trim() && (
         <div
           ref={listRef}
-          className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+          className="absolute z-50 w-full mt-1 bg-[var(--surface-card)] border border-[var(--border-hairline)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
         >
           {filteredContacts.length > 0 ? (
             <div className="max-h-64 overflow-y-auto">

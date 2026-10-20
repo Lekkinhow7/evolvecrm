@@ -8,6 +8,17 @@ import { DebugFillButton } from '@/components/debug/DebugFillButton';
 import { fakeDeal, fakeContact, fakeCompany } from '@/lib/debug';
 import { ContactSearchCombobox } from '@/components/ui/ContactSearchCombobox';
 
+import { Segmented } from '@/design-system';
+import {
+  FIELD_INPUT_CLASS,
+  FIELD_LABEL_CLASS,
+  MODAL_BODY_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_HEADER_CLASS,
+  MODAL_OVERLAY_CLASS,
+  MODAL_PANEL_BASE_CLASS,
+  MODAL_TITLE_CLASS,
+} from '@/components/ui/modalStyles';
 interface CreateDealModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -104,14 +115,14 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
     // Guard: não permite criar deal sem board ativo
     if (!activeBoard || !activeBoard.stages?.length) {
         return (
-            <div className="fixed inset-0 md:left-[var(--app-sidebar-width,0px)] z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                <div className="bg-white dark:bg-dark-card border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-5">
-                    <p className="text-slate-700 dark:text-slate-300 text-center">
+            <div className={MODAL_OVERLAY_CLASS}>
+                <div className={`${MODAL_PANEL_BASE_CLASS} max-w-md p-5`}>
+                    <p className="text-[var(--text-secondary)] text-center">
                         Nenhum board selecionado ou board sem estágios.
                     </p>
                     <button
                         onClick={onClose}
-                        className="w-full mt-4 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-bold py-2.5 rounded-lg transition-all"
+                        className="at-btn at-btn--secondary at-btn--md at-btn--block mt-4"
                     >
                         Fechar
                     </button>
@@ -201,66 +212,50 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 md:left-[var(--app-sidebar-width,0px)] z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+            className={MODAL_OVERLAY_CLASS}
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
             <div
-                className="bg-white dark:bg-dark-card border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+                className={`${MODAL_PANEL_BASE_CLASS} max-w-md animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto`}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="p-5 border-b border-slate-200 dark:border-white/10 flex justify-between items-center sticky top-0 bg-white dark:bg-dark-card z-10">
+                <div className={`${MODAL_HEADER_CLASS} sticky top-0 bg-[var(--surface-card)] z-10`}>
                     <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white font-display">Novo Negócio</h2>
+                        <h2 className={MODAL_TITLE_CLASS}>Novo negócio</h2>
                         <DebugFillButton onClick={fillWithFakeData} />
                     </div>
-                    <button onClick={() => { onClose(); resetForm(); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                    <button onClick={() => { onClose(); resetForm(); }} className={MODAL_CLOSE_BUTTON_CLASS} aria-label="Fechar">
                         <X size={20} />
                     </button>
                 </div>
                 
-                <form onSubmit={handleCreateDeal} className="p-5 space-y-5">
+                <form onSubmit={handleCreateDeal} className={`${MODAL_BODY_CLASS} space-y-5`}>
                     {/* Contato - Tabs para escolher modo */}
                     <div>
                         <div className="flex items-center gap-2 mb-3">
-                            <label className="text-xs font-bold text-slate-500 uppercase">
+                            <span className="text-sm font-semibold text-[var(--text-primary)]">
                                 Contato
-                            </label>
+                            </span>
                             {!selectedContact && (
-                                <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 ml-auto">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsCreatingNew(false)}
-                                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                                            !isCreatingNew 
-                                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
-                                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                        }`}
-                                    >
-                                        Buscar
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsCreatingNew(true)}
-                                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                                            isCreatingNew 
-                                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
-                                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                        }`}
-                                    >
-                                        + Novo
-                                    </button>
-                                </div>
+                                <Segmented
+                                    className="ml-auto"
+                                    size="sm"
+                                    variant="text"
+                                    value={isCreatingNew ? 'novo' : 'buscar'}
+                                    onChange={(v) => setIsCreatingNew(v === 'novo')}
+                                    options={[{ value: 'buscar', label: 'Buscar' }, { value: 'novo', label: 'Cadastrar novo' }]}
+                                />
                             )}
                         </div>
                         
                         {/* Modo: Contato Selecionado */}
                         {selectedContact ? (
                             <div className="relative">
-                                <div className="flex items-center gap-3 p-3 bg-primary-500/10 border border-primary-500/30 rounded-lg">
-                                    <div className="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center">
-                                        <User size={20} className="text-primary-400" />
+                                <div className="flex items-center gap-3 p-3 bg-[var(--surface-accent)] border border-[var(--border-accent)] rounded-[var(--radius-lg)]">
+                                    <div className="w-10 h-10 bg-[var(--surface-card)] rounded-full flex items-center justify-center">
+                                        <User size={20} className="text-[var(--text-accent)]" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-medium text-slate-900 dark:text-white truncate">
@@ -311,7 +306,7 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
                             />
                         ) : (
                             /* Modo: Criar Novo */
-                            <div className="space-y-3 p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <div className="space-y-3">
                                 <div className="relative">
                                     <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input
@@ -320,7 +315,7 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
                                         required={isCreatingNew}
                                         value={newContactData.name}
                                         onChange={(e) => setNewContactData(prev => ({ ...prev, name: e.target.value }))}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                                        className={`${FIELD_INPUT_CLASS} pl-10`}
                                     />
                                 </div>
                                 
@@ -329,10 +324,10 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
                                         <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input
                                             type="email"
-                                            placeholder="Email"
+                                            placeholder="E-mail"
                                             value={newContactData.email}
                                             onChange={(e) => setNewContactData(prev => ({ ...prev, email: e.target.value }))}
-                                            className="w-full pl-10 pr-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                                            className={`${FIELD_INPUT_CLASS} pl-10`}
                                         />
                                     </div>
                                     
@@ -343,7 +338,7 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
                                             placeholder="Telefone"
                                             value={newContactData.phone}
                                             onChange={(e) => setNewContactData(prev => ({ ...prev, phone: e.target.value }))}
-                                            className="w-full pl-10 pr-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                                            className={`${FIELD_INPUT_CLASS} pl-10`}
                                         />
                                     </div>
                                 </div>
@@ -352,10 +347,10 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
                                     <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input
                                         type="text"
-                                        placeholder="Empresa"
+                                        placeholder="Empresa (opcional)"
                                         value={newContactData.companyName}
                                         onChange={(e) => setNewContactData(prev => ({ ...prev, companyName: e.target.value }))}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
+                                        className={`${FIELD_INPUT_CLASS} pl-10`}
                                     />
                                 </div>
                             </div>
@@ -363,28 +358,28 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
                     </div>
 
                     {/* Dados do Negócio */}
-                    <div className="pt-3 border-t border-slate-100 dark:border-white/5">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase mb-3">Dados do Negócio</h3>
+                    <div className="pt-4 border-t border-[var(--border-hairline)]">
+                        <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Sobre o caso</h3>
                         
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Nome do Negócio *</label>
+                                <label className={FIELD_LABEL_CLASS}>Assunto *</label>
                                 <input
                                     required
                                     type="text"
-                                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-                                    placeholder="Ex: Contrato Anual - Acme"
+                                    className={FIELD_INPUT_CLASS}
+                                    placeholder="Ex.: Fraude bancária"
                                     value={dealData.title}
                                     onChange={e => setDealData(prev => ({ ...prev, title: e.target.value }))}
                                 />
                             </div>
                             
                             <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Valor Estimado (R$)</label>
+                                <label className={FIELD_LABEL_CLASS}>Honorários previstos (R$)</label>
                                 <input
                                     type="number"
-                                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
-                                    placeholder="0.00"
+                                    className={FIELD_INPUT_CLASS}
+                                    placeholder="Opcional"
                                     value={dealData.value}
                                     onChange={e => setDealData(prev => ({ ...prev, value: e.target.value }))}
                                 />
@@ -394,7 +389,7 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
 
                     {/* Mensagem de erro */}
                     {error && (
-                        <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+                        <div className="flex items-start gap-2 p-3 bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] rounded-[var(--radius-lg)] text-sm text-[var(--status-danger-fg)]">
                             <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
                             <span>{error}</span>
                         </div>
@@ -403,7 +398,7 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
                     <button 
                         type="submit" 
                         disabled={!hasContact || !dealData.title || isSubmitting}
-                        className="w-full bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg mt-2 shadow-lg shadow-primary-600/20 transition-all flex items-center justify-center gap-2"
+                        className="at-btn at-btn--primary at-btn--md at-btn--block mt-2"
                     >
                         {isSubmitting ? (
                             <>
@@ -411,7 +406,7 @@ export const CreateDealModal: React.FC<CreateDealModalProps> = ({
                                 Criando...
                             </>
                         ) : (
-                            'Criar Negócio'
+                            'Criar negócio'
                         )}
                     </button>
                 </form>
