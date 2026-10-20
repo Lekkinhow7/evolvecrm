@@ -64,6 +64,16 @@ export async function POST(request: Request) {
   if (body.starts_at && Number.isNaN(new Date(toSaoPauloIso(body.starts_at)).getTime())) {
     return NextResponse.json({ error: 'Data da reunião inválida', code: 'INVALID_DATE' }, { status: 422 })
   }
+  if (body.ends_at) {
+    const fim = new Date(toSaoPauloIso(body.ends_at)).getTime()
+    const inicio = body.starts_at ? new Date(toSaoPauloIso(body.starts_at)).getTime() : Number.NaN
+    if (Number.isNaN(fim) || (!Number.isNaN(inicio) && fim <= inicio)) {
+      return NextResponse.json(
+        { error: 'Data final inválida ou antes do início', code: 'INVALID_DATE' },
+        { status: 422 },
+      )
+    }
+  }
 
   try {
     const r = await registrarReuniao(createStaticAdminClient(), {

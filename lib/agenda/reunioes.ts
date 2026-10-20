@@ -175,6 +175,57 @@ async function acharOuCriarNegocio(
   return { dealId, contactId, contactName }
 }
 
+interface Existente {
+  id: string
+  dealId: string | null
+  contactId: string | null
+  meetingStatus: string | null
+  date: string | null
+}
+
+async function buscarPorExternalRef(
+  sb: SupabaseClient,
+  organizationId: string,
+  externalRef: string,
+): Promise<Existente | null> {
+  const { data, error } = await sb
+    .from('activities')
+    .select('id, deal_id, contact_id, meeting_status, date')
+    .eq('organization_id', organizationId)
+    .eq('external_ref', externalRef)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return {
+    id: data.id as string,
+    dealId: (data.deal_id as string) || null,
+    contactId: (data.contact_id as string) || null,
+    meetingStatus: (data.meeting_status as string) || null,
+    date: (data.date as string) || null,
+  }
+}
+
+/** Situação final (cancelada, realizada, não compareceu) fecha a atividade; "agendada" reabre. */
+export function completedDaSituacao(status: string): boolean {
+  return status !== 'agendada'
+}
+
+/** Negócio e contato que a reunião já tem, sem buscar por telefone nem criar nada. */
+async function negocioDaReuniao(sb: SupabaseClient, organizationId: string, existente: Existente): Promise<Negocio> {
+  let contactName: string | null = null
+  if (existente.contactId) {
+    const c = await sb
+      .from('contacts')
+      .select('name')
+      .eq('organization_id', organizationId)
+      .eq('id', existente.contactId)
+      .maybeSingle()
+    contactName = (c.data?.name as string) || null
+  }
+  return { dealId: existente.dealId, contactId: existente.contactId, contactName }
+}
+
 export async function registrarReuniao(
   sb: SupabaseClient,
   entrada: EntradaReuniao,
@@ -190,26 +241,20 @@ export async function registrarReuniao(
     : new Date(inicio.getTime() + duracao * 60000)
   if (!(semData && entrada.status) && Number.isNaN(fim.getTime())) throw new Error('Data final da reunião inválida')
 
-  const existente = await sb
-    .from('activities')
-    .select('id, deal_id, contact_id')
-    .eq('organization_id', organizationId)
-    .eq('external_ref', externalRef)
-    .is('deleted_at', null)
-    .maybeSingle()
-  const existenteId = (existente.data?.id as string) || null
+  let existente = await buscarPorExternalRef(sb, organizationId, externalRef)
 
   // Atualização de situação (realizada / não compareceu): só troca o status.
-  if (entrada.status && existenteId) {
-    await sb
+  if (entrada.status && existente) {
+    const { error } = await sb
       .from('activities')
-      .update({ meeting_status: entrada.status })
+      .update({ meeting_status: entrada.status, completed: completedDaSituacao(entrada.status) })
       .eq('organization_id', organizationId)
-      .eq('id', existenteId)
+      .eq('id', existente.id)
+    if (error) throw error
     return {
-      activityId: existenteId,
-      dealId: (existente.data?.deal_id as string) || null,
-      contactId: (existente.data?.contact_id as string) || null,
+      activityId: existente.id,
+      dealId: existente.dealId,
+      contactId: existente.contactId,
       reused: true,
       warnings: [],
     }
@@ -221,21 +266,30 @@ export async function registrarReuniao(
   }
 
   const warnings: string[] = []
-  const negocio = await acharOuCriarNegocio(
-    sb,
-    organizationId,
-    { dealId: entrada.dealId, phone: entrada.phone, name: entrada.name },
-    warnings,
-  )
+  // Reunião que já está num negócio continua nele, a menos que o pedido diga outro negócio.
+  const negocio =
+    existente?.dealId && !entrada.dealId
+      ? await negocioDaReuniao(sb, organizationId, existente)
+      : await acharOuCriarNegocio(
+          sb,
+          organizationId,
+          { dealId: entrada.dealId, phone: entrada.phone, name: entrada.name },
+          warnings,
+        )
   const titulo = `Reunião - ${negocio.contactName || entrada.name?.trim() || 'Contato'}`
 
-  let activityId = existenteId
-  if (existenteId) {
-    // Remarcação: acerta data, horário e detalhes; a situação não volta para "agendada".
+  // Remarcação: acerta data, horário e detalhes. Data nova numa reunião não
+  // cancelada volta a ser "agendada" e reabre a atividade.
+  const remarcar = async (atual: Existente) => {
     const ajuste: Record<string, unknown> = {
       title: titulo,
       date: inicio.toISOString(),
       ends_at: fim.toISOString(),
+    }
+    const dataAnterior = atual.date ? new Date(atual.date).getTime() : Number.NaN
+    if (dataAnterior !== inicio.getTime() && atual.meetingStatus !== 'cancelada') {
+      ajuste.meeting_status = 'agendada'
+      ajuste.completed = false
     }
     if (negocio.dealId) ajuste.deal_id = negocio.dealId
     if (negocio.contactId) ajuste.contact_id = negocio.contactId
@@ -244,8 +298,20 @@ export async function registrarReuniao(
     if (entrada.address) ajuste.address = entrada.address
     if (entrada.description) ajuste.description = entrada.description
     if (entrada.origem) ajuste.source = entrada.origem
-    await sb.from('activities').update(ajuste).eq('organization_id', organizationId).eq('id', existenteId)
+    const { error } = await sb
+      .from('activities')
+      .update(ajuste)
+      .eq('organization_id', organizationId)
+      .eq('id', atual.id)
+    if (error) throw error
+  }
+
+  let activityId: string
+  if (existente) {
+    await remarcar(existente)
+    activityId = existente.id
   } else {
+    const status = entrada.status ?? 'agendada'
     const criada = await sb
       .from('activities')
       .insert({
@@ -254,11 +320,11 @@ export async function registrarReuniao(
         type: 'MEETING',
         date: inicio.toISOString(),
         ends_at: fim.toISOString(),
-        completed: false,
+        completed: completedDaSituacao(status),
         deal_id: negocio.dealId,
         contact_id: negocio.contactId,
         external_ref: externalRef,
-        meeting_status: entrada.status ?? 'agendada',
+        meeting_status: status,
         meeting_format: entrada.format ?? null,
         meeting_url: entrada.meetingUrl ?? null,
         address: entrada.address ?? null,
@@ -267,8 +333,16 @@ export async function registrarReuniao(
       })
       .select('id')
       .single()
-    if (criada.error || !criada.data) throw new Error('Não foi possível criar a reunião')
-    activityId = criada.data.id as string
+    if ((criada.error as { code?: string } | null)?.code === '23505') {
+      // Outro pedido com o mesmo external_ref gravou primeiro: relê e atualiza.
+      existente = await buscarPorExternalRef(sb, organizationId, externalRef)
+      if (!existente) throw new Error('Não foi possível criar a reunião')
+      await remarcar(existente)
+      activityId = existente.id
+    } else {
+      if (criada.error || !criada.data) throw new Error('Não foi possível criar a reunião')
+      activityId = criada.data.id as string
+    }
   }
 
   if (negocio.dealId) {
@@ -285,10 +359,10 @@ export async function registrarReuniao(
   }
 
   return {
-    activityId: activityId as string,
+    activityId,
     dealId: negocio.dealId,
     contactId: negocio.contactId,
-    reused: Boolean(existenteId),
+    reused: Boolean(existente),
     warnings,
   }
 }
@@ -298,19 +372,13 @@ export async function cancelarReuniao(
   sb: SupabaseClient,
   dados: { organizationId: string; externalRef: string },
 ): Promise<string | null> {
-  const existente = await sb
+  const existente = await buscarPorExternalRef(sb, dados.organizationId, dados.externalRef)
+  if (!existente) return null
+  const { error } = await sb
     .from('activities')
-    .select('id')
+    .update({ meeting_status: 'cancelada', completed: true })
     .eq('organization_id', dados.organizationId)
-    .eq('external_ref', dados.externalRef)
-    .is('deleted_at', null)
-    .maybeSingle()
-  const id = (existente.data?.id as string) || null
-  if (!id) return null
-  await sb
-    .from('activities')
-    .update({ meeting_status: 'cancelada' })
-    .eq('organization_id', dados.organizationId)
-    .eq('id', id)
-  return id
+    .eq('id', existente.id)
+  if (error) throw error
+  return existente.id
 }

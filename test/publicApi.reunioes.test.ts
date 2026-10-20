@@ -67,6 +67,16 @@ describe('POST /api/public/v1/reunioes', () => {
     expect(await res.json()).toEqual({ error: 'Reunião não encontrada', code: 'REUNIAO_NAO_ENCONTRADA' })
   })
 
+  it('422 com ends_at inválido ou antes do starts_at', async () => {
+    const base = { phone: '71993042122', starts_at: '2026-10-20T14:00:00', external_ref: 'slot-1' }
+    const a = await POST(req({ ...base, ends_at: 'não é data' }))
+    expect(a.status).toBe(422)
+    expect((await a.json()).code).toBe('INVALID_DATE')
+    expect((await POST(req({ ...base, ends_at: '2026-10-20T13:00:00' }))).status).toBe(422)
+    expect((await POST(req({ ...base, ends_at: '2026-10-20T14:00:00' }))).status).toBe(422)
+    expect(registrarReuniao).not.toHaveBeenCalled()
+  })
+
   it('201 e corpo de resposta ao registrar', async () => {
     const res = await POST(
       req({ phone: '71993042122', starts_at: '2026-10-20T14:00:00', external_ref: 'slot-1', format: 'online' }),

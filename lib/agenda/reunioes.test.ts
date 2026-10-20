@@ -14,7 +14,7 @@ import { advanceDealToRole } from '@/lib/agenda/stageRole'
 import { resolveBoardIdFromKey } from '@/lib/public-api/resolve'
 import { ReuniaoNaoEncontrada, cancelarReuniao, registrarReuniao, toSaoPauloIso } from './reunioes'
 
-type Handlers = Record<string, { maybeSingle?: unknown[]; single?: unknown[] }>
+type Handlers = Record<string, { maybeSingle?: unknown[]; single?: unknown[]; update?: unknown[] }>
 
 /** Supabase falso: cada tabela devolve respostas em fila e grava insert/update. */
 function fakeSb(handlers: Handlers) {
@@ -35,7 +35,7 @@ function fakeSb(handlers: Handlers) {
       }
       b.maybeSingle = async () => (h.maybeSingle?.shift() ?? { data: null, error: null })
       b.single = async () => (h.single?.shift() ?? { data: null, error: null })
-      b.then = (res: any) => res({ data: null, error: null })
+      b.then = (res: any) => res(h.update?.shift() ?? { data: null, error: null })
       return b
     },
   }
@@ -114,7 +114,7 @@ describe('registrarReuniao', () => {
     expect(inserts.filter((i) => i.table === 'activities')).toHaveLength(1)
     const upd = updates.find((u) => u.table === 'activities')!.row
     expect(upd.date).toBe('2026-10-21T13:00:00.000Z')
-    expect(upd.meeting_status).toBeUndefined()
+    expect(upd).toMatchObject({ meeting_status: 'agendada', completed: false })
   })
 
   it('status realizada com external_ref existente só troca meeting_status e não move', async () => {
@@ -129,7 +129,7 @@ describe('registrarReuniao', () => {
       status: 'realizada',
     })
     expect(r).toMatchObject({ reused: true, activityId: 'act-1', dealId: 'd-1' })
-    expect(updates).toEqual([{ table: 'activities', row: { meeting_status: 'realizada' } }])
+    expect(updates).toEqual([{ table: 'activities', row: { meeting_status: 'realizada', completed: true } }])
     expect(advanceDealToRole).not.toHaveBeenCalled()
   })
 
@@ -244,11 +244,147 @@ describe('cancelarReuniao', () => {
     const { sb, updates } = fakeSb({ activities: { maybeSingle: [{ data: { id: 'act-1' } }] } })
     const id = await cancelarReuniao(sb, { organizationId: ORG, externalRef: 'slot-1' })
     expect(id).toBe('act-1')
-    expect(updates).toEqual([{ table: 'activities', row: { meeting_status: 'cancelada' } }])
+    expect(updates).toEqual([{ table: 'activities', row: { meeting_status: 'cancelada', completed: true } }])
     expect(advanceDealToRole).not.toHaveBeenCalled()
   })
   it('devolve null se não existe', async () => {
     const { sb } = fakeSb({})
     expect(await cancelarReuniao(sb, { organizationId: ORG, externalRef: 'x' })).toBeNull()
+  })
+})
+
+describe('revisão final: reunião existente', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  const base = { organizationId: ORG, startsAt: '2026-10-21T10:00:00', externalRef: 'slot-1' }
+
+  it('reunião já no negócio A, repetida só com telefone: continua em A sem buscar nem criar contato/negócio', async () => {
+    const ins: unknown[][] = []
+    const { sb, inserts, updates } = fakeSb({
+      activities: { maybeSingle: [{ data: { id: 'act-1', deal_id: 'deal-A', contact_id: 'c-A' } }] },
+      contacts: { maybeSingle: [{ data: { name: 'Maria' } }] },
+    })
+    const orig = sb.from.bind(sb)
+    sb.from = (t: string) => {
+      const b = orig(t)
+      b.in = (...a: unknown[]) => (ins.push(a), b)
+      return b
+    }
+    const r = await registrarReuniao(sb, { ...base, phone: '71999990000' })
+    expect(r).toMatchObject({ activityId: 'act-1', dealId: 'deal-A', contactId: 'c-A', reused: true })
+    expect(inserts).toHaveLength(0)
+    expect(ins).toHaveLength(0)
+    const upd = updates.find((u) => u.table === 'activities')!.row
+    expect(upd).toMatchObject({ deal_id: 'deal-A', contact_id: 'c-A', title: 'Reunião - Maria' })
+    expect(advanceDealToRole).toHaveBeenCalledWith(sb, { organizationId: ORG, dealId: 'deal-A', role: 'reuniao_agendada' })
+  })
+
+  it('remarcar realizada para outra data volta a agendada e reabre', async () => {
+    const { sb, updates } = fakeSb({
+      activities: {
+        maybeSingle: [
+          { data: { id: 'act-1', deal_id: 'd-1', contact_id: null, meeting_status: 'realizada', date: '2026-10-20T17:00:00.000Z' } },
+        ],
+      },
+    })
+    await registrarReuniao(sb, base)
+    expect(updates[0].row).toMatchObject({ meeting_status: 'agendada', completed: false })
+  })
+
+  it('mesma data não mexe na situação; cancelada com data nova continua cancelada', async () => {
+    const mesma = fakeSb({
+      activities: {
+        maybeSingle: [
+          { data: { id: 'act-1', deal_id: 'd-1', meeting_status: 'realizada', date: '2026-10-21T13:00:00.000Z' } },
+        ],
+      },
+    })
+    await registrarReuniao(mesma.sb, base)
+    expect(mesma.updates[0].row.meeting_status).toBeUndefined()
+    expect(mesma.updates[0].row.completed).toBeUndefined()
+
+    const cancelada = fakeSb({
+      activities: {
+        maybeSingle: [
+          { data: { id: 'act-1', deal_id: 'd-1', meeting_status: 'cancelada', date: '2026-10-20T13:00:00.000Z' } },
+        ],
+      },
+    })
+    await registrarReuniao(cancelada.sb, base)
+    expect(cancelada.updates[0].row.meeting_status).toBeUndefined()
+  })
+
+  it('status nao_compareceu fecha a atividade (completed true)', async () => {
+    const { sb, updates } = fakeSb({ activities: { maybeSingle: [{ data: { id: 'act-1' } }] } })
+    await registrarReuniao(sb, { organizationId: ORG, externalRef: 'slot-1', status: 'nao_compareceu' })
+    expect(updates[0].row).toEqual({ meeting_status: 'nao_compareceu', completed: true })
+  })
+
+  it('reunião nova já com status realizada nasce completed', async () => {
+    const { sb, inserts } = fakeSb({
+      activities: { maybeSingle: [{ data: null }], single: [{ data: { id: 'act-1' } }] },
+      deals: { maybeSingle: [{ data: { id: 'd-1', contact_id: null } }] },
+    })
+    await registrarReuniao(sb, { ...base, dealId: 'd-1', status: 'realizada' })
+    expect(inserts.find((i) => i.table === 'activities')!.row).toMatchObject({ meeting_status: 'realizada', completed: true })
+  })
+
+  it('corrida no insert (23505) relê pelo external_ref e atualiza em vez de falhar', async () => {
+    const { sb, updates } = fakeSb({
+      activities: {
+        maybeSingle: [{ data: null }, { data: { id: 'act-outro', deal_id: 'd-1', contact_id: null } }],
+        single: [{ data: null, error: { code: '23505', message: 'duplicate key' } }],
+      },
+      deals: { maybeSingle: [{ data: { id: 'd-1', contact_id: null } }] },
+    })
+    const r = await registrarReuniao(sb, { ...base, dealId: 'd-1' })
+    expect(r).toMatchObject({ activityId: 'act-outro', reused: true })
+    expect(updates.find((u) => u.table === 'activities')!.row).toMatchObject({ deal_id: 'd-1' })
+  })
+})
+
+describe('revisão final: erros de gravação lançam', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('erro na busca por external_ref', async () => {
+    const { sb, inserts } = fakeSb({ activities: { maybeSingle: [{ data: null, error: new Error('busca') }] } })
+    await expect(
+      registrarReuniao(sb, { organizationId: ORG, dealId: 'd', startsAt: '2026-10-20T14:00:00', externalRef: 's' }),
+    ).rejects.toThrow('busca')
+    expect(inserts).toHaveLength(0)
+  })
+
+  it('erro no update de status', async () => {
+    const { sb } = fakeSb({
+      activities: { maybeSingle: [{ data: { id: 'act-1' } }], update: [{ data: null, error: new Error('upd-status') }] },
+    })
+    await expect(
+      registrarReuniao(sb, { organizationId: ORG, externalRef: 's', status: 'realizada' }),
+    ).rejects.toThrow('upd-status')
+  })
+
+  it('erro no update da remarcação', async () => {
+    const { sb } = fakeSb({
+      activities: {
+        maybeSingle: [{ data: { id: 'act-1', deal_id: 'd-1' } }],
+        update: [{ data: null, error: new Error('upd-remarcar') }],
+      },
+    })
+    await expect(
+      registrarReuniao(sb, { organizationId: ORG, startsAt: '2026-10-20T14:00:00', externalRef: 's' }),
+    ).rejects.toThrow('upd-remarcar')
+    expect(advanceDealToRole).not.toHaveBeenCalled()
+  })
+
+  it('erro na busca e no update de cancelarReuniao', async () => {
+    const busca = fakeSb({ activities: { maybeSingle: [{ data: null, error: new Error('busca-c') }] } })
+    await expect(cancelarReuniao(busca.sb, { organizationId: ORG, externalRef: 's' })).rejects.toThrow('busca-c')
+    const upd = fakeSb({
+      activities: { maybeSingle: [{ data: { id: 'act-1' } }], update: [{ data: null, error: new Error('upd-c') }] },
+    })
+    await expect(cancelarReuniao(upd.sb, { organizationId: ORG, externalRef: 's' })).rejects.toThrow('upd-c')
   })
 })
