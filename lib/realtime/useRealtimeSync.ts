@@ -13,6 +13,7 @@ import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { queryKeys, DEALS_VIEW_KEY } from '@/lib/query/queryKeys';
+import { mudancasForaDaEtapa, normalizarDealDoRealtime } from './dealsRealtime';
 import type { DealView } from '@/types';
 import type { MessagingMessage } from '@/lib/messaging';
 import { transformMessage } from '@/lib/messaging/types';
@@ -57,6 +58,7 @@ type RealtimeTable =
   | 'boards'
   | 'board_stages'
   | 'crm_companies'
+  | 'deal_files'
   // Messaging tables
   | 'messaging_channels'
   | 'messaging_conversations'
@@ -71,6 +73,8 @@ const getTableQueryKeys = (table: RealtimeTable): readonly (readonly unknown[])[
     boards: [queryKeys.boards.all],
     board_stages: [queryKeys.boards.all], // stages invalidate boards
     crm_companies: [queryKeys.companies.all],
+    // Arquivos do negócio mudam o selo de documentos dos cards (documentsCount).
+    deal_files: [DEALS_VIEW_KEY],
     // Messaging tables
     messaging_channels: [queryKeys.messagingChannels.all],
     messaging_conversations: [
@@ -677,6 +681,11 @@ export function useRealtimeSync(
                   // Guard: Skip update if incoming status matches current status (no-op)
                   // This prevents Realtime from overwriting newer data with stale payloads
                   if (currentStatus && incomingStatus && currentStatus === incomingStatus) {
+                    // Etapa igual: aplica só o que mudou fora da etapa (selos do card).
+                    const mudancas = mudancasForaDaEtapa(currentDeal, normalizarDealDoRealtime(newData));
+                    if (Object.keys(mudancas).length > 0) {
+                      return old.map((deal) => (deal.id === dealId ? { ...deal, ...mudancas } : deal));
+                    }
                     // #region agent log
                     if (process.env.NODE_ENV !== 'production') {
                       console.log(`[Realtime] ⏭️ Skipping update - status unchanged`, { dealId: dealId.slice(0, 8), status: currentStatus.slice(0, 8) });
@@ -835,49 +844,8 @@ export function useRealtimeSync(
                         console.log(`[Realtime] ✅ Applying update to cache`, logData);
                       }
                       // #endregion
-                      // Transform Realtime payload (snake_case) to app format (camelCase)
-                      // This ensures fields are properly updated in cache
-                      // CRITICAL: Without this normalization, updatedAt from Realtime (updated_at) won't update cache (updatedAt)
-                      const normalizedData: Record<string, unknown> = { ...newData };
-                      
-                      // Normalize timestamp fields
-                      if (newData.updated_at && !newData.updatedAt) {
-                        normalizedData.updatedAt = newData.updated_at;
-                        delete normalizedData.updated_at;
-                      }
-                      if (newData.created_at && !newData.createdAt) {
-                        normalizedData.createdAt = newData.created_at;
-                        delete normalizedData.created_at;
-                      }
-                      
-                      // Normalize status field (Realtime sends stage_id, cache uses status)
-                      // CRITICAL: Always use stage_id when available, as it's the source of truth!
-                      // The status field in Realtime payload may be stale/incorrect.
-                      if (newData.stage_id !== undefined) {
-                        normalizedData.status = newData.stage_id;
-                        delete normalizedData.stage_id;
-                      }
-                      
-                      // Normalize boolean fields
-                      if (newData.is_won !== undefined && newData.isWon === undefined) {
-                        normalizedData.isWon = newData.is_won;
-                        delete normalizedData.is_won;
-                      }
-                      if (newData.is_lost !== undefined && newData.isLost === undefined) {
-                        normalizedData.isLost = newData.is_lost;
-                        delete normalizedData.is_lost;
-                      }
-                      
-                      // Normalize date fields
-                      if (newData.closed_at !== undefined && newData.closedAt === undefined) {
-                        normalizedData.closedAt = newData.closed_at;
-                        delete normalizedData.closed_at;
-                      }
-                      if (newData.last_stage_change_date !== undefined && newData.lastStageChangeDate === undefined) {
-                        normalizedData.lastStageChangeDate = newData.last_stage_change_date;
-                        delete normalizedData.last_stage_change_date;
-                      }
-                      
+                      // Realtime (snake_case) -> cache (camelCase); stage_id vira status (fonte da verdade da etapa).
+                      const normalizedData = normalizarDealDoRealtime(newData);
                       // Merge normalized data into existing deal (preserves enriched fields like companyName, owner, etc.)
                       return { ...deal, ...normalizedData };
                     }
@@ -988,7 +956,7 @@ export function useRealtimeSyncAll(options: UseRealtimeSyncOptions = {}) {
  * Optimized for the boards page
  */
 export function useRealtimeSyncKanban(options: UseRealtimeSyncOptions = {}) {
-  return useRealtimeSync(['deals', 'board_stages'], options);
+  return useRealtimeSync(['deals', 'board_stages', 'deal_files'], options);
 }
 
 /**
