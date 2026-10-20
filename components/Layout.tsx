@@ -168,7 +168,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="flex-1 flex min-w-0 overflow-hidden relative">
         {/* Middle Content (Header + Page) */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-          <header className="shrink-0 z-40 px-6 pt-4" role="banner">
+          {/* Em Conversas o conteúdo vai até a borda: a barra fica centrada na faixa, com respiro embaixo. */}
+          <header className={`shrink-0 z-40 px-6 ${isMessaging ? 'py-3' : 'pt-4'}`} role="banner">
             <AppTopbar showSidebarToggle={isDesktop} />
           </header>
 
