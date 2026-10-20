@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, TrendingUp, UserX, ArrowRight, Sparkles, Target } from 'lucide-react';
+import { TrendingUp, History, Inbox } from 'lucide-react';
 import type { Activity } from '@/types';
 import type { AISuggestion } from '../hooks/useInboxController';
 import { usePendingAdvanceCountQuery } from '@/lib/query/hooks';
-import { PendingAdvancesSection, PendingAdvancesStatCard } from './PendingAdvancesSection';
+import { Badge, Button, StatCard } from '@/design-system';
+import { PendingAdvancesSection } from './PendingAdvancesSection';
 
 interface InboxOverviewViewProps {
   overdueActivities: Activity[];
@@ -23,63 +24,22 @@ interface InboxOverviewViewProps {
   onOpenPending: () => void;
 }
 
-const StatCard: React.FC<{
-  label: string;
-  value: number;
-  tone: 'neutral' | 'danger' | 'success' | 'warning';
-  hint?: string;
-  onClick?: () => void;
-}> = ({ label, value, tone, hint, onClick }) => {
-  // Cartão neutro (design system): o tom aparece só num ponto ao lado do rótulo.
-  const dotStyles: Record<typeof tone, string> = {
-    neutral: '',
-    danger: 'bg-[var(--status-danger-solid)]',
-    warning: 'bg-[var(--status-warning-solid)]',
-    success: 'bg-[var(--status-success-solid)]',
-  };
+/** Quantos itens cada lista mostra antes do "Ver todos". */
+const LIST_LIMIT = 6;
 
-  const Component = onClick ? 'button' : 'div';
+/** Primeira letra (ou emoji) do nome, para o avatar da linha. */
+function initialOf(name: string): string {
+  const first = Array.from(name.trim())[0];
+  return first ? first.toLocaleUpperCase('pt-BR') : '?';
+}
 
-  return (
-    <Component
-      type={onClick ? 'button' : undefined}
-      onClick={onClick}
-      className={`w-full rounded-[var(--radius-lg)] border border-[var(--border-hairline)] bg-[var(--surface-card)] p-4 text-left shadow-[var(--shadow-sm)] transition-colors ${onClick ? 'hover:border-[var(--border-default)]' : ''}`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-1.5 text-[length:var(--fs-caption)] text-[var(--text-secondary)]">
-            {dotStyles[tone] ? <span aria-hidden="true" className={`size-2 rounded-full ${dotStyles[tone]}`} /> : null}
-            {label}
-          </div>
-          {hint ? (
-            <div className="mt-1 text-xs text-[var(--text-tertiary)]">{hint}</div>
-          ) : null}
-        </div>
-        <div className="text-2xl font-semibold tracking-[-0.03em] text-[var(--text-primary)]">{value}</div>
-      </div>
-    </Component>
-  );
-};
-
-const SuggestionMiniRow: React.FC<{
+const SuggestionRow: React.FC<{
   suggestion: AISuggestion;
   onAccept: () => void;
 }> = ({ suggestion, onAccept }) => {
   const router = useRouter();
-
-  const icon = useMemo(() => {
-    switch (suggestion.type) {
-      case 'STALLED':
-        return <AlertTriangle size={16} className="text-orange-600 dark:text-orange-400" aria-hidden="true" />;
-      case 'RESCUE':
-        return <UserX size={16} className="text-red-600 dark:text-red-400" aria-hidden="true" />;
-      case 'UPSELL':
-        return <TrendingUp size={16} className="text-green-600 dark:text-green-400" aria-hidden="true" />;
-      default:
-        return <Sparkles size={16} className="text-primary-600 dark:text-primary-400" aria-hidden="true" />;
-    }
-  }, [suggestion.type]);
+  const personName =
+    suggestion.data.deal?.contactName || suggestion.data.contact?.name || suggestion.description;
 
   const navigationTarget = useMemo(() => {
     const dealId = suggestion.data.deal?.id;
@@ -90,63 +50,72 @@ const SuggestionMiniRow: React.FC<{
   }, [suggestion.data.deal?.id, suggestion.data.contact?.id]);
 
   return (
-    <div className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-      <div className="shrink-0">{icon}</div>
+    <li className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4 sm:flex-nowrap">
+      <span
+        className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[15px] font-semibold text-[var(--text-accent)]"
+        aria-hidden="true"
+      >
+        {initialOf(personName)}
+      </span>
       <div className="min-w-0 flex-1">
-        <div className="text-sm text-slate-800 dark:text-slate-100 truncate">{suggestion.description}</div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{suggestion.title}</div>
+        <div className="truncate text-[15px] font-medium text-[var(--text-primary)]">{suggestion.description}</div>
+        <div className="mt-0.5 truncate text-sm text-[var(--text-secondary)]">{suggestion.title}</div>
       </div>
-      <div className="shrink-0 flex items-center gap-2">
-        <button
-          onClick={onAccept}
-          className="px-2.5 py-1.5 rounded-md text-xs font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors"
-        >
-          {suggestion.type === 'UPSELL' ? 'Criar negócio' : 'Criar tarefa'}
-        </button>
-        <button
-          onClick={() => navigationTarget && router.push(navigationTarget)}
+      <div className="flex shrink-0 items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
           disabled={!navigationTarget}
-          className="px-2.5 py-1.5 rounded-md text-xs font-semibold border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors disabled:opacity-50"
+          onClick={() => navigationTarget && router.push(navigationTarget)}
         >
           Abrir
-        </button>
+        </Button>
+        <Button variant="primary" size="sm" icon={suggestion.type === 'UPSELL' ? 'plus' : 'check'} onClick={onAccept}>
+          {suggestion.type === 'UPSELL' ? 'Criar negócio' : 'Criar tarefa'}
+        </Button>
       </div>
-    </div>
+    </li>
   );
 };
 
-/**
- * Componente React `InboxOverviewView`.
- *
- * @param {InboxOverviewViewProps} {
-  overdueActivities,
-  todayMeetings,
-  todayTasks,
-  upcomingActivities,
-  aiSuggestions,
-  onGoToList,
-  onStartFocus,
-  onAcceptSuggestion,
-  onOpenOverdue,
-  onOpenToday,
-  onOpenCriticalSuggestions,
-  onOpenPending,
-} - Parâmetro `{
-  overdueActivities,
-  todayMeetings,
-  todayTasks,
-  upcomingActivities,
-  aiSuggestions,
-  onGoToList,
-  onStartFocus,
-  onAcceptSuggestion,
-  onOpenOverdue,
-  onOpenToday,
-  onOpenCriticalSuggestions,
-  onOpenPending,
-}`.
- * @returns {Element} Retorna um valor do tipo `Element`.
- */
+const SuggestionList: React.FC<{
+  title: string;
+  icon: React.ElementType;
+  items: AISuggestion[];
+  total: number;
+  emptyText: string;
+  onSeeAll: () => void;
+  onAccept: (suggestion: AISuggestion) => void;
+}> = ({ title, icon: Icon, items, total, emptyText, onSeeAll, onAccept }) => (
+  <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-hairline)] bg-[var(--surface-card)] shadow-[var(--shadow-xs)]">
+    <header className="flex items-center gap-3 border-b border-[var(--border-hairline)] px-5 py-4">
+      <span className="inline-flex size-9 items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-accent)] text-[var(--text-accent)]" aria-hidden="true">
+        <Icon size={18} />
+      </span>
+      <h3 className="text-base font-semibold text-[var(--text-primary)]">{title}</h3>
+      {total > 0 ? <Badge tone="neutral" size="sm">{total}</Badge> : null}
+      {total > items.length ? (
+        <Button variant="ghost" size="sm" iconRight="arrow-right" className="ml-auto" onClick={onSeeAll}>
+          Ver todos
+        </Button>
+      ) : null}
+    </header>
+    {items.length === 0 ? (
+      <div className="flex items-center gap-3 px-5 py-8 text-sm text-[var(--text-tertiary)]">
+        <Inbox size={18} aria-hidden="true" />
+        {emptyText}
+      </div>
+    ) : (
+      <ul className="divide-y divide-[var(--border-hairline)]">
+        {items.map((s) => (
+          <SuggestionRow key={s.id} suggestion={s} onAccept={() => onAccept(s)} />
+        ))}
+      </ul>
+    )}
+  </section>
+);
+
+/** Resumo do dia: números do que pede atenção e as listas de quem retomar. */
 export const InboxOverviewView: React.FC<InboxOverviewViewProps> = ({
   overdueActivities,
   todayMeetings,
@@ -171,141 +140,111 @@ export const InboxOverviewView: React.FC<InboxOverviewViewProps> = ({
   );
 
   const riskSuggestions = useMemo(
-    () => aiSuggestions.filter(s => s.type === 'STALLED' || s.type === 'RESCUE').slice(0, 5),
+    () => aiSuggestions.filter(s => s.type === 'STALLED' || s.type === 'RESCUE'),
     [aiSuggestions]
   );
 
   const opportunitySuggestions = useMemo(
-    () => aiSuggestions.filter(s => s.type === 'UPSELL').slice(0, 5),
+    () => aiSuggestions.filter(s => s.type === 'UPSELL'),
     [aiSuggestions]
   );
 
   const canStartFocus = totalPending > 0;
 
   return (
-    <div className="space-y-6">
-      {/* Top CTA */}
-      <div className="flex items-start justify-between gap-3">
+    <div className="space-y-8">
+      {/* Cabeçalho */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Visão Geral</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Diagnóstico rápido do dia (sem virar outra lista de atividades).
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Resumo do dia</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            {totalPending > 0
+              ? `${totalPending} ${totalPending === 1 ? 'item pede' : 'itens pedem'} sua atenção.`
+              : 'Nada pendente agora.'}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={onGoToList}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-          >
+          <Button variant="secondary" icon="list" onClick={onGoToList}>
             Ver lista
-            <ArrowRight size={16} aria-hidden="true" />
-          </button>
-          <button
-            onClick={onStartFocus}
-            disabled={!canStartFocus}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50"
-            title={canStartFocus ? 'Começar a executar' : 'Nada pendente'}
-          >
-            <Target size={16} aria-hidden="true" />
+          </Button>
+          <Button variant="primary" icon="target" onClick={onStartFocus} disabled={!canStartFocus}>
             Começar foco
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      {/* Números: mesmo cartão da Visão geral (um escuro, brancos e um lime) */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Atrasados"
-          value={overdueActivities.length}
-          tone={overdueActivities.length > 0 ? 'danger' : 'success'}
-          hint={overdueActivities.length > 0 ? 'Prioridade máxima' : 'Tudo em dia'}
+          variant="ink"
+          label="Atrasadas"
+          value={overdueActivities.length.toLocaleString('pt-BR')}
+          unit={overdueActivities.length > 0 ? 'resolver primeiro' : 'tudo em dia'}
           onClick={onOpenOverdue}
         />
         <StatCard
           label="Hoje"
-          value={todayTotal}
-          tone={todayTotal > 0 ? 'warning' : 'success'}
-          hint={todayTotal > 0 ? `${todayMeetings.length} reuniões • ${todayTasks.length} tarefas` : 'Sem tarefas para hoje'}
+          value={todayTotal.toLocaleString('pt-BR')}
+          unit={todayTotal > 0 ? `${todayMeetings.length} reuniões · ${todayTasks.length} tarefas` : 'agenda livre'}
           onClick={onOpenToday}
         />
         <StatCard
           label="Para retomar já"
-          value={highPrioritySuggestions.length}
-          tone={highPrioritySuggestions.length > 0 ? 'warning' : 'neutral'}
-          hint={highPrioritySuggestions.length > 0 ? 'Negócios com valor parados' : 'Sem urgências'}
+          value={highPrioritySuggestions.length.toLocaleString('pt-BR')}
+          unit={highPrioritySuggestions.length > 0 ? 'negócios com valor parados' : 'sem urgências'}
           onClick={onOpenCriticalSuggestions}
         />
-        <PendingAdvancesStatCard count={pendingAdvanceCount} />
-        <StatCard
-          label="Pendências"
-          value={totalPending}
-          tone={totalPending > 0 ? 'neutral' : 'success'}
-          hint={upcomingActivities.length > 0 ? `${upcomingActivities.length} próximos` : 'Backlog leve'}
-          onClick={onOpenPending}
+        {pendingAdvanceCount > 0 ? (
+          <StatCard
+            variant="lime"
+            label="Aprovações da IA"
+            value={pendingAdvanceCount.toLocaleString('pt-BR')}
+            unit="aguardando sua decisão"
+          />
+        ) : (
+          <StatCard
+            variant="lime"
+            label="Pendências"
+            value={totalPending.toLocaleString('pt-BR')}
+            unit={upcomingActivities.length > 0 ? `${upcomingActivities.length} nos próximos dias` : 'nada agendado adiante'}
+            onClick={onOpenPending}
+          />
+        )}
+      </div>
+
+      {/* Listas (a de novo serviço vazia vira uma faixa, para não ocupar meia tela) */}
+      <div className={`grid grid-cols-1 gap-6 ${opportunitySuggestions.length > 0 ? 'xl:grid-cols-2' : ''}`}>
+        <SuggestionList
+          title="Para retomar"
+          icon={History}
+          items={riskSuggestions.slice(0, LIST_LIMIT)}
+          total={riskSuggestions.length}
+          emptyText="Nenhum negócio parado agora."
+          onSeeAll={onGoToList}
+          onAccept={onAcceptSuggestion}
         />
+        {opportunitySuggestions.length > 0 ? (
+        <SuggestionList
+          title="Clientes para novo serviço"
+          icon={TrendingUp}
+          items={opportunitySuggestions.slice(0, LIST_LIMIT)}
+          total={opportunitySuggestions.length}
+          emptyText="Nenhum cliente para novo serviço agora."
+          onSeeAll={onGoToList}
+          onAccept={onAcceptSuggestion}
+        />
+        ) : (
+          <div className="flex items-center gap-3 rounded-[var(--radius-xl)] border border-dashed border-[var(--border-default)] px-5 py-4 text-sm text-[var(--text-secondary)]">
+            <TrendingUp size={18} aria-hidden="true" className="text-[var(--text-tertiary)]" />
+            <span>
+              <span className="font-medium text-[var(--text-primary)]">Clientes para novo serviço:</span> nenhum agora. Aparecem aqui clientes que contrataram há mais de 30 dias.
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Groups */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={16} className="text-orange-600 dark:text-orange-400" aria-hidden="true" />
-              <h3 className="font-bold text-slate-900 dark:text-white">Para retomar</h3>
-            </div>
-            <button
-              onClick={onGoToList}
-              className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              Ver tudo
-            </button>
-          </div>
-          {riskSuggestions.length === 0 ? (
-            <div className="text-sm text-slate-500 dark:text-slate-400">Nenhum negócio parado agora.</div>
-          ) : (
-            <div className="space-y-1">
-              {riskSuggestions.map(s => (
-                <SuggestionMiniRow
-                  key={s.id}
-                  suggestion={s}
-                  onAccept={() => onAcceptSuggestion(s)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <TrendingUp size={16} className="text-green-600 dark:text-green-400" aria-hidden="true" />
-              <h3 className="font-bold text-slate-900 dark:text-white">Clientes para novo serviço</h3>
-            </div>
-            <button
-              onClick={onGoToList}
-              className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              Ver tudo
-            </button>
-          </div>
-          {opportunitySuggestions.length === 0 ? (
-            <div className="text-sm text-slate-500 dark:text-slate-400">Nenhum cliente para novo serviço agora.</div>
-          ) : (
-            <div className="space-y-1">
-              {opportunitySuggestions.map(s => (
-                <SuggestionMiniRow
-                  key={s.id}
-                  suggestion={s}
-                  onAccept={() => onAcceptSuggestion(s)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Pending Advances (HITL) */}
-        <PendingAdvancesSection limit={5} />
-      </div>
+      {/* Aprovações da IA (HITL) — só aparece quando há pendências */}
+      <PendingAdvancesSection limit={5} />
     </div>
   );
 };

@@ -2,11 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronLeft,
-  ChevronRight,
-  Check,
   Clock,
-  SkipForward,
   Phone,
   Calendar,
   Mail,
@@ -16,7 +12,6 @@ import {
   UserX,
   TrendingUp,
   Building2,
-  Maximize2
 } from 'lucide-react';
 import { FocusItem, AISuggestion } from '../hooks/useInboxController';
 import { Activity, DealView } from '@/types';
@@ -34,9 +29,32 @@ import {
 } from '@/lib/query/hooks';
 import { useAuth } from '@/context/AuthContext';
 import { InboxZeroState } from './InboxZeroState';
+import { Badge, Button, IconButton } from '@/design-system';
+import { formatBRL } from '@/lib/utils/brFormat';
 
 // Performance: reuse Intl formatter instances (avoid per-render allocations).
-const PT_BR_TIME_FORMATTER = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
+const PT_BR_TIME_FORMATTER = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+const PT_BR_WHEN_FORMATTER = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'America/Sao_Paulo' });
+
+const ACTIVITY_TYPE_LABEL: Partial<Record<Activity['type'], string>> = {
+  CALL: 'Ligação',
+  MEETING: 'Reunião',
+  EMAIL: 'E-mail',
+  TASK: 'Tarefa',
+  NOTE: 'Nota',
+};
+
+const SUGGESTION_TYPE_LABEL: Record<AISuggestion['type'], string> = {
+  STALLED: 'Negócio parado',
+  RESCUE: 'Cliente sem contato',
+  UPSELL: 'Novo serviço',
+};
+
+const Kbd: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded-[6px] border border-[var(--border-hairline)] bg-[var(--surface-card)] px-1.5 font-sans text-[11px] text-[var(--text-secondary)]">
+    {children}
+  </kbd>
+);
 
 function normalizeTitleKey(value: string) {
   // UX: normalize titles for robust matching (trim/collapse whitespace/remove quotes).
@@ -330,27 +348,27 @@ export const InboxFocusView: React.FC<InboxFocusViewProps> = ({
   const getIcon = () => {
     if (activity) {
       switch (activity.type) {
-        case 'CALL': return <Phone size={24} />;
-        case 'MEETING': return <Calendar size={24} />;
-        case 'EMAIL': return <Mail size={24} />;
-        case 'TASK': return <CheckCircle2 size={24} />;
-        default: return <FileText size={24} />;
+        case 'CALL': return <Phone size={18} />;
+        case 'MEETING': return <Calendar size={18} />;
+        case 'EMAIL': return <Mail size={18} />;
+        case 'TASK': return <CheckCircle2 size={18} />;
+        default: return <FileText size={18} />;
       }
     }
     if (suggestion) {
       switch (suggestion.type) {
-        case 'STALLED': return <AlertTriangle size={24} />;
-        case 'RESCUE': return <UserX size={24} />;
-        case 'UPSELL': return <TrendingUp size={24} />;
-        default: return <AlertTriangle size={24} />;
+        case 'STALLED': return <AlertTriangle size={18} />;
+        case 'RESCUE': return <UserX size={18} />;
+        case 'UPSELL': return <TrendingUp size={18} />;
+        default: return <AlertTriangle size={18} />;
       }
     }
-    return <FileText size={24} />;
+    return <FileText size={18} />;
   };
 
   // Cor do ícone
   const getIconColor = () => {
-    if (isOverdue) return 'text-red-500';
+    if (isOverdue) return 'text-[var(--status-danger-fg)]';
     if (activity) {
       switch (activity.type) {
         case 'CALL': return 'text-blue-500';
@@ -380,154 +398,119 @@ export const InboxFocusView: React.FC<InboxFocusViewProps> = ({
   const timeString = activity ? PT_BR_TIME_FORMATTER.format(new Date(activity.date)) : '';
   const hasResolvedContext = !!(contextData?.deal || contextData?.contact);
 
+  // Hierarquia: em sugestão, a pessoa é o destaque e o motivo vem embaixo.
+  const suggestionDeal = suggestion?.data.deal;
+  const suggestionContact = suggestion?.data.contact;
+  const headline = suggestion
+    ? (suggestionDeal?.contactName || suggestionContact?.name || suggestionDeal?.title || suggestion.description || title)
+    : title;
+  const subline = suggestion ? title : description;
+
+  // Faixa de dados do item (só o que existe).
+  const facts: Array<{ label: string; value: string }> = [];
+  if (suggestionDeal) {
+    if (suggestionDeal.stageLabel) facts.push({ label: 'Etapa', value: suggestionDeal.stageLabel });
+    if (suggestionDeal.title && suggestionDeal.title !== headline) facts.push({ label: 'Negócio', value: suggestionDeal.title });
+    facts.push({ label: 'Honorários', value: suggestionDeal.value > 0 ? formatBRL(suggestionDeal.value) : 'Não definidos' });
+  } else if (suggestionContact?.phone) {
+    facts.push({ label: 'Telefone', value: suggestionContact.phone });
+  }
+  if (activity) {
+    facts.push({ label: 'Quando', value: `${PT_BR_WHEN_FORMATTER.format(new Date(activity.date))}, ${timeString}` });
+    if (activity.dealTitle) facts.push({ label: 'Negócio', value: activity.dealTitle });
+  }
+  const typeLabel = activity
+    ? (ACTIVITY_TYPE_LABEL[activity.type] ?? 'Atividade')
+    : (suggestion ? SUGGESTION_TYPE_LABEL[suggestion.type] : '');
+  const doneLabel = activity
+    ? 'Concluir'
+    : suggestion?.type === 'UPSELL' ? 'Criar negócio' : 'Criar tarefa';
+  const progress = totalItems > 0 ? ((currentIndex + 1) / totalItems) * 100 : 0;
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] py-8 animate-fade-in">
-      {/* Badge de status */}
-      {isOverdue && (
-        <div className="mb-4 px-4 py-1.5 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full text-sm font-bold uppercase tracking-wider">
-          ⚠️ Atrasado
-        </div>
-      )}
-      {suggestion?.priority === 'high' && (
-        <div className="mb-4 px-4 py-1.5 bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 rounded-full text-sm font-bold uppercase tracking-wider">
-          🔥 Urgente
-        </div>
-      )}
-
-      {/* Horário grande (se for reunião) */}
-      {isMeeting && (
-        <div className="text-6xl font-bold text-slate-900 dark:text-white mb-4 font-display">
-          {timeString}
-        </div>
-      )}
-
-      {/* Ícone (se não for reunião) */}
-      {!isMeeting && (
-        <div className={`mb-6 p-4 rounded-2xl bg-slate-100 dark:bg-white/5 ${getIconColor()}`}>
-          {getIcon()}
-        </div>
-      )}
-
-      {/* Título */}
-      <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white text-center mb-3 max-w-lg">
-        {title}
-      </h1>
-
-      {/* Descrição */}
-      {description && (
-        <p className="text-slate-500 dark:text-slate-400 text-center mb-4 max-w-md">
-          {activity ? `"${description}"` : description}
-        </p>
-      )}
-
-      {/* Contexto (Deal/Empresa) */}
-      {context && (
-        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 mb-2">
-          <Building2 size={16} className="text-slate-400" />
-          <span>{context}</span>
-        </div>
-      )}
-
-      {/* Ver detalhes - sempre aparece; quando não há contexto, abre painel para vincular um deal */}
-      {currentItem && (
-        <div className="flex items-center justify-center my-6">
-          <button
-            onClick={() => setShowContext(true)}
-            className="relative flex items-center gap-2 text-yellow-400/70 hover:text-yellow-400 transition-colors font-medium text-sm group cursor-pointer bg-transparent border-0"
-          >
-            <span
-              className="absolute inset-0 -inset-x-8 -inset-y-4 rounded-full bg-yellow-400/20 opacity-75 group-hover:opacity-0 blur-sm"
-              style={{
-                animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite'
-              }}
-            />
-
-            <Maximize2 size={14} className="relative z-10" />
-            <span className="relative z-10">{hasResolvedContext ? 'Ver detalhes' : 'Vincular contexto'}</span>
-            <kbd className="hidden group-hover:inline-flex h-5 items-center gap-1 rounded border border-yellow-500/20 bg-yellow-500/10 px-1.5 font-mono text-[10px] font-medium text-yellow-500/50 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out translate-x-1 group-hover:translate-x-0 ml-2">
-              SPACE
-            </kbd>
-          </button>
-        </div>
-      )}
-
-      {/* Ações */}
-      <div className="flex items-center gap-4 mt-8" role="group" aria-label="Ações">
-        <button
-          onClick={onSnooze}
-          className="group flex items-center gap-3 px-6 py-3 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all font-medium border border-transparent hover:border-slate-300 dark:hover:border-white/10"
+    <div className="mx-auto w-full max-w-3xl py-6 animate-fade-in">
+      {/* Progresso + navegação */}
+      <div className="mb-4 flex items-center gap-3">
+        <span className="shrink-0 text-sm text-[var(--text-secondary)]">
+          <span className="font-semibold text-[var(--text-primary)]">{currentIndex + 1}</span> de {totalItems}
+        </span>
+        <div
+          className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-sunken)]"
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={totalItems}
+          aria-valuenow={currentIndex + 1}
+          aria-label="Progresso da fila"
         >
-          <Clock size={18} aria-hidden="true" className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
-          <span>Adiar</span>
-          <kbd className="hidden group-hover:inline-flex h-5 items-center justify-center rounded border border-slate-300 dark:border-white/10 bg-slate-200 dark:bg-white/5 px-1.5 font-mono text-[10px] uppercase text-slate-500 font-bold opacity-0 group-hover:opacity-100 transition-all">
-            A
-          </kbd>
-        </button>
-
-        <button
-          onClick={onDone}
-          className="group flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:scale-[1.02] transition-all duration-300 font-bold text-lg border-t border-white/20 ring-1 ring-emerald-600/50"
-        >
-          <div className="p-1 bg-white/20 rounded-full">
-            <Check size={20} aria-hidden="true" strokeWidth={3} />
-          </div>
-          <span className="text-shadow-sm">Feito</span>
-          <kbd className="ml-1 inline-flex h-6 items-center justify-center rounded bg-black/10 px-2 font-sans text-xs text-white/70 font-semibold border border-white/10">
-            ⏎
-          </kbd>
-        </button>
-
-        <button
-          onClick={onSkip}
-          className="group flex items-center gap-3 px-6 py-3 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all font-medium border border-transparent hover:border-slate-300 dark:hover:border-white/10"
-        >
-          <span>Pular</span>
-          <kbd className="hidden group-hover:inline-flex h-5 items-center justify-center rounded border border-slate-300 dark:border-white/10 bg-slate-200 dark:bg-white/5 px-1.5 font-mono text-[10px] uppercase text-slate-500 font-bold opacity-0 group-hover:opacity-100 transition-all">
-            P
-          </kbd>
-          <SkipForward size={18} aria-hidden="true" className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
-        </button>
+          <div className="h-full rounded-full bg-[var(--cyan-500)] transition-[width] duration-300" style={{ width: `${progress}%` }} />
+        </div>
+        <nav aria-label="Navegação entre itens" className="flex shrink-0 items-center gap-1">
+          <IconButton icon="chevron-left" label="Item anterior" variant="ghost" size="sm" round onClick={onPrev} disabled={currentIndex === 0} />
+          <IconButton icon="chevron-right" label="Próximo item" variant="ghost" size="sm" round onClick={onNext} disabled={currentIndex >= totalItems - 1} />
+        </nav>
       </div>
 
-      {/* Navegação */}
-      <nav aria-label="Navegação entre itens" className="flex items-center gap-6 mt-12">
-        <button
-          onClick={onPrev}
-          disabled={currentIndex === 0}
-          aria-label="Item anterior"
-          className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft size={24} aria-hidden="true" />
-        </button>
+      {/* Cartão do item */}
+      <article className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-hairline)] bg-[var(--surface-card)] shadow-[var(--shadow-sm)]">
+        <div className="p-6 sm:p-10">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`inline-flex size-10 items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-sunken)] ${getIconColor()}`} aria-hidden="true">
+              {getIcon()}
+            </span>
+            <span className="text-base font-medium text-[var(--text-secondary)]">{typeLabel}</span>
+            {isOverdue && <Badge tone="danger" size="sm">Atrasada</Badge>}
+            {suggestion?.priority === 'high' && <Badge tone="warning" size="sm">Prioritário</Badge>}
+            {activity && (
+              <span className="ml-auto inline-flex items-center gap-1.5 text-sm text-[var(--text-secondary)]">
+                <Clock size={14} aria-hidden="true" />
+                <span className="font-semibold text-[var(--text-primary)]">{timeString}</span>
+              </span>
+            )}
+          </div>
 
-        {/* Progress dots */}
-        <div className="flex items-center gap-1.5" role="group" aria-label={`Progresso: item ${currentIndex + 1} de ${totalItems}`}>
-          {Array.from({ length: Math.min(totalItems, 10) }).map((_, i) => (
-            <div
-              key={i}
-              aria-hidden="true"
-              className={`w-2 h-2 rounded-full transition-all ${i === currentIndex
-                ? 'w-6 bg-primary-500'
-                : 'bg-slate-300 dark:bg-slate-600'
-                }`}
-            />
-          ))}
-          {totalItems > 10 && (
-            <span className="text-xs text-slate-400 ml-2">+{totalItems - 10}</span>
+          <h1 className="mt-5 text-3xl font-semibold leading-tight tracking-[-0.02em] text-[var(--text-primary)] sm:text-4xl">
+            {headline}
+          </h1>
+
+          {subline && (
+            <p className="mt-3 max-w-prose text-lg leading-relaxed text-[var(--text-secondary)]">
+              {subline}
+            </p>
           )}
+
+          {facts.length > 0 ? (
+            <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-hairline)] bg-[var(--border-hairline)] sm:grid-cols-3">
+              {facts.map((fact) => (
+                <div key={fact.label} className="bg-[var(--surface-sunken)] px-4 py-3">
+                  <dt className="text-xs text-[var(--text-tertiary)]">{fact.label}</dt>
+                  <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
         </div>
 
-        <button
-          onClick={onNext}
-          disabled={currentIndex >= totalItems - 1}
-          aria-label="Próximo item"
-          className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronRight size={24} aria-hidden="true" />
-        </button>
-      </nav>
+        {/* Ações */}
+        <div className="flex flex-wrap items-center gap-3 border-t border-[var(--border-hairline)] px-6 py-5 sm:px-10" role="group" aria-label="Ações">
+          <Button variant="secondary" icon={hasResolvedContext ? 'panel-right-open' : 'link'} onClick={() => setShowContext(true)}>
+            {hasResolvedContext ? 'Ver negócio' : 'Vincular negócio'}
+          </Button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Button variant="ghost" icon="clock" onClick={onSnooze}>Adiar para amanhã</Button>
+            <Button variant="ghost" iconRight="skip-forward" onClick={onSkip}>Pular</Button>
+            <Button variant="primary" icon="check" onClick={onDone}>{doneLabel}</Button>
+          </div>
+        </div>
+      </article>
 
-
+      {/* Atalhos */}
+      <p className="mt-4 hidden flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-[var(--text-tertiary)] md:flex">
+        <span><Kbd>Enter</Kbd> {doneLabel.toLowerCase()}</span>
+        <span><Kbd>A</Kbd> adiar</span>
+        <span><Kbd>P</Kbd> pular</span>
+        <span><Kbd>Espaço</Kbd> ver negócio</span>
+        <span><Kbd>←</Kbd> <Kbd>→</Kbd> navegar</span>
+      </p>
 
       {/* Cockpit Panel with AnimatePresence */}
       {createPortal(
