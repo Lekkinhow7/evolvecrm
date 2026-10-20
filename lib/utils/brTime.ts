@@ -25,3 +25,17 @@ export function officeDateParts(date: Date | string): OfficeDateParts {
     Number(partsFormatter.formatToParts(d).find((p) => p.type === type)?.value ?? 0);
   return { year: get('year'), month: get('month') - 1, day: get('day'), hour: get('hour') % 24 };
 }
+
+/**
+ * Brasília está fixa em UTC−3 desde 2019 (sem horário de verão). Se isso mudar,
+ * troque por um cálculo de offset via Intl.
+ */
+const OFFICE_UTC_OFFSET_MS = -3 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Início (00:00) e fim (00:00 do dia seguinte) do dia de hoje no horário de Brasília, em ms. */
+export function officeDayBounds(now: Date = new Date()): { todayTs: number; tomorrowTs: number } {
+  const p = officeDateParts(now);
+  const todayTs = Date.UTC(p.year, p.month, p.day) - OFFICE_UTC_OFFSET_MS;
+  return { todayTs, tomorrowTs: todayTs + DAY_MS };
+}

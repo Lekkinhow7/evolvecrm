@@ -402,13 +402,17 @@ export async function registrarDocumentos(
     if (r.error) warnings.push('falha_ao_gravar_nota')
   }
 
-  // Reenvio: tudo já recebido só refaz o pós-processamento se a tarefa não existe.
-  let executar = saved > 0
+  // Uma tarefa "Analisar documentos" por vez: documento novo reaproveita a que
+  // está aberta. Reenvio de tudo já recebido só refaz o pós-processamento se a
+  // tarefa não existe.
+  const recebeuNovo = saved > 0
   const tudoJaRecebido =
     entrada.files.length > 0 &&
     skipped.length === entrada.files.length &&
     skipped.every((x) => x.reason === 'ja_recebido')
-  if (!executar && tudoJaRecebido) {
+  let executar = recebeuNovo || tudoJaRecebido
+  let tarefaAbertaId: string | null = null
+  if (executar) {
     const aberta = await sb
       .from('activities')
       .select('id')
@@ -421,7 +425,8 @@ export async function registrarDocumentos(
       .limit(1)
       .maybeSingle()
     if (aberta.error) throw aberta.error
-    executar = !aberta.data
+    tarefaAbertaId = (aberta.data?.id as string | undefined) ?? null
+    if (!recebeuNovo && tarefaAbertaId) executar = false
   }
 
   let taskId: string | null = null
@@ -433,22 +438,26 @@ export async function registrarDocumentos(
       .eq('id', negocio.id)
     if (espera.error) warnings.push('falha_ao_atualizar_negocio')
 
-    const tarefa = await sb
-      .from('activities')
-      .insert({
-        organization_id: organizationId,
-        title: `Analisar documentos de ${negocio.nome}`,
-        type: 'TASK',
-        date: prazoAnalise(),
-        completed: false,
-        deal_id: negocio.id,
-        contact_id: negocio.contactId,
-        owner_id: negocio.ownerId ?? (await primeiroAdmin(sb, organizationId)),
-      })
-      .select('id')
-      .single()
-    if (tarefa.error || !tarefa.data) warnings.push('falha_ao_criar_tarefa')
-    else taskId = tarefa.data.id as string
+    if (tarefaAbertaId) {
+      taskId = tarefaAbertaId
+    } else {
+      const tarefa = await sb
+        .from('activities')
+        .insert({
+          organization_id: organizationId,
+          title: `Analisar documentos de ${negocio.nome}`,
+          type: 'TASK',
+          date: prazoAnalise(),
+          completed: false,
+          deal_id: negocio.id,
+          contact_id: negocio.contactId,
+          owner_id: negocio.ownerId ?? (await primeiroAdmin(sb, organizationId)),
+        })
+        .select('id')
+        .single()
+      if (tarefa.error || !tarefa.data) warnings.push('falha_ao_criar_tarefa')
+      else taskId = tarefa.data.id as string
+    }
 
     try {
       const r = await advanceDealToRole(sb, {

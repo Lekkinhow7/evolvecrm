@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { Activity, Deal } from '@/types';
 import { countStalledDeals, getActivityStats, plural } from './sidebarStats';
 
-const now = new Date(2026, 9, 18, 10, 0);
-const at = (d: number, h: number) => new Date(2026, 9, d, h).toISOString();
+// Horários em Brasília (UTC−3), para o teste não depender do fuso da máquina.
+const br = (d: number, h: number) => new Date(Date.UTC(2026, 9, d, h + 3));
+const now = br(18, 10);
+const at = (d: number, h: number) => br(d, h).toISOString();
 const act = (over: Partial<Activity>): Activity => ({
   id: Math.random().toString(36), dealId: 'd', dealTitle: '', type: 'TASK', title: 't',
   date: at(18, 15), user: { name: '', avatar: '' }, completed: false, ...over,

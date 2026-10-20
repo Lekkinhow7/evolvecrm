@@ -194,6 +194,20 @@ describe('registrarDocumentos', () => {
     expect(advanceDealToRole).toHaveBeenCalledOnce()
   })
 
+  it('documento novo com análise já aberta reaproveita a tarefa', async () => {
+    const { sb, inserts } = fakeSb({
+      deals: { maybeSingle: [negocio] },
+      contacts: { maybeSingle: [{ data: { id: 'c-1' } }, { data: { name: 'Maria' } }] },
+      deal_files: { maybeSingle: [{ data: null }] },
+      activities: { maybeSingle: [{ data: { id: 't-aberta' }, error: null }] },
+    })
+    const r = await registrarDocumentos(sb, { organizationId: ORG, phone: '71993042122', files: [pdf] }, fetchOk)
+    expect(r.saved).toBe(1)
+    expect(r.taskId).toBe('t-aberta')
+    expect(inserts.filter((i) => i.table === 'activities')).toHaveLength(0)
+    expect(advanceDealToRole).toHaveBeenCalled()
+  })
+
   it('erro ao zerar awaiting_documents vira aviso', async () => {
     const { sb } = fakeSb({
       deals: { maybeSingle: [negocio], insertError: { message: 'x' } },

@@ -2536,6 +2536,7 @@ export default function DealCockpitClient({ dealId }: { dealId?: string }) {
         }}
         onSave={(data) => void handleScheduleSave(data)}
         contactName={contact?.name || 'Contato'}
+        dealId={selectedDeal?.id}
         initialType={scheduleInitial?.type}
         initialTitle={scheduleInitial?.title}
         initialDescription={scheduleInitial?.description}

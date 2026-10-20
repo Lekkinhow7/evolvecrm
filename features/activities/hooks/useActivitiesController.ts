@@ -15,6 +15,7 @@ import { useContacts, useCompanies } from '@/lib/query/hooks/useContactsQuery';
 import { useRealtimeSync } from '@/lib/realtime/useRealtimeSync';
 import { toLocalDateInput } from '@/lib/utils/localDate';
 import { isRecordActivity } from '@/components/navigation/sidebarStats';
+import { officeDayBounds } from '@/lib/utils/brTime';
 
 /** Tipos aceitos no `?tipo=` da URL (os mesmos do filtro de tipo da tela). */
 const URL_TYPES: Activity['type'][] = ['CALL', 'MEETING', 'EMAIL', 'TASK'];
@@ -90,13 +91,8 @@ export const useActivitiesController = (options?: { initialView?: 'list' | 'cale
   const contactsById = useMemo(() => new Map(contacts.map((c) => [c.id, c])), [contacts]);
 
   // Performance: compute date boundaries once per render (used inside memoized filters).
-  const dateBoundaries = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return { todayTs: today.getTime(), tomorrowTs: tomorrow.getTime() };
-  }, []);
+  // "Hoje" no horário de Brasília (mesma regra do menu lateral).
+  const dateBoundaries = useMemo(() => officeDayBounds(), []);
 
   const filteredActivities = useMemo(() => {
     const { todayTs, tomorrowTs } = dateBoundaries;

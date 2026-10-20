@@ -1879,6 +1879,7 @@ export const FocusContextPanel: React.FC<FocusContextPanelProps> = ({
                 }}
                 onSave={handleScheduleSave}
                 contactName={contact?.name || 'Contato'}
+                dealId={deal.id}
                 initialType={scheduleType}
                 initialTitle={schedulePrefill?.title}
                 initialDescription={schedulePrefill?.description}

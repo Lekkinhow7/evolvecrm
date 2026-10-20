@@ -26,6 +26,7 @@ import { useLastMessageByContact } from '@/lib/query/hooks/useMessagingConversat
 import { formatBRL } from '@/lib/utils/brFormat';
 import { daysSince, describeStalledDeal, isDealStalled, lastMovementTs } from './stalledDeals';
 import { isRecordActivity } from '@/components/navigation/sidebarStats';
+import { officeDayBounds } from '@/lib/utils/brTime';
 
 const EMPTY_LAST_MESSAGES = new Map<string, number>();
 
@@ -102,18 +103,6 @@ export const useInboxController = () => {
   const isLoading = activitiesLoading || contactsLoading || dealsLoading;
 
   // --- Datas de referência ---
-  const today = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-
-  const tomorrow = useMemo(() => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + 1);
-    return d;
-  }, [today]);
-
   const sevenDaysAgo = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
@@ -135,8 +124,8 @@ export const useInboxController = () => {
     const todayList: Array<{ a: Activity; ts: number }> = [];
     const upcoming: Array<{ a: Activity; ts: number }> = [];
 
-    const todayTs = today.getTime();
-    const tomorrowTs = tomorrow.getTime();
+    // "Hoje" no horário de Brasília (mesma regra do menu lateral).
+    const { todayTs, tomorrowTs } = officeDayBounds();
 
     for (const a of activities) {
       if (a.completed) continue;
@@ -151,7 +140,7 @@ export const useInboxController = () => {
       today: todayList.toSorted((x, y) => x.ts - y.ts).map(x => x.a),
       upcoming: upcoming.toSorted((x, y) => x.ts - y.ts).map(x => x.a),
     };
-  }, [activities, today, tomorrow]);
+  }, [activities]);
 
   // --- Atividades Filtradas ---
   const overdueActivities = activityBuckets.overdue;

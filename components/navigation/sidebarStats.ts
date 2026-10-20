@@ -1,4 +1,5 @@
 import type { Activity, Deal } from '@/types';
+import { officeDayBounds } from '@/lib/utils/brTime';
 
 /** Reunião e ligação contam como compromisso. */
 const APPOINTMENT_TYPES: Activity['type'][] = ['MEETING', 'CALL'];
@@ -22,12 +23,8 @@ export interface ActivityStats {
 }
 
 export function getActivityStats(activities: Activity[], now: Date = new Date()): ActivityStats {
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const todayTs = today.getTime();
-  const tomorrowTs = tomorrow.getTime();
+  // "Hoje" é o dia em Brasília, seja qual for o fuso do computador.
+  const { todayTs, tomorrowTs } = officeDayBounds(now);
 
   const stats: ActivityStats = { todayAppointments: 0, todayTasks: 0, todayTotal: 0, overdue: 0 };
   for (const a of activities) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { officeDateParts } from './brTime';
+import { officeDateParts, officeDayBounds } from './brTime';
 
 describe('officeDateParts', () => {
   it('converte o instante para o horário de Brasília', () => {
@@ -13,5 +13,14 @@ describe('officeDateParts', () => {
 
   it('meia-noite vira hora 0', () => {
     expect(officeDateParts('2026-10-20T03:00:00Z').hour).toBe(0);
+  });
+});
+
+describe('officeDayBounds', () => {
+  it('dia de hoje em Brasília vai de 03:00 a 03:00 UTC', () => {
+    // 01:30 UTC de 21/10 ainda é dia 20 em Brasília
+    const { todayTs, tomorrowTs } = officeDayBounds(new Date('2026-10-21T01:30:00Z'));
+    expect(new Date(todayTs).toISOString()).toBe('2026-10-20T03:00:00.000Z');
+    expect(new Date(tomorrowTs).toISOString()).toBe('2026-10-21T03:00:00.000Z');
   });
 });

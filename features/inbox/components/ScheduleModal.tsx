@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Phone, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { NovaReuniaoModal } from '@/features/activities/components/NovaReuniaoModal';
 
 export type ScheduleType = 'CALL' | 'MEETING' | 'TASK';
 
@@ -13,6 +14,8 @@ interface ScheduleModalProps {
     initialDescription?: string;
     initialDate?: string; // YYYY-MM-DD
     initialTime?: string; // HH:mm
+    /** Negócio da reunião: reunião é marcada nos horários livres da agenda, não com data livre. */
+    dealId?: string;
 }
 
 export interface ScheduleData {
@@ -65,6 +68,7 @@ export function ScheduleModal({
     initialDescription,
     initialDate,
     initialTime,
+    dealId,
 }: ScheduleModalProps) {
     const [type, setType] = useState<ScheduleType>(initialType);
     const [title, setTitle] = useState('');
@@ -73,12 +77,14 @@ export function ScheduleModal({
     const [time, setTime] = useState('10:00');
     const [isSaving, setIsSaving] = useState(false);
     const [titleTouched, setTitleTouched] = useState(false);
+    const [showSlots, setShowSlots] = useState(false);
 
     // Reset form when modal opens
     useEffect(() => {
         if (!isOpen) return;
 
         setTitleTouched(false);
+        setShowSlots(false);
         setType(initialType);
 
         const defaultTitle = typeConfig[initialType].label + ' com ' + contactName;
@@ -128,7 +134,20 @@ export function ScheduleModal({
 
     if (!isOpen) return null;
 
-    const config = typeConfig[type];
+    if (showSlots) {
+        return (
+            <NovaReuniaoModal
+                open
+                dealId={dealId}
+                onClose={() => {
+                    setShowSlots(false);
+                    onClose();
+                }}
+            />
+        );
+    }
+
+    const isMeeting = type === 'MEETING';
 
     return (
         <div className="fixed inset-0 md:left-[var(--app-sidebar-width,0px)] z-[9999] flex items-center justify-center">
@@ -201,6 +220,12 @@ export function ScheduleModal({
                         />
                     </div>
 
+                    {isMeeting ? (
+                        <p className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300">
+                            Reunião é marcada num horário livre da agenda. Ela vai para a agenda do escritório e o cliente recebe a confirmação.
+                        </p>
+                    ) : (
+                    <>
                     {/* Date and Time */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -257,6 +282,8 @@ export function ScheduleModal({
                             placeholder="Notas adicionais..."
                         />
                     </div>
+                    </>
+                    )}
                 </div>
 
                 {/* Footer */}
@@ -267,6 +294,15 @@ export function ScheduleModal({
                     >
                         Cancelar
                     </button>
+                    {isMeeting ? (
+                    <button
+                        onClick={() => setShowSlots(true)}
+                        className="flex-1 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                        <Calendar size={16} />
+                        Escolher horário livre
+                    </button>
+                    ) : (
                     <button
                         onClick={handleSave}
                         disabled={!title.trim() || !date || isSaving}
@@ -279,6 +315,7 @@ export function ScheduleModal({
                         )}
                         Agendar
                     </button>
+                    )}
                 </div>
             </div>
         </div>
