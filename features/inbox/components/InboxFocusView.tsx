@@ -372,8 +372,8 @@ export const InboxFocusView: React.FC<InboxFocusViewProps> = ({
   // Título e descrição
   const title = activity?.title || suggestion?.title || '';
   const description = activity?.description || suggestion?.description || '';
-  const context = activity?.dealTitle || suggestion?.data.deal?.companyName || suggestion?.data.contact?.name || '';
-  const value = suggestion?.data.deal?.value;
+  // Sugestões já trazem contato, etapa e valor na descrição.
+  const context = activity?.dealTitle || '';
 
   // Horário (se for reunião/call)
   const isMeeting = activity?.type === 'MEETING' || activity?.type === 'CALL';
@@ -416,7 +416,7 @@ export const InboxFocusView: React.FC<InboxFocusViewProps> = ({
       {/* Descrição */}
       {description && (
         <p className="text-slate-500 dark:text-slate-400 text-center mb-4 max-w-md">
-          "{description}"
+          {activity ? `"${description}"` : description}
         </p>
       )}
 
@@ -425,13 +425,6 @@ export const InboxFocusView: React.FC<InboxFocusViewProps> = ({
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 mb-2">
           <Building2 size={16} className="text-slate-400" />
           <span>{context}</span>
-        </div>
-      )}
-
-      {/* Valor (se houver) */}
-      {value && (
-        <div className="text-lg font-bold text-green-600 dark:text-green-400 mb-6">
-          R$ {value.toLocaleString('pt-BR')}
         </div>
       )}
 
