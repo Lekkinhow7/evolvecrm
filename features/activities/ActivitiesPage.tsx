@@ -55,6 +55,23 @@ export const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ initialView, tit
 
     const { addToast } = useToast();
     const [reuniaoAberta, setReuniaoAberta] = useState<Activity | null>(null);
+    const [reuniaoDealId, setReuniaoDealId] = useState<string | undefined>(undefined);
+
+    // Reunião da agenda (com agendamento no n8n) abre o detalhe, não o formulário genérico.
+    const abrirAtividade = (activity: Activity) => {
+        if (activity.type === 'MEETING' && activity.externalRef) {
+            setReuniaoAberta(activity);
+            return;
+        }
+        handleEditActivity(activity);
+    };
+
+    // Tipo "Reunião" no formulário de atividade nova troca para a marcação pelos horários livres.
+    const trocarParaNovaReuniao = (dealId?: string) => {
+        setIsModalOpen(false);
+        setReuniaoDealId(dealId);
+        setIsMeetingModalOpen(true);
+    };
     const [selectedActivities, setSelectedActivities] = useState<Set<string>>(new Set());
 
     const handleSelectActivity = (id: string, selected: boolean) => {
@@ -112,7 +129,7 @@ export const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ initialView, tit
                         contacts={contacts}
                         companies={companies}
                         onToggleComplete={handleToggleComplete}
-                        onEdit={handleEditActivity}
+                        onEdit={abrirAtividade}
                         onDelete={handleDeleteActivity}
                         selectedActivities={selectedActivities}
                         onSelectActivity={handleSelectActivity}
@@ -137,9 +154,17 @@ export const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ initialView, tit
                 setFormData={setFormData}
                 editingActivity={editingActivity}
                 deals={deals}
+                onEscolherReuniao={trocarParaNovaReuniao}
             />
 
-            <NovaReuniaoModal open={isMeetingModalOpen} onClose={() => setIsMeetingModalOpen(false)} />
+            <NovaReuniaoModal
+                open={isMeetingModalOpen}
+                dealId={reuniaoDealId}
+                onClose={() => {
+                    setIsMeetingModalOpen(false);
+                    setReuniaoDealId(undefined);
+                }}
+            />
 
             {reuniaoAberta && (
                 <ReuniaoDetalhe

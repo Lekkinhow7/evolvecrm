@@ -5,6 +5,7 @@ import { useBoardsController } from './hooks/useBoardsController';
 import { PipelineView } from './components/PipelineView';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { useFirstVisit } from '@/hooks/useFirstVisit';
+import { NovaReuniaoModal } from '@/features/activities/components/NovaReuniaoModal';
 
 /**
  * Componente React `BoardsPage`.
@@ -47,6 +48,12 @@ export const BoardsPage: React.FC = () => {
     return (
         <>
             <PipelineView {...controller} />
+
+            <NovaReuniaoModal
+                open={!!controller.reuniaoDealId}
+                dealId={controller.reuniaoDealId ?? undefined}
+                onClose={() => controller.setReuniaoDealId(null)}
+            />
 
             <OnboardingModal
                 isOpen={showOnboarding}

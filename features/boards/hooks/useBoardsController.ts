@@ -307,6 +307,8 @@ export const useBoardsController = () => {
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [openActivityMenuId, setOpenActivityMenuId] = useState<string | null>(null);
+  // Negócio cuja reunião vai ser marcada pelos horários livres (atalho do card).
+  const [reuniaoDealId, setReuniaoDealId] = useState<string | null>(null);
 
   // Loss Reason Modal State
   const [lossReasonModal, setLossReasonModal] = useState<{
@@ -589,6 +591,12 @@ export const useBoardsController = () => {
     type: 'CALL' | 'MEETING' | 'EMAIL',
     dealTitle: string
   ) => {
+    // Reunião não é criada solta: abre a marcação pelos horários livres da agenda.
+    if (type === 'MEETING') {
+      setReuniaoDealId(dealId);
+      setOpenActivityMenuId(null);
+      return;
+    }
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(10, 0, 0, 0);
@@ -887,6 +895,8 @@ export const useBoardsController = () => {
     setIsCreateModalOpen,
     openActivityMenuId,
     setOpenActivityMenuId,
+    reuniaoDealId,
+    setReuniaoDealId,
     filteredDeals,
     customFieldDefinitions,
     isLoading,

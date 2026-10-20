@@ -19,6 +19,11 @@ interface ActivityFormModalProps {
   setFormData: (data: ActivityFormData) => void;
   editingActivity: Activity | null;
   deals: Deal[];
+  /**
+   * Atividade nova do tipo "Reunião" não é criada aqui: a reunião sai dos horários
+   * livres da agenda. Recebe o negócio já escolhido (se houver).
+   */
+  onEscolherReuniao?: (dealId?: string) => void;
 }
 
 /**
@@ -51,6 +56,7 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
   setFormData,
   editingActivity,
   deals,
+  onEscolherReuniao,
 }) => {
   React.useEffect(() => {
     if (!isOpen) return;
@@ -106,9 +112,14 @@ export const ActivityFormModal: React.FC<ActivityFormModalProps> = ({
               <select
                 className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500"
                 value={formData.type}
-                onChange={e =>
-                  setFormData({ ...formData, type: e.target.value as Activity['type'] })
-                }
+                onChange={e => {
+                  const type = e.target.value as Activity['type'];
+                  if (type === 'MEETING' && !editingActivity && onEscolherReuniao) {
+                    onEscolherReuniao(formData.dealId || undefined);
+                    return;
+                  }
+                  setFormData({ ...formData, type });
+                }}
               >
                 <option value="CALL">Ligação</option>
                 <option value="MEETING">Reunião</option>
