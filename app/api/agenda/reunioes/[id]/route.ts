@@ -7,17 +7,22 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createStaticAdminClient } from '@/lib/supabase/staticAdminClient'
 import { chamarAgendaNoN8n } from '@/lib/agenda/n8n'
-import { cancelarReuniao, registrarReuniao } from '@/lib/agenda/reunioes'
+import { cancelarReuniao, completedDaSituacao, registrarReuniao } from '@/lib/agenda/reunioes'
 import {
   DatasDaReuniao,
   autenticarRotaInterna,
   fimDepoisDoInicio,
   respostaFalhaAoGravar,
   respostaFalhaN8n,
+  respostaMarcadaSemRegistro,
 } from '@/lib/agenda/rotaInterna'
 
 const Corpo = z.discriminatedUnion('acao', [
-  DatasDaReuniao.extend({ acao: z.literal('remarcar') }),
+  DatasDaReuniao.extend({
+    acao: z.literal('remarcar'),
+    formato: z.enum(['online', 'presencial']).optional(),
+    pedido_id: z.string().uuid().optional(),
+  }),
   z.object({ acao: z.literal('cancelar') }),
   z.object({ acao: z.literal('status'), status: z.enum(['realizada', 'nao_compareceu']) }),
 ])
@@ -46,7 +51,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   if (corpo.acao === 'status') {
     const { error } = await auth.sb
       .from('activities')
-      .update({ meeting_status: corpo.status })
+      .update({ meeting_status: corpo.status, completed: completedDaSituacao(corpo.status) })
       .eq('organization_id', auth.organizationId)
       .eq('id', id)
     if (error) return respostaFalhaAoGravar(error)
@@ -58,31 +63,48 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: 'Essa reunião não veio do agendamento.', code: 'SEM_AGENDAMENTO' }, { status: 422 })
   }
 
-  try {
-    if (corpo.acao === 'cancelar') {
+  if (corpo.acao === 'cancelar') {
+    try {
       await chamarAgendaNoN8n('cancelar_reuniao', { agendamento_id: externalRef })
-      await cancelarReuniao(createStaticAdminClient(), { organizationId: auth.organizationId, externalRef })
-      return NextResponse.json({ ok: true })
+    } catch (e) {
+      return respostaFalhaN8n(e)
     }
+    try {
+      await cancelarReuniao(createStaticAdminClient(), { organizationId: auth.organizationId, externalRef })
+    } catch (e) {
+      return respostaFalhaAoGravar(e)
+    }
+    return NextResponse.json({ ok: true })
+  }
 
-    const r = await chamarAgendaNoN8n<{ ocupado?: boolean; link?: string }>('remarcar_reuniao', {
+  let r: { ocupado?: boolean; link?: string }
+  try {
+    r = await chamarAgendaNoN8n('remarcar_reuniao', {
       agendamento_id: externalRef,
       inicio: corpo.inicio,
       fim: corpo.fim,
+      ...(corpo.formato ? { formato: corpo.formato } : {}),
+      ...(corpo.pedido_id ? { pedido_id: corpo.pedido_id } : {}),
     })
-    if (r?.ocupado) {
-      return NextResponse.json({ error: 'Esse horário já foi ocupado.', code: 'HORARIO_OCUPADO' }, { status: 409 })
-    }
+  } catch (e) {
+    return respostaFalhaN8n(e)
+  }
+  if (r?.ocupado) {
+    return NextResponse.json({ error: 'Esse horário já foi ocupado.', code: 'HORARIO_OCUPADO' }, { status: 409 })
+  }
+  // O n8n já remarcou: falha no CRM não pode pedir para tentar de novo.
+  try {
     await registrarReuniao(createStaticAdminClient(), {
       organizationId: auth.organizationId,
       dealId: (atividade.deal_id as string | null) || undefined,
       startsAt: corpo.inicio,
       endsAt: corpo.fim,
       externalRef,
+      format: corpo.formato,
       meetingUrl: r?.link,
     })
-    return NextResponse.json({ ok: true })
   } catch (e) {
-    return respostaFalhaN8n(e)
+    return respostaMarcadaSemRegistro(e)
   }
+  return NextResponse.json({ ok: true })
 }

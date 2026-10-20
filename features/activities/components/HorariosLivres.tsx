@@ -7,6 +7,12 @@ import type { FreeSlot } from '@/lib/query/hooks/useAgendaQuery';
 export const MSG_SEM_HORARIOS = 'Nenhum horário livre nos próximos 14 dias.';
 export const MSG_AGENDA_FORA = 'Não foi possível falar com a agenda. Tente de novo.';
 export const MSG_HORARIO_OCUPADO = 'Esse horário acabou de ser ocupado. Escolha outro.';
+export const MSG_MARCADA_PENDENTE = 'Reunião marcada. Ela aparece na agenda em instantes.';
+
+/** pedido_id que o n8n usa para não reservar duas vezes (um por abertura do modal ou remarcação). */
+export function novoPedidoId(): string {
+  return crypto.randomUUID();
+}
 
 const TZ = 'America/Sao_Paulo';
 

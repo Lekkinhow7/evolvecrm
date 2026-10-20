@@ -4,7 +4,14 @@ import React, { useState } from 'react';
 import { Badge, Button, Modal, ModalSection } from '@/design-system';
 import { useFreeSlots, useUpdateMeeting, type FreeSlot } from '@/lib/query/hooks/useAgendaQuery';
 import type { Activity } from '@/types';
-import { HorariosLivres, MSG_AGENDA_FORA, MSG_HORARIO_OCUPADO, MSG_SEM_HORARIOS } from './HorariosLivres';
+import {
+  HorariosLivres,
+  MSG_AGENDA_FORA,
+  MSG_HORARIO_OCUPADO,
+  MSG_SEM_HORARIOS,
+  novoPedidoId,
+} from './HorariosLivres';
+import { useOptionalToast } from '@/context/ToastContext';
 import { sanitizeUrl } from '@/lib/utils/sanitize';
 import { useContacts } from '@/lib/query/hooks/useContactsQuery';
 import { useDealsView } from '@/lib/query/hooks/useDealsQuery';
@@ -18,6 +25,8 @@ const quandoFmt = new Intl.DateTimeFormat('pt-BR', {
   minute: '2-digit',
 });
 const horaFmt = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+
+const MSG_REMARCADA_PENDENTE = 'Reunião remarcada. Ela aparece na agenda em instantes.';
 
 const SITUACAO: Record<string, { texto: string; tone: 'info' | 'success' | 'warning' | 'danger' }> = {
   agendada: { texto: 'Agendada', tone: 'info' },
@@ -36,6 +45,8 @@ export const ReuniaoDetalhe: React.FC<Props> = ({ activity, onClose }) => {
   const [remarcando, setRemarcando] = useState(false);
   const [slot, setSlot] = useState<FreeSlot | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [pedidoId, setPedidoId] = useState<string>('');
+  const { addToast } = useOptionalToast();
   const slotsQuery = useFreeSlots(remarcando);
   const { data: contacts = [] } = useContacts();
   const { data: deals = [] } = useDealsView();
@@ -60,7 +71,8 @@ export const ReuniaoDetalhe: React.FC<Props> = ({ activity, onClose }) => {
   const executar = async (corpo: Parameters<typeof update.mutateAsync>[0]) => {
     setErro(null);
     try {
-      await update.mutateAsync(corpo);
+      const resposta = await update.mutateAsync(corpo);
+      if (resposta?.pendente) addToast(MSG_REMARCADA_PENDENTE, 'success');
       onClose();
     } catch (e) {
       if ((e as { code?: string })?.code === 'HORARIO_OCUPADO') {
@@ -73,7 +85,9 @@ export const ReuniaoDetalhe: React.FC<Props> = ({ activity, onClose }) => {
     }
   };
 
-  const slots = slotsQuery.data ?? [];
+  // Remarcar só oferece horários do mesmo formato da reunião.
+  const formato = activity.meetingFormat;
+  const slots = (slotsQuery.data ?? []).filter((s) => !formato || !s.formato || s.formato === formato);
 
   return (
     <Modal
@@ -99,7 +113,17 @@ export const ReuniaoDetalhe: React.FC<Props> = ({ activity, onClose }) => {
             </Button>
             <Button
               disabled={!slot || update.isPending || slotsQuery.isError}
-              onClick={() => slot && executar({ id: activity.id, acao: 'remarcar', inicio: slot.inicio, fim: slot.fim })}
+              onClick={() =>
+                slot &&
+                executar({
+                  id: activity.id,
+                  acao: 'remarcar',
+                  inicio: slot.inicio,
+                  fim: slot.fim,
+                  ...(formato ? { formato } : {}),
+                  ...(pedidoId ? { pedido_id: pedidoId } : {}),
+                })
+              }
             >
               Confirmar novo horário
             </Button>
@@ -112,7 +136,14 @@ export const ReuniaoDetalhe: React.FC<Props> = ({ activity, onClose }) => {
             <Button variant="secondary" disabled={update.isPending} onClick={() => executar({ id: activity.id, acao: 'status', status: 'nao_compareceu' })}>
               Não compareceu
             </Button>
-            <Button variant="outline" disabled={update.isPending} onClick={() => setRemarcando(true)}>
+            <Button
+              variant="outline"
+              disabled={update.isPending}
+              onClick={() => {
+                setPedidoId(novoPedidoId());
+                setRemarcando(true);
+              }}
+            >
               Remarcar
             </Button>
             <Button variant="ghost" disabled={update.isPending} onClick={() => executar({ id: activity.id, acao: 'cancelar' })}>

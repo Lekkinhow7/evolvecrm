@@ -5,7 +5,12 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { chamarAgendaNoN8n } from '@/lib/agenda/n8n'
-import { autenticarRotaInterna, respostaFalhaAoGravar, respostaFalhaN8n } from '@/lib/agenda/rotaInterna'
+import {
+  autenticarRotaInterna,
+  contatoDoNegocio,
+  respostaFalhaAoGravar,
+  respostaFalhaN8n,
+} from '@/lib/agenda/rotaInterna'
 
 const Corpo = z.object({ deal_id: z.string().min(1) })
 
@@ -18,15 +23,16 @@ export async function POST(request: Request) {
 
   const { data: negocio } = await auth.sb
     .from('deals')
-    .select('id')
+    .select('id, contact_id')
     .eq('organization_id', auth.organizationId)
     .eq('id', deal_id)
     .is('deleted_at', null)
     .maybeSingle()
   if (!negocio) return NextResponse.json({ error: 'Negócio não encontrado' }, { status: 404 })
+  const contato = await contatoDoNegocio(auth.sb, auth.organizationId, negocio.contact_id as string | null)
 
   try {
-    await chamarAgendaNoN8n('pedir_documentos', { deal_id })
+    await chamarAgendaNoN8n('pedir_documentos', { deal_id, ...contato })
   } catch (e) {
     return respostaFalhaN8n(e)
   }

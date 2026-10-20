@@ -11,6 +11,8 @@ vi.mock('@/lib/query/hooks/useAgendaQuery', () => ({
   useFreeSlots: () => slotsState,
   useScheduleMeeting: () => ({ mutateAsync, isPending: false }),
 }));
+const addToast = vi.fn();
+vi.mock('@/context/ToastContext', () => ({ useOptionalToast: () => ({ addToast }) }));
 vi.mock('@/lib/query/hooks/useDealsQuery', () => ({
   useDealsView: () => ({
     data: [
@@ -66,9 +68,41 @@ describe('NovaReuniaoModal', () => {
         inicio: SLOTS[0].inicio,
         fim: SLOTS[0].fim,
         formato: 'online',
+        pedido_id: expect.stringMatching(/^[0-9a-f-]{36}$/),
       }),
     );
     await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(addToast).not.toHaveBeenCalled();
+  });
+
+  it('n8n marcou mas o CRM não registrou: avisa que aparece em instantes e fecha', async () => {
+    mutateAsync.mockResolvedValue({ ok: true, pendente: true, code: 'MARCADA_SEM_REGISTRO' });
+    const onClose = vi.fn();
+    render(<NovaReuniaoModal open onClose={onClose} dealId="d1" />);
+    fireEvent.click(screen.getAllByText('10:00')[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Marcar reunião' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(addToast).toHaveBeenCalledWith('Reunião marcada. Ela aparece na agenda em instantes.', 'success');
+  });
+
+  it('repetir depois de falha usa o mesmo pedido_id; nova abertura gera outro', async () => {
+    mutateAsync.mockRejectedValueOnce(Object.assign(new Error('fora'), { code: 'N8N_INDISPONIVEL', status: 502 }));
+    mutateAsync.mockResolvedValue({ ok: true });
+    const { rerender } = render(<NovaReuniaoModal open onClose={vi.fn()} dealId="d1" />);
+    fireEvent.click(screen.getAllByText('10:00')[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Marcar reunião' }));
+    await screen.findByText('Não foi possível falar com a agenda. Tente de novo.');
+    fireEvent.click(screen.getAllByText('10:00')[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Marcar reunião' }));
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(2));
+    const [a, b] = mutateAsync.mock.calls.map((c) => c[0].pedido_id);
+    expect(a).toBe(b);
+    rerender(<NovaReuniaoModal open={false} onClose={vi.fn()} dealId="d1" />);
+    rerender(<NovaReuniaoModal open onClose={vi.fn()} dealId="d1" />);
+    fireEvent.click(screen.getAllByText('10:00')[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Marcar reunião' }));
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(3));
+    expect(mutateAsync.mock.calls[2][0].pedido_id).not.toBe(a);
   });
 
   it('409 mostra aviso e recarrega a lista', async () => {

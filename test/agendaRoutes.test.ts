@@ -32,7 +32,8 @@ function fakeSb() {
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn(async () => fakeSb()) }))
 vi.mock('@/lib/supabase/staticAdminClient', () => ({ createStaticAdminClient: vi.fn(() => ({ admin: true })) }))
-vi.mock('@/lib/agenda/reunioes', () => ({
+vi.mock('@/lib/agenda/reunioes', async () => ({
+  ...(await vi.importActual<typeof import('@/lib/agenda/reunioes')>('@/lib/agenda/reunioes')),
   registrarReuniao: vi.fn(async () => ({ activityId: 'act-1', dealId: 'd1', contactId: 'c1', reused: false, warnings: [] })),
   cancelarReuniao: vi.fn(async () => 'act-1'),
 }))
@@ -213,7 +214,7 @@ describe('PATCH /api/agenda/reunioes/[id]', () => {
     expect(r.status).toBe(200)
     expect(n8n).not.toHaveBeenCalled()
     const u = state.updates.find((x) => x.table === 'activities')!
-    expect(u.row).toEqual({ meeting_status: 'realizada' })
+    expect(u.row).toEqual({ meeting_status: 'realizada', completed: true })
     expect(u.eqs).toContainEqual(['organization_id', ORG])
     expect(u.eqs).toContainEqual(['id', 'a1'])
   })
@@ -234,7 +235,7 @@ describe('POST /api/agenda/pedir-documentos', () => {
     n8n.mockResolvedValue({ ok: true })
     const r = await pedirDocs(json('POST', { deal_id: 'd1' }))
     expect(r.status).toBe(200)
-    expect(n8n).toHaveBeenCalledWith('pedir_documentos', { deal_id: 'd1' })
+    expect(n8n).toHaveBeenCalledWith('pedir_documentos', { deal_id: 'd1', contact_id: null, phone: null, name: null })
     const u = state.updates.find((x) => x.table === 'deals')!
     expect(u.row).toEqual({ awaiting_documents: true })
     expect(u.eqs).toContainEqual(['organization_id', ORG])
@@ -258,5 +259,103 @@ describe('POST /api/agenda/pedir-documentos', () => {
     const r = await pedirDocs(json('POST', { deal_id: 'd1' }))
     expect(r.status).toBe(500)
     expect((await r.json()).code).toBe('FALHA_AO_GRAVAR')
+  })
+})
+
+describe('revisão final: rotas internas', () => {
+  const PEDIDO = '0b6f1c1e-6a7d-4c5e-9f0a-1b2c3d4e5f60'
+  const corpo = { deal_id: 'd1', inicio: '2026-11-01T10:00:00-03:00', fim: '2026-11-01T11:00:00-03:00', formato: 'online' }
+
+  it('agendar_reuniao manda contato do negócio e pedido_id', async () => {
+    state.queues.deals = [{ id: 'd1', contact_id: 'c1' }]
+    state.queues.contacts = [{ id: 'c1', name: 'Maria', phone: '+5571999990000' }]
+    n8n.mockResolvedValue({ agendamento_id: 'ag-9' })
+    const r = await criar(json('POST', { ...corpo, pedido_id: PEDIDO }))
+    expect(r.status).toBe(200)
+    expect(n8n).toHaveBeenCalledWith('agendar_reuniao', {
+      deal_id: 'd1',
+      contact_id: 'c1',
+      phone: '+5571999990000',
+      name: 'Maria',
+      inicio: corpo.inicio,
+      fim: corpo.fim,
+      formato: 'online',
+      pedido_id: PEDIDO,
+    })
+    const s = state.selects.find((x) => x.table === 'contacts')!
+    expect(s.eqs).toContainEqual(['organization_id', ORG])
+  })
+
+  it('n8n marcou e o CRM falhou: 202 pendente MARCADA_SEM_REGISTRO', async () => {
+    state.queues.deals = [{ id: 'd1' }]
+    n8n.mockResolvedValue({ agendamento_id: 'ag-9' })
+    vi.mocked(registrarReuniao).mockRejectedValueOnce(new Error('db'))
+    const r = await criar(json('POST', corpo))
+    expect(r.status).toBe(202)
+    expect(await r.json()).toEqual({ ok: true, pendente: true, code: 'MARCADA_SEM_REGISTRO' })
+  })
+
+  it('pedido_id que não é UUID: 400', async () => {
+    state.queues.deals = [{ id: 'd1' }]
+    expect((await criar(json('POST', { ...corpo, pedido_id: 'x' }))).status).toBe(400)
+    expect(n8n).not.toHaveBeenCalled()
+  })
+
+  it('pedir_documentos manda contato do negócio', async () => {
+    state.queues.deals = [{ id: 'd1', contact_id: 'c1' }]
+    state.queues.contacts = [{ id: 'c1', name: 'Maria', phone: '+5571999990000' }]
+    n8n.mockResolvedValue({ ok: true })
+    await pedirDocs(json('POST', { deal_id: 'd1' }))
+    expect(n8n).toHaveBeenCalledWith('pedir_documentos', {
+      deal_id: 'd1',
+      contact_id: 'c1',
+      phone: '+5571999990000',
+      name: 'Maria',
+    })
+  })
+
+  describe('PATCH', () => {
+    beforeEach(() => {
+      state.queues.activities = [{ external_ref: 'ag-1', deal_id: 'd1' }]
+    })
+    const remarcar = { acao: 'remarcar', inicio: '2026-11-02T10:00:00-03:00', fim: '2026-11-02T11:00:00-03:00' }
+
+    it('status nao_compareceu fecha a atividade', async () => {
+      await alterar(json('PATCH', { acao: 'status', status: 'nao_compareceu' }), ctx('a1'))
+      expect(state.updates.find((x) => x.table === 'activities')!.row).toEqual({
+        meeting_status: 'nao_compareceu',
+        completed: true,
+      })
+    })
+
+    it('remarcar manda formato e pedido_id ao n8n e formato ao registro', async () => {
+      n8n.mockResolvedValue({ ok: true })
+      const r = await alterar(json('PATCH', { ...remarcar, formato: 'presencial', pedido_id: PEDIDO }), ctx('a1'))
+      expect(r.status).toBe(200)
+      expect(n8n).toHaveBeenCalledWith('remarcar_reuniao', {
+        agendamento_id: 'ag-1',
+        inicio: remarcar.inicio,
+        fim: remarcar.fim,
+        formato: 'presencial',
+        pedido_id: PEDIDO,
+      })
+      expect(registrarReuniao).toHaveBeenCalledWith({ admin: true }, expect.objectContaining({ format: 'presencial' }))
+    })
+
+    it('n8n remarcou e o CRM falhou: 202 pendente', async () => {
+      n8n.mockResolvedValue({ ok: true })
+      vi.mocked(registrarReuniao).mockRejectedValueOnce(new Error('db'))
+      const r = await alterar(json('PATCH', remarcar), ctx('a1'))
+      expect(r.status).toBe(202)
+      expect((await r.json()).code).toBe('MARCADA_SEM_REGISTRO')
+    })
+
+    it('n8n cancelou e o CRM falhou: 500 FALHA_AO_GRAVAR', async () => {
+      n8n.mockResolvedValue({ ok: true })
+      vi.mocked(cancelarReuniao).mockRejectedValueOnce(new Error('db'))
+      const r = await alterar(json('PATCH', { acao: 'cancelar' }), ctx('a1'))
+      expect(r.status).toBe(500)
+      expect((await r.json()).code).toBe('FALHA_AO_GRAVAR')
+    })
   })
 })

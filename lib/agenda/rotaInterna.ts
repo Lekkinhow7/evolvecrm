@@ -52,3 +52,33 @@ export function respostaFalhaAoGravar(erro: unknown) {
     { status: 500 },
   )
 }
+
+/**
+ * O n8n já marcou (ou remarcou) mas o CRM não conseguiu registrar. Não é para
+ * tentar de novo (reservaria duas vezes): a reunião chega pela porta pública.
+ */
+export function respostaMarcadaSemRegistro(erro: unknown) {
+  console.error('[agenda] n8n marcou mas o CRM não registrou', erro)
+  return NextResponse.json({ ok: true, pendente: true, code: 'MARCADA_SEM_REGISTRO' }, { status: 202 })
+}
+
+/** Contato do negócio para o n8n saber com quem falar (campos nulos se não houver). */
+export async function contatoDoNegocio(
+  sb: Awaited<ReturnType<typeof createClient>>,
+  organizationId: string,
+  contactId: string | null,
+): Promise<{ contact_id: string | null; phone: string | null; name: string | null }> {
+  if (!contactId) return { contact_id: null, phone: null, name: null }
+  const { data } = await sb
+    .from('contacts')
+    .select('id, name, phone')
+    .eq('organization_id', organizationId)
+    .eq('id', contactId)
+    .is('deleted_at', null)
+    .maybeSingle()
+  return {
+    contact_id: contactId,
+    phone: (data?.phone as string | null) || null,
+    name: (data?.name as string | null) || null,
+  }
+}

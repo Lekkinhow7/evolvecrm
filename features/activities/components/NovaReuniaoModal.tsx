@@ -4,7 +4,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, ChipGroup, Modal, ModalSection, SearchInput } from '@/design-system';
 import { useFreeSlots, useScheduleMeeting, type FreeSlot, type MeetingFormat } from '@/lib/query/hooks/useAgendaQuery';
 import { useDealsView } from '@/lib/query/hooks/useDealsQuery';
-import { HorariosLivres, MSG_AGENDA_FORA, MSG_HORARIO_OCUPADO, MSG_SEM_HORARIOS } from './HorariosLivres';
+import { useOptionalToast } from '@/context/ToastContext';
+import {
+  HorariosLivres,
+  MSG_AGENDA_FORA,
+  MSG_HORARIO_OCUPADO,
+  MSG_MARCADA_PENDENTE,
+  MSG_SEM_HORARIOS,
+  novoPedidoId,
+} from './HorariosLivres';
 
 interface Props {
   open: boolean;
@@ -21,16 +29,19 @@ export const NovaReuniaoModal: React.FC<Props> = ({ open, onClose, dealId }) => 
   const slotsQuery = useFreeSlots(open);
   const schedule = useScheduleMeeting();
   const { data: deals = [] } = useDealsView();
+  const { addToast } = useOptionalToast();
 
   const [busca, setBusca] = useState('');
   const [dealEscolhido, setDealEscolhido] = useState<string | null>(null);
   const [formato, setFormato] = useState<MeetingFormat>('online');
   const [slot, setSlot] = useState<FreeSlot | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [pedidoId, setPedidoId] = useState<string>('');
 
-  // Estado limpo a cada abertura.
+  // Estado limpo a cada abertura (e um pedido_id novo para o n8n).
   useEffect(() => {
     if (open) {
+      setPedidoId(novoPedidoId());
       setBusca('');
       setDealEscolhido(null);
       setFormato('online');
@@ -61,7 +72,14 @@ export const NovaReuniaoModal: React.FC<Props> = ({ open, onClose, dealId }) => 
     if (!negocioId || !slot) return;
     setErro(null);
     try {
-      await schedule.mutateAsync({ deal_id: negocioId, inicio: slot.inicio, fim: slot.fim, formato });
+      const resposta = await schedule.mutateAsync({
+        deal_id: negocioId,
+        inicio: slot.inicio,
+        fim: slot.fim,
+        formato,
+        pedido_id: pedidoId || undefined,
+      });
+      if (resposta?.pendente) addToast(MSG_MARCADA_PENDENTE, 'success');
       setSlot(null);
       setBusca('');
       setDealEscolhido(null);

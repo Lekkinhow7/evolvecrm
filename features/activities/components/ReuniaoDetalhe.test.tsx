@@ -4,9 +4,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const mutateAsync = vi.fn();
+let slotsData: Array<Record<string, string>> = [];
+const addToast = vi.fn();
+vi.mock('@/context/ToastContext', () => ({ useOptionalToast: () => ({ addToast }) }));
 vi.mock('@/lib/query/hooks/useAgendaQuery', () => ({
   useFreeSlots: () => ({
-    data: [{ inicio: '2026-10-22T17:00:00.000Z', fim: '2026-10-22T18:00:00.000Z' }],
+    data: slotsData,
     isLoading: false,
     isError: false,
     error: null,
@@ -45,6 +48,7 @@ describe('ReuniaoDetalhe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mutateAsync.mockResolvedValue({ ok: true });
+    slotsData = [{ inicio: '2026-10-22T17:00:00.000Z', fim: '2026-10-22T18:00:00.000Z' }];
   });
 
   it('online mostra o link e o resumo, com as quatro ações', () => {
@@ -116,7 +120,31 @@ describe('ReuniaoDetalhe', () => {
         acao: 'remarcar',
         inicio: '2026-10-22T17:00:00.000Z',
         fim: '2026-10-22T18:00:00.000Z',
+        formato: 'online',
+        pedido_id: expect.stringMatching(/^[0-9a-f-]{36}$/),
       }),
     );
+  });
+
+  it('remarcar só mostra horários do formato da reunião', () => {
+    slotsData = [
+      { inicio: '2026-10-22T17:00:00.000Z', fim: '2026-10-22T18:00:00.000Z', formato: 'presencial' },
+      { inicio: '2026-10-22T19:00:00.000Z', fim: '2026-10-22T20:00:00.000Z', formato: 'online' },
+    ];
+    render(<ReuniaoDetalhe activity={base} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Remarcar' }));
+    expect(screen.queryByText('14:00')).not.toBeInTheDocument();
+    expect(screen.getByText('16:00')).toBeInTheDocument();
+  });
+
+  it('remarcação pendente no CRM avisa e fecha', async () => {
+    mutateAsync.mockResolvedValue({ ok: true, pendente: true, code: 'MARCADA_SEM_REGISTRO' });
+    const onClose = vi.fn();
+    render(<ReuniaoDetalhe activity={base} onClose={onClose} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Remarcar' }));
+    fireEvent.click(screen.getByText('14:00'));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar novo horário' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(addToast).toHaveBeenCalledWith('Reunião remarcada. Ela aparece na agenda em instantes.', 'success');
   });
 });

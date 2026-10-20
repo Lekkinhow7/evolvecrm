@@ -15,9 +15,19 @@ export interface FreeSlot {
 export type MeetingFormat = 'online' | 'presencial';
 
 export type MeetingUpdate =
-  | { id: string; acao: 'remarcar'; inicio: string; fim: string }
+  | { id: string; acao: 'remarcar'; inicio: string; fim: string; formato?: MeetingFormat; pedido_id?: string }
   | { id: string; acao: 'cancelar' }
   | { id: string; acao: 'status'; status: 'realizada' | 'nao_compareceu' };
+
+/**
+ * Resposta das rotas que passam pelo n8n. `pendente`: o n8n marcou mas o CRM
+ * ainda não registrou (código MARCADA_SEM_REGISTRO); não tentar de novo.
+ */
+export interface RespostaAgenda {
+  ok: boolean;
+  pendente?: boolean;
+  code?: string;
+}
 
 /** Erro de rota da agenda, com o código devolvido pela API (ex.: HORARIO_OCUPADO). */
 export class AgendaApiError extends Error {
@@ -60,13 +70,13 @@ export const useFreeSlots = (enabled: boolean) =>
 export const useScheduleMeeting = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { deal_id: string; inicio: string; fim: string; formato: MeetingFormat }) => {
+    mutationFn: async (input: { deal_id: string; inicio: string; fim: string; formato: MeetingFormat; pedido_id?: string }) => {
       const res = await fetch('/api/agenda/reunioes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
-      return lerResposta<{ ok: boolean; reuniao_id: string }>(res);
+      return lerResposta<RespostaAgenda & { reuniao_id?: string }>(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.activities.all });
@@ -83,7 +93,7 @@ export const useUpdateMeeting = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(corpo),
       });
-      return lerResposta<{ ok: boolean }>(res);
+      return lerResposta<RespostaAgenda>(res);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.activities.all });
