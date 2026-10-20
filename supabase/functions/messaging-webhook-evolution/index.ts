@@ -635,6 +635,9 @@ async function handleMessagesUpsert(
         ? { sent_at: timestamp.toISOString() }
         : { delivered_at: timestamp.toISOString() }),
       sender_name: isFromMe ? null : pushName,
+      // Mensagem enviada pelo celular da equipe: conta como "Equipe" nas métricas
+      // (o que o CRM e a IA enviam já chega com sender_type próprio).
+      ...(isFromMe ? { sender_type: "user" } : {}),
       metadata: {
         evolution_message_id: externalMessageId,
         message_type: data.messageType,

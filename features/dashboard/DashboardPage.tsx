@@ -160,7 +160,7 @@ const DashboardPage: React.FC = () => {
             <DashboardMetric
               label="Valor médio por cliente"
               value={formatBRL(avgLTV)}
-              hint="Quanto cada cliente ativo já rendeu, em média."
+              hint="Média dos honorários ganhos por cliente."
             />
           </div>
         </div>

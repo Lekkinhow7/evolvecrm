@@ -2,6 +2,7 @@ import React from 'react';
 import { useDeals } from '@/lib/query/hooks/useDealsQuery';
 import { useContacts } from '@/lib/query/hooks/useContactsQuery';
 import { useBoards, useDefaultBoard } from '@/lib/query/hooks/useBoardsQuery';
+import { averageWonValuePerClient } from './clientValue';
 
 export type PeriodFilter =
   | 'all'
@@ -356,14 +357,12 @@ export const useDashboardMetrics = (period: PeriodFilter = 'this_month', boardId
     const active: typeof allContacts = [];
     const inactive: typeof allContacts = [];
     const churned: typeof allContacts = [];
-    let totalLTV = 0;
     for (const c of allContacts) {
-      totalLTV += c.totalValue || 0;
       if (c.status === 'ACTIVE') active.push(c);
       else if (c.status === 'INACTIVE') inactive.push(c);
       else if (c.status === 'CHURNED') churned.push(c);
     }
-    return { active, inactive, churned, totalLTV };
+    return { active, inactive, churned };
   }, [allContacts]);
 
   const activeContacts = contactsBuckets.active;
@@ -375,7 +374,8 @@ export const useDashboardMetrics = (period: PeriodFilter = 'this_month', boardId
   const inactivePercent = Math.round((inactiveContacts.length / totalContacts) * 100);
   const churnedPercent = Math.round((churnedContacts.length / totalContacts) * 100);
 
-  const avgLTV = activeContacts.length > 0 ? contactsBuckets.totalLTV / activeContacts.length : 0;
+  // Valor médio por cliente: média dos negócios ganhos por cliente (todo o histórico).
+  const avgLTV = React.useMemo(() => averageWonValuePerClient(allDeals), [allDeals]);
 
   // Calculate Stagnant Deals (no stage change > 10 days)
   const tenDaysAgoTs = Date.now() - 10 * 24 * 60 * 60 * 1000;
