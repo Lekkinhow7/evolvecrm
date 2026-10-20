@@ -78,3 +78,20 @@ jobs:
         run: |
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "$TAG" --notes "Pacote do CRM para a VPS. Atualizado a cada push."
           gh release upload "$TAG" crm.tgz --clobber
+
+      # Pede ao EasyPanel para implantar o pacote novo (o mesmo que clicar em "Implantar").
+      # O endereço de deploy do serviço fica num secret do GitHub; sem ele, o passo é pulado.
+      - name: Implanta no EasyPanel
+        env:
+          DEPLOY_URL_ALICE: ${{ secrets.EASYPANEL_DEPLOY_ALICE }}
+          DEPLOY_URL_SUCCAOZERO: ${{ secrets.EASYPANEL_DEPLOY_SUCCAOZERO }}
+        run: |
+          case "$TAG" in
+            vps-alice) URL="$DEPLOY_URL_ALICE" ;;
+            vps-succaozero) URL="$DEPLOY_URL_SUCCAOZERO" ;;
+          esac
+          if [ -z "$URL" ]; then
+            echo "Sem secret de deploy para $TAG: implante pelo EasyPanel."
+            exit 0
+          fi
+          curl -fsS -X POST "$URL" > /dev/null && echo "EasyPanel avisado: implantação iniciada."
