@@ -70,6 +70,13 @@ export interface DbActivity {
   created_at: string;
   /** ID do dono/responsável. */
   owner_id: string | null;
+  ends_at?: string | null;
+  external_ref?: string | null;
+  meeting_status?: string | null;
+  meeting_format?: string | null;
+  meeting_url?: string | null;
+  address?: string | null;
+  source?: string | null;
 }
 
 // Interface auxiliar para o retorno do Supabase com o join
@@ -83,7 +90,7 @@ interface DbActivityWithDeal extends DbActivity {
  * @param db - Atividade no formato do banco.
  * @returns Atividade no formato da aplicação.
  */
-const transformActivity = (db: DbActivityWithDeal): Activity => ({
+export const transformActivity = (db: DbActivityWithDeal): Activity => ({
   id: db.id,
   organizationId: db.organization_id,
   title: db.title,
@@ -96,6 +103,13 @@ const transformActivity = (db: DbActivityWithDeal): Activity => ({
   clientCompanyId: (db as any).client_company_id || undefined,
   participantContactIds: (db as any).participant_contact_ids || [],
   dealTitle: db.deals?.title || '',
+  endsAt: db.ends_at || undefined,
+  externalRef: db.external_ref || undefined,
+  meetingStatus: (db.meeting_status as Activity['meetingStatus']) || undefined,
+  meetingFormat: (db.meeting_format as Activity['meetingFormat']) || undefined,
+  meetingUrl: db.meeting_url || undefined,
+  address: db.address || undefined,
+  source: (db.source as Activity['source']) || undefined,
   user: { name: 'Você', avatar: '' }, // Will be enriched later
 });
 
@@ -105,7 +119,7 @@ const transformActivity = (db: DbActivityWithDeal): Activity => ({
  * @param activity - Atividade parcial no formato da aplicação.
  * @returns Atividade parcial no formato do banco.
  */
-const transformActivityToDb = (activity: Partial<Activity>): Partial<DbActivity> => {
+export const transformActivityToDb = (activity: Partial<Activity>): Partial<DbActivity> => {
   const db: Partial<DbActivity> = {};
 
   if (activity.title !== undefined) db.title = activity.title;
@@ -117,6 +131,13 @@ const transformActivityToDb = (activity: Partial<Activity>): Partial<DbActivity>
   if (activity.contactId !== undefined) db.contact_id = sanitizeUUID(activity.contactId);
   if (activity.clientCompanyId !== undefined) (db as any).client_company_id = sanitizeUUID(activity.clientCompanyId);
   if (activity.participantContactIds !== undefined) (db as any).participant_contact_ids = activity.participantContactIds || [];
+  if (activity.endsAt !== undefined) db.ends_at = activity.endsAt || null;
+  if (activity.externalRef !== undefined) db.external_ref = activity.externalRef || null;
+  if (activity.meetingStatus !== undefined) db.meeting_status = activity.meetingStatus || null;
+  if (activity.meetingFormat !== undefined) db.meeting_format = activity.meetingFormat || null;
+  if (activity.meetingUrl !== undefined) db.meeting_url = activity.meetingUrl || null;
+  if (activity.address !== undefined) db.address = activity.address || null;
+  if (activity.source !== undefined) db.source = activity.source || null;
 
   return db;
 };

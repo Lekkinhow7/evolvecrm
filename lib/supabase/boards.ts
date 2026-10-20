@@ -147,6 +147,8 @@ export interface DbBoardStage {
   is_default: boolean;
   /** Estágio de lifecycle vinculado. */
   linked_lifecycle_stage: string | null;
+  /** Papel especial da etapa (agenda/documentos). */
+  role?: string | null;
   /** Data de criação. */
   created_at: string;
 }
@@ -157,13 +159,14 @@ export interface DbBoardStage {
  * @param db - Estágio no formato do banco.
  * @returns Estágio no formato da aplicação.
  */
-const transformStage = (db: DbBoardStage): BoardStage => ({
+export const transformStage = (db: DbBoardStage): BoardStage => ({
   id: db.id,
   organizationId: db.organization_id,
   boardId: db.board_id,
   label: db.label || db.name, // label pode ser null, usar name como fallback
   color: db.color || 'bg-gray-500',
   linkedLifecycleStage: db.linked_lifecycle_stage || undefined,
+  role: (db.role as BoardStage['role']) || undefined,
 });
 
 /**
@@ -284,7 +287,7 @@ const transformToDb = (board: Omit<Board, 'id' | 'createdAt'>, order?: number): 
  * @param orderNum - Posição na lista.
  * @returns Estágio parcial no formato do banco.
  */
-const transformStageToDb = (
+export const transformStageToDb = (
   stage: BoardStage,
   boardId: string,
   orderNum: number,
@@ -297,6 +300,7 @@ const transformStageToDb = (
   color: stage.color || 'bg-gray-500',
   order: orderNum,
   linked_lifecycle_stage: stage.linkedLifecycleStage || null,
+  role: stage.role || null,
 });
 
 /**
@@ -816,6 +820,7 @@ export const boardsService = {
           color: stage.color || 'bg-gray-500',
           order: nextOrder,
           linked_lifecycle_stage: stage.linkedLifecycleStage || null,
+          role: stage.role || null,
           ...(organizationId ? { organization_id: organizationId } : {}),
         })
         .select()
@@ -840,6 +845,7 @@ export const boardsService = {
       if (updates.linkedLifecycleStage !== undefined) {
         dbUpdates.linked_lifecycle_stage = updates.linkedLifecycleStage || null;
       }
+      if (updates.role !== undefined) dbUpdates.role = updates.role || null;
 
       const { error } = await supabase
         .from('board_stages')

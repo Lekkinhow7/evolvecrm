@@ -241,6 +241,10 @@ export interface Deal {
   customFields?: Record<string, any>; // Dynamic fields storage
   lastStageChangeDate?: string; // For stagnation tracking
   lossReason?: string; // For win/loss analysis
+  /** Deal aguardando documentos do cliente (flag). */
+  awaitingDocuments?: boolean;
+  /** Quantidade de arquivos anexados (agregado deal_files). */
+  documentsCount?: number;
   aiExtracted?: Record<string, any>; // AI-extracted BANT fields (zero config)
 
   // @deprecated - Use clientCompanyId instead
@@ -254,6 +258,10 @@ export interface DealView extends Deal {
   contactEmail: string;
   /** Nome/label do estágio atual (resolvido a partir do status UUID) */
   stageLabel: string;
+  /** Deal aguardando documentos do cliente. */
+  awaitingDocuments: boolean;
+  /** Quantidade de arquivos anexados ao deal. */
+  documentsCount: number;
 
   // @deprecated - Use clientCompanyName instead
   companyName?: string;
@@ -270,6 +278,16 @@ export interface Activity {
   /** IDs dos contatos participantes (opcional). */
   participantContactIds?: string[];
   dealTitle: string;
+  /** Fim da reunião (MEETING). */
+  endsAt?: string;
+  /** Referência externa idempotente (n8n/IA). */
+  externalRef?: string;
+  meetingStatus?: 'agendada' | 'realizada' | 'cancelada' | 'nao_compareceu';
+  meetingFormat?: 'online' | 'presencial';
+  meetingUrl?: string;
+  address?: string;
+  /** Quem criou: IA (n8n) ou equipe. */
+  source?: 'ia' | 'equipe';
   type: 'CALL' | 'MEETING' | 'EMAIL' | 'TASK' | 'NOTE' | 'STATUS_CHANGE';
   title: string;
   description?: string;
@@ -296,6 +314,8 @@ export interface BoardStage {
   label: string;
   color: string;
   linkedLifecycleStage?: string; // ID do LifecycleStage
+  /** Papel especial da etapa na automação da agenda/documentos. */
+  role?: 'reuniao_agendada' | 'analise_documentos';
 }
 
 // Metas do Board (Revenue Ops)

@@ -66,6 +66,8 @@ export const dealsViewQueryFn = async (
       contactName: contact?.name || 'Sem contato',
       contactEmail: contact?.email || '',
       stageLabel: stageMap.get(deal.status) || 'Estágio não identificado',
+      awaitingDocuments: deal.awaitingDocuments ?? false,
+      documentsCount: deal.documentsCount ?? 0,
     };
   });
 };

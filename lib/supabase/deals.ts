@@ -140,6 +140,8 @@ export interface DbDealItem {
  */
 interface DbDealWithItems extends DbDeal {
   deal_items: DbDealItem[];
+  /** Agregado PostgREST: `deal_files(count)`. */
+  deal_files?: { count: number }[] | null;
 }
 
 const transformDeal = (db: DbDeal | DbDealWithItems, items?: DbDealItem[]): Deal => {
@@ -187,6 +189,8 @@ const transformDeal = (db: DbDeal | DbDealWithItems, items?: DbDealItem[]): Deal
     })),
     owner: { name: 'Sem Dono', avatar: '' }, // Will be enriched later
     ownerId: db.owner_id || undefined,
+    awaitingDocuments: (db as { awaiting_documents?: boolean | null }).awaiting_documents ?? false,
+    documentsCount: ('deal_files' in db ? db.deal_files?.[0]?.count : undefined) ?? 0,
   };
 };
 
@@ -267,7 +271,8 @@ export const dealsService = {
         .from('deals')
         .select(`
           *,
-          deal_items (*)
+          deal_items (*),
+          deal_files(count)
         `);
       if (options?.signal) dealsQuery = dealsQuery.abortSignal(options.signal);
       const { data, error } = await dealsQuery
