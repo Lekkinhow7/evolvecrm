@@ -12,7 +12,7 @@ vi.mock('@/lib/agenda/stageRole', () => ({
 
 import { advanceDealToRole } from '@/lib/agenda/stageRole'
 import { resolveBoardIdFromKey } from '@/lib/public-api/resolve'
-import { cancelarReuniao, registrarReuniao, toSaoPauloIso } from './reunioes'
+import { ReuniaoNaoEncontrada, cancelarReuniao, registrarReuniao, toSaoPauloIso } from './reunioes'
 
 type Handlers = Record<string, { maybeSingle?: unknown[]; single?: unknown[] }>
 
@@ -24,7 +24,7 @@ function fakeSb(handlers: Handlers) {
     from(table: string) {
       const h = handlers[table] ?? {}
       const b: any = {}
-      for (const m of ['select', 'eq', 'is', 'order', 'limit']) b[m] = () => b
+      for (const m of ['select', 'eq', 'is', 'in', 'order', 'limit']) b[m] = () => b
       b.insert = (row: any) => {
         inserts.push({ table, row })
         return b
@@ -147,6 +147,92 @@ describe('registrarReuniao', () => {
       externalRef: 'slot-2',
     })
     expect(r.warnings).toContain('falha_ao_mover')
+  })
+})
+
+describe('busca de contato por telefone', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  for (const enviado of ['557188417064', '5571988417064']) {
+    it(`acha contato guardado sem o 9 quando o n8n manda ${enviado}`, async () => {
+      const { sb, inserts } = fakeSb({
+        activities: { maybeSingle: [{ data: null }], single: [{ data: { id: 'act-1' } }] },
+        contacts: { maybeSingle: [{ data: { id: 'c-9', name: 'Ana' } }] },
+        deals: { maybeSingle: [{ data: { id: 'd-9' } }] },
+      })
+      const r = await registrarReuniao(sb, {
+        organizationId: ORG,
+        phone: enviado,
+        startsAt: '2026-10-20T14:00:00',
+        externalRef: 'slot-9',
+      })
+      expect(r).toMatchObject({ contactId: 'c-9', dealId: 'd-9' })
+      expect(inserts.some((i) => i.table === 'contacts')).toBe(false)
+    })
+  }
+
+  it('consulta as duas variantes (com e sem o 9)', async () => {
+    const ins: unknown[][] = []
+    const { sb } = fakeSb({
+      activities: { maybeSingle: [{ data: null }], single: [{ data: { id: 'a' } }] },
+      contacts: { maybeSingle: [{ data: { id: 'c', name: 'Ana' } }] },
+      deals: { maybeSingle: [{ data: { id: 'd' } }] },
+    })
+    const orig = sb.from.bind(sb)
+    sb.from = (t: string) => {
+      const b = orig(t)
+      const i = b.in
+      b.in = (...a: unknown[]) => {
+        ins.push(a)
+        return i(...a)
+      }
+      return b
+    }
+    await registrarReuniao(sb, { organizationId: ORG, phone: '557188417064', startsAt: '2026-10-20T14:00:00', externalRef: 's' })
+    expect(ins[0]).toEqual(['phone', ['+5571988417064', '+557188417064']])
+  })
+
+  it('contato novo guarda o telefone como veio, sem inserir o 9', async () => {
+    const { sb, inserts } = fakeSb({
+      activities: { maybeSingle: [{ data: null }], single: [{ data: { id: 'a' } }] },
+      contacts: { maybeSingle: [{ data: null }], single: [{ data: { id: 'c-new' } }] },
+      deals: { maybeSingle: [{ data: null }], single: [{ data: { id: 'd-new' } }] },
+    })
+    await registrarReuniao(sb, { organizationId: ORG, phone: '557188417064', startsAt: '2026-10-20T14:00:00', externalRef: 's' })
+    expect(inserts.find((i) => i.table === 'contacts')!.row.phone).toBe('+557188417064')
+  })
+
+  it('erro na busca do contato lança (não cria duplicado)', async () => {
+    const { sb, inserts } = fakeSb({
+      activities: { maybeSingle: [{ data: null }] },
+      contacts: { maybeSingle: [{ data: null, error: new Error('db') }] },
+    })
+    await expect(
+      registrarReuniao(sb, { organizationId: ORG, phone: '71993042122', startsAt: '2026-10-20T14:00:00', externalRef: 's' }),
+    ).rejects.toThrow('db')
+    expect(inserts).toHaveLength(0)
+  })
+
+  it('erro na busca do negócio aberto lança', async () => {
+    const { sb, inserts } = fakeSb({
+      activities: { maybeSingle: [{ data: null }] },
+      contacts: { maybeSingle: [{ data: { id: 'c', name: 'Ana' } }] },
+      deals: { maybeSingle: [{ data: null, error: new Error('db2') }] },
+    })
+    await expect(
+      registrarReuniao(sb, { organizationId: ORG, phone: '71993042122', startsAt: '2026-10-20T14:00:00', externalRef: 's' }),
+    ).rejects.toThrow('db2')
+    expect(inserts).toHaveLength(0)
+  })
+
+  it('status de reunião desconhecida sem telefone e data não cria nada', async () => {
+    const { sb, inserts } = fakeSb({ activities: { maybeSingle: [{ data: null }] } })
+    await expect(
+      registrarReuniao(sb, { organizationId: ORG, externalRef: 'nao-existe', status: 'realizada' }),
+    ).rejects.toBeInstanceOf(ReuniaoNaoEncontrada)
+    expect(inserts).toHaveLength(0)
   })
 })
 

@@ -20,7 +20,7 @@ vi.mock('@/lib/agenda/reunioes', async (orig) => {
 })
 
 import { authPublicApi } from '@/lib/public-api/auth'
-import { cancelarReuniao, registrarReuniao } from '@/lib/agenda/reunioes'
+import { ReuniaoNaoEncontrada, cancelarReuniao, registrarReuniao } from '@/lib/agenda/reunioes'
 import { POST } from '@/app/api/public/v1/reunioes/route'
 
 function req(body: unknown) {
@@ -58,6 +58,13 @@ describe('POST /api/public/v1/reunioes', () => {
     const res = await POST(req({ cancelada: true, external_ref: 'slot-1' }))
     expect(res.status).toBe(200)
     expect(await res.json()).toMatchObject({ ok: true, cancelada: true, reuniao_id: 'act-1' })
+  })
+
+  it('404 status de reunião desconhecida', async () => {
+    vi.mocked(registrarReuniao).mockRejectedValueOnce(new ReuniaoNaoEncontrada())
+    const res = await POST(req({ external_ref: 'x', status: 'realizada' }))
+    expect(res.status).toBe(404)
+    expect(await res.json()).toEqual({ error: 'Reunião não encontrada', code: 'REUNIAO_NAO_ENCONTRADA' })
   })
 
   it('201 e corpo de resposta ao registrar', async () => {

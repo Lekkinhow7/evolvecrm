@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 import { authPublicApi } from '@/lib/public-api/auth'
 import { createStaticAdminClient } from '@/lib/supabase/server'
-import { cancelarReuniao, registrarReuniao, toSaoPauloIso } from '@/lib/agenda/reunioes'
+import { ReuniaoNaoEncontrada, cancelarReuniao, registrarReuniao, toSaoPauloIso } from '@/lib/agenda/reunioes'
 
 export const runtime = 'nodejs'
 
@@ -61,9 +61,7 @@ export async function POST(request: Request) {
     }
   }
 
-  // Atualização de situação sem data: usa agora só para passar na validação (não é gravada).
-  const startsAt = body.starts_at ?? new Date().toISOString()
-  if (Number.isNaN(new Date(toSaoPauloIso(startsAt)).getTime())) {
+  if (body.starts_at && Number.isNaN(new Date(toSaoPauloIso(body.starts_at)).getTime())) {
     return NextResponse.json({ error: 'Data da reunião inválida', code: 'INVALID_DATE' }, { status: 422 })
   }
 
@@ -73,7 +71,7 @@ export async function POST(request: Request) {
       phone: body.phone,
       dealId: body.deal_id,
       name: body.name,
-      startsAt,
+      startsAt: body.starts_at,
       endsAt: body.ends_at,
       durationMinutes: body.duration_minutes,
       externalRef: body.external_ref,
@@ -96,6 +94,9 @@ export async function POST(request: Request) {
       { status: r.reused ? 200 : 201 },
     )
   } catch (erro) {
+    if (erro instanceof ReuniaoNaoEncontrada) {
+      return NextResponse.json({ error: 'Reunião não encontrada', code: 'REUNIAO_NAO_ENCONTRADA' }, { status: 404 })
+    }
     console.error('[reunioes] falha ao registrar', erro)
     return NextResponse.json({ error: 'Não foi possível registrar a reunião', code: 'SCHEDULE_FAILED' }, { status: 500 })
   }

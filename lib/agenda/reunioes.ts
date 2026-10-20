@@ -5,7 +5,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveBoardIdFromKey, resolveFirstStageId } from '@/lib/public-api/resolve'
 import { advanceDealToRole } from '@/lib/agenda/stageRole'
-import { paraE164 } from '@/lib/agenda/phone'
+import { e164Recebido, variantesE164 } from '@/lib/agenda/phone'
 
 const DURACAO_PADRAO_MIN = 60
 
@@ -22,7 +22,7 @@ export interface EntradaReuniao {
   phone?: string
   dealId?: string
   name?: string
-  startsAt: string
+  startsAt?: string
   endsAt?: string
   durationMinutes?: number
   externalRef: string
@@ -32,6 +32,14 @@ export interface EntradaReuniao {
   description?: string
   origem?: 'ia' | 'equipe'
   status?: 'realizada' | 'nao_compareceu'
+}
+
+/** Pedido de mudar a situação de uma reunião que o CRM não conhece. */
+export class ReuniaoNaoEncontrada extends Error {
+  constructor() {
+    super('Reunião não encontrada')
+    this.name = 'ReuniaoNaoEncontrada'
+  }
 }
 
 export interface ResultadoReuniao {
@@ -81,8 +89,9 @@ async function acharOuCriarNegocio(
     warnings.push('negocio_nao_encontrado')
   }
 
-  const telefone = dados.phone ? paraE164(dados.phone) : null
-  if (!telefone) {
+  const variantes = dados.phone ? variantesE164(dados.phone) : []
+  const telefoneNovo = dados.phone ? e164Recebido(dados.phone) : null
+  if (!variantes.length || !telefoneNovo) {
     if (dados.phone) warnings.push('telefone_invalido')
     return vazio
   }
@@ -91,11 +100,12 @@ async function acharOuCriarNegocio(
     .from('contacts')
     .select('id, name')
     .eq('organization_id', organizationId)
-    .eq('phone', telefone)
+    .in('phone', variantes)
     .is('deleted_at', null)
     .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle()
+  if (achado.error) throw achado.error
   let contactId = (achado.data?.id as string) || null
   let contactName = (achado.data?.name as string) || null
 
@@ -106,7 +116,7 @@ async function acharOuCriarNegocio(
       .insert({
         organization_id: organizationId,
         name: nome,
-        phone: telefone,
+        phone: telefoneNovo,
         source: 'whatsapp',
         status: 'ACTIVE',
         stage: 'LEAD',
@@ -132,6 +142,7 @@ async function acharOuCriarNegocio(
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
+  if (aberto.error) throw aberto.error
   if (aberto.data) return { dealId: aberto.data.id as string, contactId, contactName }
 
   const boardKey = process.env.SITE_LEAD_BOARD_KEY || 'alice'
@@ -169,14 +180,15 @@ export async function registrarReuniao(
   entrada: EntradaReuniao,
 ): Promise<ResultadoReuniao> {
   const { organizationId, externalRef } = entrada
-  const inicio = new Date(toSaoPauloIso(entrada.startsAt))
-  if (Number.isNaN(inicio.getTime())) throw new Error('Data da reunião inválida')
+  const semData = !entrada.startsAt
+  const inicio = new Date(toSaoPauloIso(entrada.startsAt ?? ''))
+  if (!(semData && entrada.status) && Number.isNaN(inicio.getTime())) throw new Error('Data da reunião inválida')
   const duracao =
     entrada.durationMinutes && entrada.durationMinutes > 0 ? entrada.durationMinutes : DURACAO_PADRAO_MIN
   const fim = entrada.endsAt
     ? new Date(toSaoPauloIso(entrada.endsAt))
     : new Date(inicio.getTime() + duracao * 60000)
-  if (Number.isNaN(fim.getTime())) throw new Error('Data final da reunião inválida')
+  if (!(semData && entrada.status) && Number.isNaN(fim.getTime())) throw new Error('Data final da reunião inválida')
 
   const existente = await sb
     .from('activities')
@@ -201,6 +213,11 @@ export async function registrarReuniao(
       reused: true,
       warnings: [],
     }
+  }
+
+  // Só mudar a situação de uma reunião que não existe: não cria nada.
+  if (entrada.status && (!entrada.startsAt || !(entrada.phone || entrada.dealId))) {
+    throw new ReuniaoNaoEncontrada()
   }
 
   const warnings: string[] = []
