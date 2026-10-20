@@ -307,23 +307,58 @@ export const transformStageToDb = (
  * Libera o papel (role) das etapas que o perdem nesta gravação.
  *
  * Existe um índice único (board_id, role) por funil. Se o papel muda de uma etapa
- * para outra, o upsert poderia, por um instante, deixar duas etapas com o mesmo papel
- * e falhar. Por isso limpamos primeiro o papel da etapa antiga.
+ * para outra (inclusive de uma etapa que será removida, ou para uma etapa nova), o
+ * upsert/delete poderia, por um instante, deixar duas etapas com o mesmo papel e falhar.
+ * Por isso limpamos primeiro o papel da etapa antiga. Devolve o que foi limpo, para
+ * poder restaurar se a gravação falhar.
  */
 export async function clearMovedStageRoles(
   client: { from: (table: string) => any },
   boardId: string,
+  organizationId: string,
   stages: BoardStage[]
-): Promise<{ error: Error | null }> {
-  const { data, error } = await client.from('board_stages').select('id, role').eq('board_id', boardId);
-  if (error) return { error };
+): Promise<{ error: Error | null; cleared: Array<{ id: string; role: string }> }> {
+  const { data, error } = await client
+    .from('board_stages')
+    .select('id, role')
+    .eq('board_id', boardId)
+    .eq('organization_id', organizationId);
+  if (error) return { error, cleared: [] };
   const nextRoleById = new Map(stages.map((s) => [s.id, s.role ?? null]));
-  const toClear = ((data ?? []) as Array<{ id: string; role: string | null }>)
-    .filter((row) => row.role && nextRoleById.has(row.id) && nextRoleById.get(row.id) !== row.role)
-    .map((row) => row.id);
-  if (toClear.length === 0) return { error: null };
-  const { error: clearError } = await client.from('board_stages').update({ role: null }).in('id', toClear);
-  return { error: clearError ?? null };
+  const takenRoles = new Set(stages.map((s) => s.role).filter(Boolean) as string[]);
+  const cleared = ((data ?? []) as Array<{ id: string; role: string | null }>)
+    .filter((row): row is { id: string; role: string } => {
+      if (!row.role) return false;
+      if (nextRoleById.has(row.id)) return nextRoleById.get(row.id) !== row.role;
+      return takenRoles.has(row.role); // etapa removida cujo papel outra etapa assume
+    });
+  if (cleared.length === 0) return { error: null, cleared };
+  const { error: clearError } = await client
+    .from('board_stages')
+    .update({ role: null })
+    .eq('organization_id', organizationId)
+    .in('id', cleared.map((r) => r.id));
+  return { error: clearError ?? null, cleared: clearError ? [] : cleared };
+}
+
+/** Devolve os papéis limpos por clearMovedStageRoles (melhor esforço; só registra falhas). */
+export async function restoreStageRoles(
+  client: { from: (table: string) => any },
+  organizationId: string,
+  cleared: Array<{ id: string; role: string }>
+): Promise<void> {
+  for (const row of cleared) {
+    try {
+      const { error } = await client
+        .from('board_stages')
+        .update({ role: row.role })
+        .eq('organization_id', organizationId)
+        .eq('id', row.id);
+      if (error) console.error('[boards] não foi possível restaurar o papel da etapa', row.id, error);
+    } catch (e) {
+      console.error('[boards] não foi possível restaurar o papel da etapa', row.id, e);
+    }
+  }
 }
 
 /**
@@ -644,7 +679,7 @@ export const boardsService = {
           return { error: new Error('Organização não identificada para atualizar estágios deste board. Recarregue a página e tente novamente.') };
         }
         // 0. Libera papéis que mudaram de etapa (índice único por funil).
-        const { error: roleError } = await clearMovedStageRoles(supabase, id, updates.stages);
+        const { error: roleError, cleared: clearedRoles } = await clearMovedStageRoles(supabase, id, organizationId, updates.stages);
         if (roleError) return { error: roleError };
 
         // 1. Upsert provided stages (Update existing + Insert new)
@@ -658,7 +693,10 @@ export const boardsService = {
           .from('board_stages')
           .upsert(stagesToUpsert);
 
-        if (upsertError) return { error: upsertError };
+        if (upsertError) {
+          await restoreStageRoles(supabase, organizationId, clearedRoles);
+          return { error: upsertError };
+        }
 
         // 2. Delete removed stages
         // Delete any stage belonging to this board that is NOT in the new list
