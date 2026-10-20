@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { Badge, Button, Modal, ModalSection } from '@/design-system';
 import { useFreeSlots, useUpdateMeeting, type FreeSlot } from '@/lib/query/hooks/useAgendaQuery';
 import type { Activity } from '@/types';
-import { HorariosLivres } from './HorariosLivres';
-import { MSG_AGENDA_FORA, MSG_HORARIO_OCUPADO, MSG_SEM_HORARIOS } from './NovaReuniaoModal';
+import { HorariosLivres, MSG_AGENDA_FORA, MSG_HORARIO_OCUPADO, MSG_SEM_HORARIOS } from './HorariosLivres';
+import { sanitizeUrl } from '@/lib/utils/sanitize';
+import { useContacts } from '@/lib/query/hooks/useContactsQuery';
+import { useDealsView } from '@/lib/query/hooks/useDealsQuery';
 
 const quandoFmt = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo',
@@ -35,6 +37,19 @@ export const ReuniaoDetalhe: React.FC<Props> = ({ activity, onClose }) => {
   const [slot, setSlot] = useState<FreeSlot | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const slotsQuery = useFreeSlots(remarcando);
+  const { data: contacts = [] } = useContacts();
+  const { data: deals = [] } = useDealsView();
+  const contactId = activity.contactId || deals.find((d) => d.id === activity.dealId)?.contactId;
+  const contato = contactId ? contacts.find((c) => c.id === contactId) : undefined;
+  const linkConversa = contato?.phone
+    ? `/messaging?${new URLSearchParams({
+        newConversation: 'true',
+        contactId: contato.id,
+        contactName: contato.name || '',
+        contactPhone: contato.phone,
+      }).toString()}`
+    : null;
+  const linkReuniao = sanitizeUrl(activity.meetingUrl);
 
   const status = activity.meetingStatus ?? 'agendada';
   const cancelada = status === 'cancelada';
@@ -111,12 +126,24 @@ export const ReuniaoDetalhe: React.FC<Props> = ({ activity, onClose }) => {
         <Badge tone={situacao.tone}>{situacao.texto}</Badge>{' '}
         {activity.meetingFormat && <Badge tone="neutral">{activity.meetingFormat === 'online' ? 'Online' : 'Presencial'}</Badge>}
         {activity.dealTitle && <p style={{ marginTop: 'var(--space-2)' }}>{activity.dealTitle}</p>}
+        <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+          {activity.dealId && (
+            <Button size="sm" variant="secondary" href={`/boards?deal=${encodeURIComponent(activity.dealId)}`}>
+              Abrir negócio
+            </Button>
+          )}
+          {linkConversa && (
+            <Button size="sm" variant="secondary" href={linkConversa}>
+              Abrir conversa
+            </Button>
+          )}
+        </div>
       </ModalSection>
 
-      {activity.meetingFormat === 'online' && activity.meetingUrl && (
+      {activity.meetingFormat === 'online' && linkReuniao && (
         <ModalSection title="Link">
-          <a href={activity.meetingUrl} target="_blank" rel="noopener noreferrer">
-            {activity.meetingUrl}
+          <a href={linkReuniao} target="_blank" rel="noopener noreferrer">
+            {linkReuniao}
           </a>
         </ModalSection>
       )}

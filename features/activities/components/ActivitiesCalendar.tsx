@@ -202,7 +202,19 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
                                                         cursor-pointer
                                                         overflow-hidden
                                                     `}
-                                                    onClick={activity.type === 'MEETING' && onSelectMeeting ? () => onSelectMeeting(activity) : undefined}
+                                                    {...(activity.type === 'MEETING' && onSelectMeeting
+                                                        ? {
+                                                            role: 'button',
+                                                            tabIndex: 0,
+                                                            onClick: () => onSelectMeeting(activity),
+                                                            onKeyDown: (e: React.KeyboardEvent) => {
+                                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                                    e.preventDefault();
+                                                                    onSelectMeeting(activity);
+                                                                }
+                                                            },
+                                                        }
+                                                        : {})}
                                                     title={`${activity.title} - ${activity.dealId ? (dealTitleById.get(activity.dealId) ?? '') : ''}`}
                                                 >
                                                     {/* Shine effect on hover */}
@@ -214,7 +226,7 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
                                                                 {getActivityIcon(activity.type)}
                                                             </div>
                                                             <span className="font-black text-white text-sm">
-                                                                {new Date(activity.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                                {new Date(activity.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
                                                             </span>
                                                         </div>
                                                         <div className={`font-bold text-white leading-tight ${activity.completed || activity.meetingStatus === 'cancelada' ? 'line-through' : ''}`}>

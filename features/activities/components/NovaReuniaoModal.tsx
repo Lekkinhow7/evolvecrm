@@ -1,14 +1,10 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, ChipGroup, Modal, ModalSection, SearchInput } from '@/design-system';
 import { useFreeSlots, useScheduleMeeting, type FreeSlot, type MeetingFormat } from '@/lib/query/hooks/useAgendaQuery';
 import { useDealsView } from '@/lib/query/hooks/useDealsQuery';
-import { HorariosLivres } from './HorariosLivres';
-
-export const MSG_SEM_HORARIOS = 'Nenhum horário livre nos próximos 14 dias.';
-export const MSG_AGENDA_FORA = 'Não foi possível falar com a agenda. Tente de novo.';
-export const MSG_HORARIO_OCUPADO = 'Esse horário acabou de ser ocupado. Escolha outro.';
+import { HorariosLivres, MSG_AGENDA_FORA, MSG_HORARIO_OCUPADO, MSG_SEM_HORARIOS } from './HorariosLivres';
 
 interface Props {
   open: boolean;
@@ -31,6 +27,17 @@ export const NovaReuniaoModal: React.FC<Props> = ({ open, onClose, dealId }) => 
   const [formato, setFormato] = useState<MeetingFormat>('online');
   const [slot, setSlot] = useState<FreeSlot | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+
+  // Estado limpo a cada abertura.
+  useEffect(() => {
+    if (open) {
+      setBusca('');
+      setDealEscolhido(null);
+      setFormato('online');
+      setSlot(null);
+      setErro(null);
+    }
+  }, [open]);
 
   const negocioId = dealId ?? dealEscolhido;
 
@@ -56,6 +63,10 @@ export const NovaReuniaoModal: React.FC<Props> = ({ open, onClose, dealId }) => 
     try {
       await schedule.mutateAsync({ deal_id: negocioId, inicio: slot.inicio, fim: slot.fim, formato });
       setSlot(null);
+      setBusca('');
+      setDealEscolhido(null);
+      setFormato('online');
+      setErro(null);
       onClose();
     } catch (e) {
       const code = (e as { code?: string })?.code;
@@ -97,7 +108,7 @@ export const NovaReuniaoModal: React.FC<Props> = ({ open, onClose, dealId }) => 
                 size="sm"
                 onClick={() => setDealEscolhido(d.id)}
               >
-                {d.title}
+                {d.contactName ? `${d.title} - ${d.contactName}` : d.title}
               </Button>
             ))}
           </div>

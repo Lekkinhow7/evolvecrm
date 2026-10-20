@@ -4,6 +4,10 @@ import React, { useMemo } from 'react';
 import { Button } from '@/design-system';
 import type { FreeSlot } from '@/lib/query/hooks/useAgendaQuery';
 
+export const MSG_SEM_HORARIOS = 'Nenhum horário livre nos próximos 14 dias.';
+export const MSG_AGENDA_FORA = 'Não foi possível falar com a agenda. Tente de novo.';
+export const MSG_HORARIO_OCUPADO = 'Esse horário acabou de ser ocupado. Escolha outro.';
+
 const TZ = 'America/Sao_Paulo';
 
 const diaFmt = new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, weekday: 'short', day: '2-digit', month: '2-digit' });

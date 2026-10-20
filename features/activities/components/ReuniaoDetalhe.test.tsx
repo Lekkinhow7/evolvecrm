@@ -15,6 +15,13 @@ vi.mock('@/lib/query/hooks/useAgendaQuery', () => ({
   useUpdateMeeting: () => ({ mutateAsync, isPending: false }),
 }));
 
+vi.mock('@/lib/query/hooks/useContactsQuery', () => ({
+  useContacts: () => ({ data: [{ id: 'c1', name: 'Maria', phone: '+5511999990000' }, { id: 'c2', name: 'Sem Fone', phone: '' }] }),
+}));
+vi.mock('@/lib/query/hooks/useDealsQuery', () => ({
+  useDealsView: () => ({ data: [{ id: 'd1', contactId: 'c1' }, { id: 'd2', contactId: 'c2' }] }),
+}));
+
 import { ReuniaoDetalhe } from './ReuniaoDetalhe';
 import type { Activity } from '@/types';
 
@@ -47,6 +54,26 @@ describe('ReuniaoDetalhe', () => {
     for (const n of ['Marcar como realizada', 'Não compareceu', 'Remarcar', 'Cancelar reunião']) {
       expect(screen.getByRole('button', { name: n })).toBeInTheDocument();
     }
+  });
+
+  it('mostra atalhos para o negócio e para a conversa', () => {
+    render(<ReuniaoDetalhe activity={base} onClose={vi.fn()} />);
+    expect(screen.getByRole('link', { name: 'Abrir negócio' })).toHaveAttribute('href', '/boards?deal=d1');
+    const conversa = screen.getByRole('link', { name: 'Abrir conversa' }).getAttribute('href') ?? '';
+    expect(conversa).toContain('/messaging?newConversation=true');
+    expect(conversa).toContain('contactId=c1');
+    expect(conversa).toContain('contactPhone=%2B5511999990000');
+  });
+
+  it('sem telefone esconde o atalho da conversa', () => {
+    render(<ReuniaoDetalhe activity={{ ...base, dealId: 'd2' }} onClose={vi.fn()} />);
+    expect(screen.getByRole('link', { name: 'Abrir negócio' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Abrir conversa' })).not.toBeInTheDocument();
+  });
+
+  it('não deixa link javascript: clicável', () => {
+    render(<ReuniaoDetalhe activity={{ ...base, meetingUrl: 'javascript:alert(1)' }} onClose={vi.fn()} />);
+    expect(document.querySelector('a[href^="javascript"]')).toBeNull();
   });
 
   it('presencial mostra o endereço', () => {

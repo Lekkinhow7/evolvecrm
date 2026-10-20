@@ -84,7 +84,7 @@ describe('NovaReuniaoModal', () => {
     mutateAsync.mockResolvedValue({ ok: true, reuniao_id: 'r1' });
     render(<NovaReuniaoModal open onClose={vi.fn()} />);
     expect(screen.queryByText('Fechado')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Casa Azul'));
+    fireEvent.click(screen.getByText('Casa Azul - Maria'));
     fireEvent.click(screen.getAllByText('10:00')[0]);
     fireEvent.click(screen.getByRole('button', { name: 'Marcar reunião' }));
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ deal_id: 'd1' })));
