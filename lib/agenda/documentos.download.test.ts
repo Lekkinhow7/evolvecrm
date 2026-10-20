@@ -97,3 +97,27 @@ describe('baixarArquivoSeguro', () => {
     expect(r.size).toBe(30000000)
   })
 })
+
+describe('baixarArquivoSeguro com sinal de fora', () => {
+  it('sinal abortado durante o download aborta o fetch', async () => {
+    const externo = new AbortController()
+    let sinalDoFetch: AbortSignal | undefined
+    const fetchImpl = vi.fn(async (_u: string, init: RequestInit) => {
+      sinalDoFetch = init.signal as AbortSignal
+      externo.abort()
+      return resp(200, [new Uint8Array(5)])
+    })
+    await baixarArquivoSeguro('https://x.com/a.pdf', { fetchImpl: fetchImpl as any, resolve: publico, signal: externo.signal })
+    expect(sinalDoFetch?.aborted).toBe(true)
+  })
+
+  it('sinal já abortado nem chama o fetch', async () => {
+    const externo = new AbortController()
+    externo.abort()
+    const fetchImpl = vi.fn()
+    await expect(
+      baixarArquivoSeguro('https://x.com/a.pdf', { fetchImpl: fetchImpl as any, resolve: publico, signal: externo.signal }),
+    ).rejects.toThrow()
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+})

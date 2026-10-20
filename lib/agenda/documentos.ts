@@ -11,6 +11,8 @@ import { addBusinessDays, checkFile, MAX_FILE_BYTES } from '@/lib/agenda/documen
 
 const BUCKET = 'deal-files'
 const DOWNLOAD_TIMEOUT_MS = 30_000
+/** Prazo total para baixar todos os arquivos de um pedido (a rota tem 60 s). */
+export const PRAZO_DOWNLOADS_MS = 45_000
 const MAX_REDIRECTS = 3
 
 export interface ArquivoEntrada {
@@ -36,7 +38,10 @@ export interface ResultadoDocumentos {
   warnings: string[]
 }
 
-export type BaixarArquivo = (url: string) => Promise<{ bytes: ArrayBuffer; size: number }>
+export type BaixarArquivo = (
+  url: string,
+  opts?: { signal?: AbortSignal },
+) => Promise<{ bytes: ArrayBuffer; size: number }>
 
 /** Nenhum negócio aberto para o telefone (ou negócio informado não existe). */
 export class NegocioNaoEncontrado extends Error {
@@ -50,6 +55,7 @@ type Resolver = (host: string) => Promise<string[]>
 export interface DepsDownload {
   fetchImpl?: typeof fetch
   resolve?: Resolver
+  signal?: AbortSignal
 }
 
 const resolverPadrao: Resolver = async (host) => {
@@ -111,7 +117,10 @@ export async function baixarArquivoSeguro(
   const resolve = deps.resolve ?? resolverPadrao
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS)
+  const pararJunto = () => controller.abort()
+  deps.signal?.addEventListener('abort', pararJunto, { once: true })
   try {
+    if (deps.signal?.aborted) throw new Error('Download cancelado')
     let url = new URL(link)
     for (let salto = 0; ; salto++) {
       await validarDestino(url, resolve)
@@ -159,10 +168,30 @@ export async function baixarArquivoSeguro(
     }
   } finally {
     clearTimeout(timer)
+    deps.signal?.removeEventListener('abort', pararJunto)
   }
 }
 
-export const baixarArquivoPadrao: BaixarArquivo = (link) => baixarArquivoSeguro(link)
+export const baixarArquivoPadrao: BaixarArquivo = (link, opts) => baixarArquivoSeguro(link, { signal: opts?.signal })
+
+class TempoEsgotado extends Error {}
+
+/** Baixa com o tempo que sobra do prazo total; estourou, cancela e lança TempoEsgotado. */
+async function baixarNoPrazo(fetchFile: BaixarArquivo, link: string, restanteMs: number) {
+  const controller = new AbortController()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const estouro = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort()
+      reject(new TempoEsgotado())
+    }, restanteMs)
+  })
+  try {
+    return await Promise.race([fetchFile(link, { signal: controller.signal }), estouro])
+  } finally {
+    clearTimeout(timer)
+  }
+}
 
 /** Parte do nome usada na chave do storage: ASCII, sem separadores, com extensão. */
 export function nomeParaChave(nome: string): string {
@@ -261,6 +290,19 @@ async function acharNegocio(
   return { id: data.id as string, ownerId: (data.owner_id as string) || null, contactId, nome }
 }
 
+/** Dono da tarefa quando o negócio não tem dono: o primeiro admin da organização. */
+async function primeiroAdmin(sb: SupabaseClient, organizationId: string): Promise<string | null> {
+  const { data } = await sb
+    .from('profiles')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .eq('role', 'admin')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  return (data?.id as string | undefined) ?? null
+}
+
 export async function registrarDocumentos(
   sb: SupabaseClient,
   entrada: EntradaDocumentos,
@@ -271,9 +313,16 @@ export async function registrarDocumentos(
   const warnings: string[] = []
   const skipped: { fileName: string; reason: string }[] = []
   let saved = 0
+  const fimDosDownloads = Date.now() + PRAZO_DOWNLOADS_MS
+  let tempoEsgotado = false
 
   for (const arquivo of entrada.files) {
     const { fileName, mimeType, externalRef } = arquivo
+    // Prazo total estourado: o resto fica para o reenvio (por isso o external_ref por arquivo).
+    if (tempoEsgotado) {
+      skipped.push({ fileName, reason: 'tempo_esgotado' })
+      continue
+    }
 
     if (externalRef) {
       const ja = await sb
@@ -298,10 +347,13 @@ export async function registrarDocumentos(
     }
 
     let baixado: { bytes: ArrayBuffer; size: number }
+    const restante = fimDosDownloads - Date.now()
     try {
-      baixado = await fetchFile(arquivo.url)
-    } catch {
-      skipped.push({ fileName, reason: 'falha_no_download' })
+      if (restante <= 0) throw new TempoEsgotado()
+      baixado = await baixarNoPrazo(fetchFile, arquivo.url, restante)
+    } catch (erro) {
+      if (erro instanceof TempoEsgotado) tempoEsgotado = true
+      skipped.push({ fileName, reason: tempoEsgotado ? 'tempo_esgotado' : 'falha_no_download' })
       continue
     }
     const check = checkFile({ mimeType, size: baixado.size })
@@ -391,7 +443,7 @@ export async function registrarDocumentos(
         completed: false,
         deal_id: negocio.id,
         contact_id: negocio.contactId,
-        owner_id: negocio.ownerId,
+        owner_id: negocio.ownerId ?? (await primeiroAdmin(sb, organizationId)),
       })
       .select('id')
       .single()

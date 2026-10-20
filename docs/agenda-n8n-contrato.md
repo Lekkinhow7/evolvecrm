@@ -66,9 +66,10 @@ Se o CRM já mostrou a reunião com a resposta do `agendar_reuniao`, a chamada d
 Corpo:
 - `phone` **ou** `deal_id` (obrigatório um)
 - `files`: de 1 a 10 itens `{ url, file_name, mime_type, external_ref? }` (o n8n baixa do WhatsApp e manda o link; `external_ref` evita anexar o mesmo arquivo duas vezes)
+- `external_ref` por arquivo é opcional no formato, mas **obrigatório na prática**: o CRM tem 45 segundos para baixar todos os arquivos do pedido. O que não couber volta em `ignorados` com `motivo: "tempo_esgotado"` (os já salvos seguem o fluxo normal) e o n8n deve reenviar o mesmo pedido. Sem `external_ref`, o reenvio anexa de novo os arquivos que já tinham sido salvos.
 - `note` (opcional): o que o cliente disse
 
-Comportamento: guarda os arquivos, move o negócio para a etapa de papel `analise_documentos`, cria a tarefa de análise para a Alice e tira a marca "aguardando documentos".
+Comportamento: guarda os arquivos, move o negócio para a etapa de papel `analise_documentos`, cria a tarefa de análise para a Alice (do dono do negócio; sem dono, do primeiro admin da organização) e tira a marca "aguardando documentos".
 Resposta: `{ ok, deal_id, salvos, ignorados: [{ file_name, motivo }], tarefa_id, avisos[] }`. Erros: 422 dados inválidos, 404 `DEAL_NOT_FOUND`, 500 falha.
 
 ## 3. Rotas internas do CRM (a tela chama; não são para o n8n)

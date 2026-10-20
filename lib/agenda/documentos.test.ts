@@ -219,3 +219,85 @@ describe('registrarDocumentos', () => {
     expect(inserts.find((i) => i.table === 'deal_files')!.row.file_name).toBe('Relatório/../CNH João.pdf')
   })
 })
+
+describe('revisão final: documentos', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-19T15:00:00Z'))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('negócio sem dono: tarefa vai para o primeiro admin da organização', async () => {
+    const eqsProfiles: Array<[string, unknown]> = []
+    const ordens: unknown[][] = []
+    const { sb, inserts } = fakeSb({
+      deals: { maybeSingle: [{ data: { ...negocio.data, owner_id: null }, error: null }] },
+      deal_files: { maybeSingle: [{ data: null }] },
+      profiles: { maybeSingle: [{ data: { id: 'admin-1' }, error: null }] },
+      activities: { single: [{ data: { id: 't-1' } }] },
+    })
+    const orig = sb.from.bind(sb)
+    sb.from = (t: string) => {
+      const b = orig(t)
+      if (t === 'profiles') {
+        b.eq = (c: string, v: unknown) => (eqsProfiles.push([c, v]), b)
+        b.order = (...a: unknown[]) => (ordens.push(a), b)
+      }
+      return b
+    }
+    await registrarDocumentos(sb, { organizationId: ORG, dealId: 'd-1', files: [pdf] }, fetchOk)
+    const tarefa = inserts.find((i) => i.table === 'activities' && i.row.type === 'TASK')!.row
+    expect(tarefa.owner_id).toBe('admin-1')
+    expect(eqsProfiles).toEqual([
+      ['organization_id', ORG],
+      ['role', 'admin'],
+    ])
+    expect(ordens[0]).toEqual(['created_at', { ascending: true }])
+  })
+
+  it('negócio com dono não consulta admins', async () => {
+    const { sb, inserts } = fakeSb({
+      deals: { maybeSingle: [negocio] },
+      deal_files: { maybeSingle: [{ data: null }] },
+      profiles: { maybeSingle: [{ data: { id: 'admin-1' }, error: null }] },
+      activities: { single: [{ data: { id: 't-1' } }] },
+    })
+    await registrarDocumentos(sb, { organizationId: ORG, dealId: 'd-1', files: [pdf] }, fetchOk)
+    expect(inserts.find((i) => i.row.type === 'TASK')!.row.owner_id).toBe('u-1')
+  })
+
+  it('downloads lentos: passou de 45 s, o resto vira tempo_esgotado e o salvo segue o fluxo', async () => {
+    const sinais: AbortSignal[] = []
+    const lento = vi.fn((url: string, opts?: { signal?: AbortSignal }) => {
+      if (opts?.signal) sinais.push(opts.signal)
+      const ms = url.endsWith('a.pdf') ? 20_000 : 600_000
+      return new Promise<{ bytes: ArrayBuffer; size: number }>((res) =>
+        setTimeout(() => res({ bytes: new ArrayBuffer(10), size: 10 }), ms),
+      )
+    })
+    const { sb, uploads } = fakeSb({
+      deals: { maybeSingle: [negocio] },
+      deal_files: { maybeSingle: [{ data: null }, { data: null }, { data: null }] },
+      activities: { single: [{ data: { id: 't-1' } }] },
+    })
+    const arquivos = [
+      { ...pdf, url: 'https://x/a.pdf', fileName: 'a.pdf', externalRef: 'm-a' },
+      { ...pdf, url: 'https://x/b.pdf', fileName: 'b.pdf', externalRef: 'm-b' },
+      { ...pdf, url: 'https://x/c.pdf', fileName: 'c.pdf', externalRef: 'm-c' },
+    ]
+    const promessa = registrarDocumentos(sb, { organizationId: ORG, dealId: 'd-1', files: arquivos }, lento)
+    await vi.advanceTimersByTimeAsync(46_000)
+    const r = await promessa
+    expect(r.saved).toBe(1)
+    expect(r.skipped).toEqual([
+      { fileName: 'b.pdf', reason: 'tempo_esgotado' },
+      { fileName: 'c.pdf', reason: 'tempo_esgotado' },
+    ])
+    expect(lento).toHaveBeenCalledTimes(2)
+    expect(sinais[1].aborted).toBe(true)
+    expect(uploads).toHaveLength(1)
+    expect(r.taskId).toBe('t-1')
+    expect(advanceDealToRole).toHaveBeenCalledOnce()
+  })
+})
