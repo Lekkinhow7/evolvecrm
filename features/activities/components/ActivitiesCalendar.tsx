@@ -7,6 +7,8 @@ interface ActivitiesCalendarProps {
     deals: Deal[];
     currentDate: Date;
     setCurrentDate: (date: Date) => void;
+    /** Clique numa reunião abre o detalhe dela. */
+    onSelectMeeting?: (activity: Activity) => void;
 }
 
 const HOURS = Array.from({ length: 10 }, (_, i) => i + 9); // 9:00 to 18:00
@@ -32,7 +34,8 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
     activities,
     deals,
     currentDate,
-    setCurrentDate
+    setCurrentDate,
+    onSelectMeeting
 }) => {
     const getWeekStart = (date: Date) => {
         const d = new Date(date);
@@ -192,13 +195,14 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
                                                         group relative
                                                         text-xs p-3 rounded-xl border-2
                                                         ${getActivityGradient(activity.type)}
-                                                        ${activity.completed ? 'opacity-50 saturate-50' : ''}
+                                                        ${activity.completed || activity.meetingStatus === 'cancelada' ? 'opacity-50 saturate-50' : ''}
                                                         ${isOverdue(activity) && !activity.completed ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-slate-900' : ''}
                                                         transition-all duration-300
                                                         hover:scale-105 hover:-translate-y-1
                                                         cursor-pointer
                                                         overflow-hidden
                                                     `}
+                                                    onClick={activity.type === 'MEETING' && onSelectMeeting ? () => onSelectMeeting(activity) : undefined}
                                                     title={`${activity.title} - ${activity.dealId ? (dealTitleById.get(activity.dealId) ?? '') : ''}`}
                                                 >
                                                     {/* Shine effect on hover */}
@@ -213,9 +217,15 @@ export const ActivitiesCalendar: React.FC<ActivitiesCalendarProps> = ({
                                                                 {new Date(activity.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                             </span>
                                                         </div>
-                                                        <div className={`font-bold text-white leading-tight ${activity.completed ? 'line-through' : ''}`}>
+                                                        <div className={`font-bold text-white leading-tight ${activity.completed || activity.meetingStatus === 'cancelada' ? 'line-through' : ''}`}>
                                                             {activity.title}
                                                         </div>
+                                                        {activity.type === 'MEETING' && activity.meetingFormat && (
+                                                            <div className="text-xs text-white/90 font-medium">
+                                                                {activity.meetingFormat === 'online' ? 'Online' : 'Presencial'}
+                                                                {activity.meetingStatus === 'cancelada' ? ' - Cancelada' : ''}
+                                                            </div>
+                                                        )}
 
                                                         {/* Hover Expanded Info */}
                                                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-2 pt-2 border-t border-white/20">

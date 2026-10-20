@@ -49,6 +49,7 @@ export const useActivitiesController = (options?: { initialView?: 'list' | 'cale
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
 
   // Permite deep-link do Inbox: /activities?filter=overdue|today|upcoming (e do menu: &tipo=TASK).
   // Depende só desses parâmetros: tirar o `novo` da URL não apaga o filtro escolhido.
@@ -138,8 +139,12 @@ export const useActivitiesController = (options?: { initialView?: 'list' | 'cale
 
   // Botão Novo do menu lateral: /activities?novo=reuniao abre uma reunião; ?novo=tarefa, uma tarefa.
   useNewParam((value) => {
+    // Reunião nova é marcada em horário livre da agenda (modal próprio), não pelo formulário de atividade.
+    if (value === 'reuniao') {
+      setIsMeetingModalOpen(true);
+      return;
+    }
     handleNewActivity();
-    if (value === 'reuniao') setFormData((f) => ({ ...f, type: 'MEETING' }));
     if (value === 'tarefa') setFormData((f) => ({ ...f, type: 'TASK' }));
   });
 
@@ -269,6 +274,8 @@ export const useActivitiesController = (options?: { initialView?: 'list' | 'cale
     contacts,
     companies,
     isLoading,
+    isMeetingModalOpen,
+    setIsMeetingModalOpen,
     handleNewActivity,
     handleEditActivity,
     handleDeleteActivity,

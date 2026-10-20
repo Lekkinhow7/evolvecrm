@@ -7,8 +7,11 @@ import { ActivitiesFilters } from './components/ActivitiesFilters';
 import { ActivitiesList } from './components/ActivitiesList';
 import { ActivitiesCalendar } from './components/ActivitiesCalendar';
 import { ActivityFormModal } from './components/ActivityFormModal';
+import { NovaReuniaoModal } from './components/NovaReuniaoModal';
+import { ReuniaoDetalhe } from './components/ReuniaoDetalhe';
 import { BulkActionsToolbar } from './components/BulkActionsToolbar';
 import { useToast } from '@/context/ToastContext';
+import type { Activity } from '@/types';
 
 /**
  * Componente React `ActivitiesPage`.
@@ -34,6 +37,8 @@ export const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ initialView, tit
         setCurrentDate,
         isModalOpen,
         setIsModalOpen,
+        isMeetingModalOpen,
+        setIsMeetingModalOpen,
         editingActivity,
         formData,
         setFormData,
@@ -49,6 +54,7 @@ export const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ initialView, tit
     } = useActivitiesController({ initialView });
 
     const { addToast } = useToast();
+    const [reuniaoAberta, setReuniaoAberta] = useState<Activity | null>(null);
     const [selectedActivities, setSelectedActivities] = useState<Set<string>>(new Set());
 
     const handleSelectActivity = (id: string, selected: boolean) => {
@@ -119,6 +125,7 @@ export const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ initialView, tit
                     deals={deals}
                     currentDate={currentDate}
                     setCurrentDate={setCurrentDate}
+                    onSelectMeeting={setReuniaoAberta}
                 />
             )}
 
@@ -131,6 +138,16 @@ export const ActivitiesPage: React.FC<ActivitiesPageProps> = ({ initialView, tit
                 editingActivity={editingActivity}
                 deals={deals}
             />
+
+            <NovaReuniaoModal open={isMeetingModalOpen} onClose={() => setIsMeetingModalOpen(false)} />
+
+            {reuniaoAberta && (
+                <ReuniaoDetalhe
+                    key={reuniaoAberta.id}
+                    activity={reuniaoAberta}
+                    onClose={() => setReuniaoAberta(null)}
+                />
+            )}
 
             <BulkActionsToolbar
                 selectedCount={selectedActivities.size}
