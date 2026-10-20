@@ -7,7 +7,7 @@ import { InboxZeroState } from './InboxZeroState';
 import {
   ChevronDown,
   ChevronRight,
-  Sparkles,
+  History,
   AlertTriangle,
   TrendingUp,
   Check,
@@ -62,7 +62,6 @@ const SuggestionRow: React.FC<{
     }
   };
 
-  const value = suggestion.data.deal?.value;
   const dealId = suggestion.data.deal?.id;
   const contactId = suggestion.data.contact?.id;
 
@@ -91,37 +90,32 @@ const SuggestionRow: React.FC<{
         <p className="text-sm text-slate-700 dark:text-slate-200 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400">
           {suggestion.description}
         </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{suggestion.title}</p>
       </button>
-
-      {value && (
-        <span className="shrink-0 text-sm font-medium text-green-600 dark:text-green-400">
-          R$ {(value / 1000).toFixed(0)}k
-        </span>
-      )}
 
       {/* Actions */}
       <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={onAccept}
           className="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 rounded-md transition-colors"
-          aria-label="Aplicar sugestão"
-          title="Aplicar"
+          aria-label={suggestion.type === 'UPSELL' ? 'Criar negócio' : 'Criar tarefa'}
+          title={suggestion.type === 'UPSELL' ? 'Criar negócio' : 'Criar tarefa'}
         >
           <Check size={14} aria-hidden="true" />
         </button>
         <button
           onClick={onSnooze}
           className="p-1.5 text-slate-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-md transition-colors"
-          aria-label="Adiar sugestão"
-          title="Adiar"
+          aria-label="Lembrar depois"
+          title="Lembrar depois"
         >
           <Clock size={14} aria-hidden="true" />
         </button>
         <button
           onClick={onDismiss}
           className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors"
-          aria-label="Descartar sugestão"
-          title="Descartar"
+          aria-label="Dispensar"
+          title="Dispensar"
         >
           <X size={14} aria-hidden="true" />
         </button>
@@ -184,9 +178,9 @@ const AISuggestionsCard: React.FC<{
         className="w-full flex items-center gap-3 p-4 hover:bg-primary-100/50 dark:hover:bg-primary-500/10 transition-colors"
       >
         <div className="p-1.5 rounded-lg bg-primary-100 dark:bg-primary-500/20">
-          <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+          <History size={16} className="text-primary-600 dark:text-primary-400" aria-hidden="true" />
         </div>
-        <span className="font-semibold text-slate-900 dark:text-white">Sugestões da IA</span>
+        <span className="font-semibold text-slate-900 dark:text-white">Para retomar</span>
         <span className="text-xs px-2 py-0.5 rounded-full bg-primary-200 dark:bg-primary-500/30 text-primary-700 dark:text-primary-300">
           {suggestions.length}
         </span>
@@ -215,7 +209,7 @@ const AISuggestionsCard: React.FC<{
               onClick={() => setShowAll(true)}
               className="w-full py-3 px-4 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-100/50 dark:hover:bg-primary-500/10 transition-colors"
             >
-              Ver todas as {suggestions.length} sugestões
+              Ver todos os {suggestions.length}
             </button>
           )}
 

@@ -98,6 +98,8 @@ export const queryKeys = {
         byContact: (contactId: string) => [...base.all, 'byContact', contactId] as const,
         /** Unread count */
         unreadCount: () => [...base.all, 'unreadCount'] as const,
+        /** Última mensagem de cada contato (Prioridades: negócio parado) */
+        lastMessageByContact: () => [...base.all, 'lastMessageByContact'] as const,
     })),
 
     /**

@@ -22,6 +22,11 @@ import { useHiddenSuggestionIds, useRecordSuggestionInteraction } from '@/lib/qu
 import { SuggestionType } from '@/lib/supabase/aiSuggestions';
 import { isDebugMode, generateFakeContacts, fakeDeal } from '@/lib/debug';
 import { supabase } from '@/lib/supabase/client';
+import { useLastMessageByContact } from '@/lib/query/hooks/useMessagingConversationsQuery';
+import { formatBRL } from '@/lib/utils/brFormat';
+import { daysSince, describeStalledDeal, isDealStalled, lastMovementTs } from './stalledDeals';
+
+const EMPTY_LAST_MESSAGES = new Map<string, number>();
 
 // Tipos para sugestões de IA (BIRTHDAY removido - será implementado em widget separado)
 export type AISuggestionType = 'UPSELL' | 'RESCUE' | 'STALLED';
@@ -62,6 +67,7 @@ export const useInboxController = () => {
   const { data: contacts = [], isLoading: contactsLoading } = useContacts();
   const { data: deals = [], isLoading: dealsLoading } = useDealsView();
   const { data: defaultBoard } = useDefaultBoard();
+  const { data: lastMessageByContact = EMPTY_LAST_MESSAGES } = useLastMessageByContact();
 
   const createActivityMutation = useCreateActivity();
   const updateActivityMutation = useUpdateActivity();
@@ -176,15 +182,10 @@ export const useInboxController = () => {
     [contacts, currentMonth]
   );
 
-  // Negócios estagnados (> 7 dias sem update)
+  // Negócios parados: abertos, sem edição e sem mensagem do contato há > 7 dias
   const stalledDeals = useMemo(
-    () =>
-      deals.filter(d => {
-        const isClosed = d.isWon || d.isLost;
-        const lastUpdateTs = Date.parse(d.updatedAt);
-        return !isClosed && lastUpdateTs < sevenDaysAgo.getTime();
-      }),
-    [deals, sevenDaysAgo]
+    () => deals.filter(d => isDealStalled(d, lastMessageByContact, sevenDaysAgo.getTime())),
+    [deals, lastMessageByContact, sevenDaysAgo]
   );
 
   // Oportunidades de Upsell (ganhos há > 30 dias)
@@ -230,7 +231,7 @@ export const useInboxController = () => {
   const calculateDealScore = useCallback((deal: DealView, type: 'STALLED' | 'UPSELL'): number => {
     const value = deal.value || 0;
     const probability = deal.probability || 50;
-    const daysSinceUpdate = Math.floor((Date.now() - Date.parse(deal.updatedAt)) / (1000 * 60 * 60 * 24));
+    const daysSinceUpdate = daysSince(Date.parse(deal.updatedAt));
 
     // Base score from value (log scale to handle big differences)
     const valueScore = Math.log10(Math.max(value, 1)) * 10;
@@ -252,17 +253,17 @@ export const useInboxController = () => {
     // Stalled/Rescue - Score and rank
     const scoredStalledDeals = stalledDeals
       .map(deal => ({ deal, score: calculateDealScore(deal, 'STALLED') }))
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.score - a.score || lastMovementTs(b.deal, lastMessageByContact) - lastMovementTs(a.deal, lastMessageByContact));
 
     scoredStalledDeals.forEach(({ deal, score }) => {
       const id = `stalled-${deal.id}`;
       if (!hiddenSuggestionIds.has(id)) {
-        const daysSinceUpdate = Math.floor((Date.now() - Date.parse(deal.updatedAt)) / (1000 * 60 * 60 * 24));
+        const idleDays = daysSince(lastMovementTs(deal, lastMessageByContact));
         suggestions.push({
           id,
           type: 'STALLED',
-          title: `Negócio Parado (${daysSinceUpdate}d)`,
-          description: `${deal.title} - R$ ${deal.value.toLocaleString('pt-BR')} • ${deal.probability}% probabilidade`,
+          title: `Parado há ${idleDays} dias`,
+          description: describeStalledDeal(deal),
           priority: score > 30 ? 'high' : score > 15 ? 'medium' : 'low',
           data: { deal },
           createdAt: nowIso,
@@ -282,8 +283,8 @@ export const useInboxController = () => {
         suggestions.push({
           id,
           type: 'UPSELL',
-          title: `Oportunidade de Upsell`,
-          description: `${deal.companyName} fechou há ${daysSinceClose} dias • R$ ${deal.value.toLocaleString('pt-BR')}`,
+          title: `Cliente pode precisar de novo serviço`,
+          description: `${deal.contactName || deal.title} fechou há ${daysSinceClose} dias${deal.value > 0 ? ` · ${formatBRL(deal.value)}` : ''}`,
           priority: score > 25 ? 'high' : score > 10 ? 'medium' : 'low',
           data: { deal },
           createdAt: nowIso,
@@ -296,18 +297,18 @@ export const useInboxController = () => {
       const id = `rescue-${contact.id}`;
       if (!hiddenSuggestionIds.has(id)) {
         const lastDate = contact.lastInteraction || contact.lastPurchaseDate;
-        const daysSince = lastDate
+        const idleDays = lastDate
           ? Math.floor((Date.now() - Date.parse(lastDate)) / (1000 * 60 * 60 * 24))
           : null;
 
         suggestions.push({
           id,
           type: 'RESCUE',
-          title: `Risco de Churn`,
-          description: daysSince
-            ? `${contact.name} não interage há ${daysSince} dias`
-            : `${contact.name} nunca interagiu - reative!`,
-          priority: daysSince && daysSince > 60 ? 'high' : 'medium',
+          title: `Cliente sem contato`,
+          description: idleDays
+            ? `${contact.name} não interage há ${idleDays} dias`
+            : `${contact.name} ainda não teve contato registrado`,
+          priority: idleDays && idleDays > 60 ? 'high' : 'medium',
           data: { contact },
           createdAt: nowIso,
         });
@@ -318,7 +319,7 @@ export const useInboxController = () => {
       const priorityOrder = { high: 0, medium: 1, low: 2 };
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
-  }, [upsellDeals, stalledDeals, rescueContacts, hiddenSuggestionIds, calculateDealScore]);
+  }, [upsellDeals, stalledDeals, rescueContacts, hiddenSuggestionIds, calculateDealScore, lastMessageByContact]);
 
   // --- Gerar Briefing via Edge Function (sem necessidade de API key no localStorage) ---
   useEffect(() => {
@@ -450,7 +451,7 @@ export const useInboxController = () => {
             isWon: false,
             isLost: false,
           });
-          showToast(`Oportunidade de Upsell criada!`, 'success');
+          showToast(`Novo negócio criado para o cliente`, 'success');
         }
         break;
 
@@ -465,9 +466,9 @@ export const useInboxController = () => {
 
           createActivityMutation.mutate({
             activity: {
-              title: `Follow-up: ${deal.title}`,
+              title: `Retomar contato: ${deal.title}`,
               type: 'TASK',
-              description: 'Deal parado — fazer follow-up para destravar o próximo passo',
+              description: 'Negócio sem movimento — retomar o contato para destravar o próximo passo',
               date: due.toISOString(),
               dealId: deal.id,
               contactId: deal.contactId,
@@ -479,7 +480,7 @@ export const useInboxController = () => {
             },
           });
 
-          showToast('Follow-up criado para reativar o negócio', 'success');
+          showToast('Tarefa criada para retomar o contato', 'success');
         }
         break;
 
@@ -490,7 +491,7 @@ export const useInboxController = () => {
             activity: {
               title: `Reativar cliente: ${c.name}`,
               type: 'CALL',
-              description: 'Cliente em risco de churn - ligar para reativar',
+              description: 'Cliente sem contato há mais de 30 dias — ligar para retomar',
               date: new Date().toISOString(),
               dealId: '',
               contactId: c.id,

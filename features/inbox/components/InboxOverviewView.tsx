@@ -93,15 +93,15 @@ const SuggestionMiniRow: React.FC<{
     <div className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
       <div className="shrink-0">{icon}</div>
       <div className="min-w-0 flex-1">
-        <div className="text-sm text-slate-800 dark:text-slate-100 truncate">{suggestion.title}</div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{suggestion.description}</div>
+        <div className="text-sm text-slate-800 dark:text-slate-100 truncate">{suggestion.description}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{suggestion.title}</div>
       </div>
       <div className="shrink-0 flex items-center gap-2">
         <button
           onClick={onAccept}
           className="px-2.5 py-1.5 rounded-md text-xs font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors"
         >
-          Aplicar
+          {suggestion.type === 'UPSELL' ? 'Criar negócio' : 'Criar tarefa'}
         </button>
         <button
           onClick={() => navigationTarget && router.push(navigationTarget)}
@@ -229,10 +229,10 @@ export const InboxOverviewView: React.FC<InboxOverviewViewProps> = ({
           onClick={onOpenToday}
         />
         <StatCard
-          label="Sugestões críticas"
+          label="Para retomar já"
           value={highPrioritySuggestions.length}
           tone={highPrioritySuggestions.length > 0 ? 'warning' : 'neutral'}
-          hint={highPrioritySuggestions.length > 0 ? 'Risco/Oportunidade agora' : 'Sem urgências'}
+          hint={highPrioritySuggestions.length > 0 ? 'Negócios com valor parados' : 'Sem urgências'}
           onClick={onOpenCriticalSuggestions}
         />
         <PendingAdvancesStatCard count={pendingAdvanceCount} />
@@ -251,7 +251,7 @@ export const InboxOverviewView: React.FC<InboxOverviewViewProps> = ({
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
               <AlertTriangle size={16} className="text-orange-600 dark:text-orange-400" aria-hidden="true" />
-              <h3 className="font-bold text-slate-900 dark:text-white">Risco (resgate e deals parados)</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white">Para retomar</h3>
             </div>
             <button
               onClick={onGoToList}
@@ -261,7 +261,7 @@ export const InboxOverviewView: React.FC<InboxOverviewViewProps> = ({
             </button>
           </div>
           {riskSuggestions.length === 0 ? (
-            <div className="text-sm text-slate-500 dark:text-slate-400">Sem riscos destacados agora.</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">Nenhum negócio parado agora.</div>
           ) : (
             <div className="space-y-1">
               {riskSuggestions.map(s => (
@@ -279,7 +279,7 @@ export const InboxOverviewView: React.FC<InboxOverviewViewProps> = ({
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
               <TrendingUp size={16} className="text-green-600 dark:text-green-400" aria-hidden="true" />
-              <h3 className="font-bold text-slate-900 dark:text-white">Oportunidades (upsell)</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white">Clientes para novo serviço</h3>
             </div>
             <button
               onClick={onGoToList}
@@ -289,7 +289,7 @@ export const InboxOverviewView: React.FC<InboxOverviewViewProps> = ({
             </button>
           </div>
           {opportunitySuggestions.length === 0 ? (
-            <div className="text-sm text-slate-500 dark:text-slate-400">Sem oportunidades destacadas agora.</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">Nenhum cliente para novo serviço agora.</div>
           ) : (
             <div className="space-y-1">
               {opportunitySuggestions.map(s => (

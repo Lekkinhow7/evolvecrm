@@ -285,6 +285,41 @@ export function useUnreadConversationCount() {
   });
 }
 
+/**
+ * Última mensagem de cada contato (timestamp em ms), para saber quem está
+ * conversando mesmo sem ninguém ter mexido no negócio.
+ */
+export function useLastMessageByContact() {
+  const { user, organizationId, loading: authLoading } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.messagingConversations.lastMessageByContact(),
+    queryFn: async ({ signal }): Promise<Map<string, number>> => {
+      const supabase = getClient();
+
+      const { data, error } = await supabase
+        .from('messaging_conversations')
+        .select('contact_id, last_message_at')
+        .eq('organization_id', organizationId!)
+        .not('contact_id', 'is', null)
+        .not('last_message_at', 'is', null)
+        .abortSignal(signal);
+
+      if (error) throw error;
+
+      const byContact = new Map<string, number>();
+      for (const row of data ?? []) {
+        const ts = Date.parse(row.last_message_at as string);
+        const contactId = row.contact_id as string;
+        if (ts > (byContact.get(contactId) ?? 0)) byContact.set(contactId, ts);
+      }
+      return byContact;
+    },
+    staleTime: 60 * 1000,
+    enabled: !authLoading && !!user && !!organizationId,
+  });
+}
+
 // =============================================================================
 // MUTATION HOOKS
 // =============================================================================
