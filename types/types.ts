@@ -256,6 +256,10 @@ export interface DealView extends Deal {
   clientCompanyName?: string; // Name of the CRM client company
   contactName: string;
   contactEmail: string;
+  /** Telefone do contato (card do Kanban). */
+  contactPhone?: string;
+  /** Foto do contato (WhatsApp), quando houver. */
+  contactAvatar?: string;
   /** Nome/label do estágio atual (resolvido a partir do status UUID) */
   stageLabel: string;
   /** Deal aguardando documentos do cliente. */

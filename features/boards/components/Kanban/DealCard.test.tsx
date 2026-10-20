@@ -28,20 +28,20 @@ const renderCard = (over: Partial<DealView>) =>
   );
 
 describe('DealCard selos de documentos', () => {
-  it('mostra "3 documentos"', () => {
+  it('mostra "3 docs"', () => {
     renderCard({ documentsCount: 3 });
-    expect(screen.getByText('3 documentos')).toBeTruthy();
+    expect(screen.getByText('3 docs')).toBeTruthy();
   });
   it('singular com 1 documento', () => {
     renderCard({ documentsCount: 1 });
-    expect(screen.getByText('1 documento')).toBeTruthy();
+    expect(screen.getByText('1 doc')).toBeTruthy();
   });
-  it('mostra "Aguardando documentos"', () => {
+  it('mostra "Aguardando docs"', () => {
     renderCard({ awaitingDocuments: true });
-    expect(screen.getByText('Aguardando documentos')).toBeTruthy();
+    expect(screen.getByText('Aguardando docs')).toBeTruthy();
   });
   it('sem documentos não mostra selos', () => {
     renderCard({});
-    expect(screen.queryByText(/documento/)).toBeNull();
+    expect(screen.queryByText(/docs?/)).toBeNull();
   });
 });

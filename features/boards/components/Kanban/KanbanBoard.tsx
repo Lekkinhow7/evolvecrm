@@ -7,6 +7,8 @@ import { SkeletonDealCard } from '@/components/ui/Skeleton';
 import { useLifecycleStages } from '@/lib/query/hooks/useLifecycleStagesQuery';
 import { Badge } from '@/design-system';
 import { formatBRL } from '@/lib/utils/brFormat';
+import { useActivities } from '@/lib/query/hooks/useActivitiesQuery';
+import { nextMeetingByDeal } from './dealCardInfo';
 
 /** Barra de rolagem fina com as cores do tema (colunas e quadro). */
 const THIN_SCROLL = '[scrollbar-color:var(--border-default)_transparent] [scrollbar-width:thin]';
@@ -84,6 +86,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onAddStage,
 }) => {
   const { data: lifecycleStages = [] } = useLifecycleStages();
+  // Card: próxima reunião do negócio.
+  const { data: activities } = useActivities();
+  const nextMeetings = useMemo(() => nextMeetingByDeal(activities ?? []), [activities]);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   
   // State for move-to-stage modal (keyboard accessibility alternative to drag-and-drop)
@@ -250,6 +255,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     onQuickAddActivity={handleQuickAddActivity}
                     setLastMouseDownDealId={setLastMouseDownDealId}
                     onMoveToStage={onMoveDealToStage ? handleOpenMoveToStage : undefined}
+                    nextMeetingAt={nextMeetings.get(deal.id)}
                   />
                 </div>
               ))}

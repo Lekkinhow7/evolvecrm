@@ -65,6 +65,8 @@ export const dealsViewQueryFn = async (
       companyName: company?.name || 'Sem empresa',
       contactName: contact?.name || 'Sem contato',
       contactEmail: contact?.email || '',
+      contactPhone: contact?.phone || '',
+      contactAvatar: contact?.avatar || '',
       stageLabel: stageMap.get(deal.status) || 'Estágio não identificado',
       awaitingDocuments: deal.awaitingDocuments ?? false,
       documentsCount: deal.documentsCount ?? 0,

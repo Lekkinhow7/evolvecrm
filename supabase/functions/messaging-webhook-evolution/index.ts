@@ -499,6 +499,7 @@ async function handleMessagesUpsert(
     organization_id: string;
     business_unit_id: string;
     external_identifier: string;
+    credentials?: Record<string, string> | null;
   },
   payload: EvolutionUpsertPayload
 ) {
@@ -633,6 +634,16 @@ async function handleMessagesUpsert(
         });
       }
     }
+  }
+
+  // Foto do WhatsApp do cliente: busca quando ele escreve e a foto falta ou venceu.
+  if (!isFromMe && contactId && channel.credentials) {
+    await refreshContactAvatar(supabase, {
+      contactId,
+      organizationId: channel.organization_id,
+      phone,
+      credentials: channel.credentials,
+    });
   }
 
   // Insert message (inbound or outbound from WhatsApp app)
@@ -802,6 +813,69 @@ async function handleConnectionUpdate(
     console.error("[Evolution] Failed to update channel status:", error, { state, channelId: channel.id });
   } else {
     console.log(`[Evolution] Channel ${channel.id} status → ${newStatus}`);
+  }
+}
+
+/**
+ * URLs de foto do WhatsApp vencem (parâmetro oe = expiração em segundos, hex).
+ * Mesma regra de lib/messaging/whatsappAvatar.ts (o Deno não importa de lib/).
+ */
+function isAvatarExpired(url: string | null | undefined): boolean {
+  if (!url) return true;
+  try {
+    const oe = new URL(url).searchParams.get("oe");
+    if (!oe) return false;
+    const expiresAt = parseInt(oe, 16) * 1000;
+    if (!Number.isFinite(expiresAt)) return false;
+    return expiresAt - Date.now() < 24 * 60 * 60 * 1000;
+  } catch {
+    return true;
+  }
+}
+
+/** Busca a foto de perfil na Evolution e grava em contacts.avatar. Falha vira só log. */
+async function refreshContactAvatar(
+  supabase: ReturnType<typeof createClient>,
+  params: { contactId: string; organizationId: string; phone: string; credentials: Record<string, string> },
+) {
+  const { contactId, organizationId, phone, credentials } = params;
+  const { serverUrl, apiKey, instanceName } = credentials;
+  const number = phone.replace(/\D/g, "");
+  if (!serverUrl || !apiKey || !instanceName || !number) return;
+
+  try {
+    const { data: contact } = await supabase
+      .from("contacts")
+      .select("avatar")
+      .eq("id", contactId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (!contact || !isAvatarExpired(contact.avatar as string | null)) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(
+      `${serverUrl.replace(/\/$/, "")}/chat/fetchProfilePictureUrl/${encodeURIComponent(instanceName)}`,
+      {
+        method: "POST",
+        headers: { apikey: apiKey, "content-type": "application/json" },
+        body: JSON.stringify({ number }),
+        signal: controller.signal,
+      },
+    ).finally(() => clearTimeout(timer));
+    if (!res.ok) return;
+    const data = await res.json() as { profilePictureUrl?: string | null };
+    const url = data?.profilePictureUrl;
+    if (typeof url !== "string" || !url.startsWith("https://")) return;
+
+    const { error } = await supabase
+      .from("contacts")
+      .update({ avatar: url })
+      .eq("id", contactId)
+      .eq("organization_id", organizationId);
+    if (error) console.error("[Evolution] Failed to save avatar:", error);
+  } catch (e) {
+    console.warn("[Evolution] Avatar fetch failed:", e instanceof Error ? e.message : e);
   }
 }
 

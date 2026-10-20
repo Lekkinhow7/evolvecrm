@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 vi.mock('@/lib/query/hooks/useLifecycleStagesQuery', () => ({ useLifecycleStages: () => ({ data: [] }) }));
+vi.mock('@/lib/query/hooks/useActivitiesQuery', () => ({ useActivities: () => ({ data: [] }) }));
 vi.mock('@/features/boards/hooks/useBoardsController', () => ({
   isDealRotting: () => false,
   getActivityStatus: () => 'none',
