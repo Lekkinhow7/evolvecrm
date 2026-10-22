@@ -221,3 +221,14 @@ export async function generateSalesScript(args: {
 }): Promise<{ script: string; scriptType?: string; generatedFor?: string }> {
   return await postTask('/api/ai/tasks/inbox/sales-script', args);
 }
+
+/** Resumo do que já foi falado numa conversa (botão "Resumo" em Conversas). */
+export async function summarizeConversation(
+  conversationId: string,
+): Promise<import('@/lib/ai/conversationSummary').ConversationSummary> {
+  const data = await postTask<{ summary: import('@/lib/ai/conversationSummary').ConversationSummary }>(
+    '/api/ai/tasks/conversations/summary',
+    { conversationId },
+  );
+  return data.summary;
+}

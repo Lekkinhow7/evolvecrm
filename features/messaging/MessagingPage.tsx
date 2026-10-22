@@ -17,6 +17,7 @@ import { ChannelIndicator } from './components/ChannelIndicator';
 import { WindowExpiryBadge } from './components/WindowExpiryBadge';
 import { MessageSearchBar } from './components/MessageSearchBar';
 import { AssignmentDropdown } from './components/AssignmentDropdown';
+import { ConversationDealBar } from './components/ConversationDealBar';
 import {
   useConversation,
   useMarkConversationRead,
@@ -297,6 +298,12 @@ export function MessagingPage({ initialConversationId }: MessagingPageProps = {}
                 </DropdownMenu>
               </div>
             </div>
+
+            {/* Etapa no Kanban (manual) e Resumo da conversa */}
+            <ConversationDealBar
+              conversationId={selectedConversation.id}
+              contactId={selectedConversation.contactId}
+            />
 
             {/* Search Bar */}
             {showSearch && (
